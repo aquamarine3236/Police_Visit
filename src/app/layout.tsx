@@ -1,20 +1,24 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Inter, Bebas_Neue } from 'next/font/google';
 import './globals.css';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
+const inter = Inter({
+  subsets: ['latin', 'vietnamese'],
+  variable: '--font-inter',
+  display: 'swap',
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const bebasNeue = Bebas_Neue({
+  weight: '400',
   subsets: ['latin'],
+  variable: '--font-bebas-neue',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
   title: 'Hệ thống Quản lý Đăng ký Thăm gặp',
-  description: 'Hệ thống quản lý đăng ký thăm gặp phạm nhân trực tuyến',
+  description:
+    'Hệ thống quản lý đăng ký thăm gặp phạm nhân trực tuyến — đăng ký lịch thăm gặp, quản lý phạm nhân, và cài đặt lịch trình.',
 };
 
 export default function RootLayout({
@@ -23,8 +27,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>{children}</body>
+    <html
+      lang="vi"
+      className={`${inter.variable} ${bebasNeue.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
