@@ -14,6 +14,7 @@ import {
 } from 'docx';
 
 import { requireAdminAuth, errorResponse } from '@/lib/api-helpers';
+import { formatDateVN, formatDateTimeVN, toTitleCaseName } from '@/lib/format';
 
 // ─── Status labels ──────────────────────────────────────────────────────────
 
@@ -124,8 +125,8 @@ export async function GET(
         new TableRow({
           children: [
             createCell((idx + 1).toString()),
-            createCell(v.full_name),
-            createCell(v.date_of_birth),
+            createCell(toTitleCaseName(v.full_name)),
+            createCell(formatDateVN(v.date_of_birth)),
             createCell(v.citizen_id),
             createCell(v.relationship),
           ],
@@ -155,7 +156,7 @@ export async function GET(
       spacing: { after: 200 },
       children: [
         new TextRun({
-          text: `Ngày tạo: ${new Date(registration.created_at).toLocaleString('vi-VN')}`,
+          text: `Ngày tạo: ${formatDateTimeVN(registration.created_at)}`,
           size: 18,
           color: '666666',
         }),
@@ -180,9 +181,9 @@ export async function GET(
     new Paragraph({
       children: [
         new TextRun({ text: 'Họ và tên: ', bold: true, size: 22 }),
-        new TextRun({ text: inmate.full_name, size: 22 }),
+        new TextRun({ text: toTitleCaseName(inmate.full_name), size: 22 }),
         new TextRun({ text: '    Ngày sinh: ', bold: true, size: 22 }),
-        new TextRun({ text: inmate.date_of_birth, size: 22 }),
+        new TextRun({ text: formatDateVN(inmate.date_of_birth), size: 22 }),
       ],
       spacing: { after: 200 },
     }),
@@ -196,7 +197,7 @@ export async function GET(
     new Paragraph({
       children: [
         new TextRun({ text: 'Ngày thăm: ', bold: true, size: 22 }),
-        new TextRun({ text: registration.visit_date, size: 22 }),
+        new TextRun({ text: formatDateVN(registration.visit_date), size: 22 }),
         new TextRun({ text: '    Thời gian: ', bold: true, size: 22 }),
         new TextRun({
           text: `${registration.time_slot_start} - ${registration.time_slot_end}`,

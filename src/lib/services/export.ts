@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 
+import { formatDateVN, formatDateTimeVN, toTitleCaseName } from '@/lib/format';
 import type { Inmate } from '@/types';
 
 // ─── Vietnamese header style ────────────────────────────────────────────────
@@ -51,13 +52,13 @@ export async function exportInmatesToExcel(
     worksheet.addRow({
       stt: idx + 1,
       prison_number: inmate.prison_number,
-      full_name: inmate.full_name,
-      date_of_birth: inmate.date_of_birth,
+      full_name: toTitleCaseName(inmate.full_name),
+      date_of_birth: formatDateVN(inmate.date_of_birth),
       citizen_id: inmate.citizen_id || '',
       permanent_address: inmate.permanent_address || '',
       criminal_offense: inmate.criminal_offense || '',
-      arrest_date: inmate.arrest_date || '',
-      admission_date: inmate.admission_date || '',
+      arrest_date: formatDateVN(inmate.arrest_date),
+      admission_date: formatDateVN(inmate.admission_date),
       classification: inmate.classification,
       visit_status: inmate.visit_status,
     });
@@ -125,15 +126,15 @@ export async function exportRegistrationsToExcel(
     const visitors = reg.visitors ?? [];
     worksheet.addRow({
       stt: idx + 1,
-      visit_date: reg.visit_date,
+      visit_date: formatDateVN(reg.visit_date),
       time_slot: `${reg.time_slot_start} - ${reg.time_slot_end}`,
       prison_number: reg.inmate?.prison_number || '',
-      inmate_name: reg.inmate?.full_name || '',
-      visitor_names: visitors.map((v) => v.full_name).join(', '),
+      inmate_name: toTitleCaseName(reg.inmate?.full_name),
+      visitor_names: visitors.map((v) => toTitleCaseName(v.full_name)).join(', '),
       visitor_cccd: visitors.map((v) => v.citizen_id).join(', '),
       relationship: visitors.map((v) => v.relationship).join(', '),
       status: STATUS_LABELS[reg.status] || reg.status,
-      created_at: reg.created_at ? new Date(reg.created_at).toLocaleString('vi-VN') : '',
+      created_at: reg.created_at ? formatDateTimeVN(reg.created_at) : '',
     });
   });
 

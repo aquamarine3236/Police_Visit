@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { 
   Search, 
@@ -17,6 +17,7 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -54,6 +55,7 @@ import {
   INMATE_VISIT_STATUSES 
 } from '@/lib/validations/inmate';
 import { createInmate, updateInmate, deleteInmate } from '@/actions/inmates';
+import { formatDateVN, toTitleCaseName } from '@/lib/format';
 import type { Inmate } from '@/types';
 
 export default function InmatesPage() {
@@ -132,6 +134,7 @@ export default function InmatesPage() {
     reset: resetAdd,
     setValue: setValueAdd,
     watch: watchAdd,
+    control: controlAdd,
   } = useForm<InmateFormData>({
     resolver: zodResolver(inmateFormSchema),
     defaultValues: {
@@ -156,6 +159,7 @@ export default function InmatesPage() {
     reset: resetEdit,
     setValue: setValueEdit,
     watch: watchEdit,
+    control: controlEdit,
   } = useForm<InmateFormData>({
     resolver: zodResolver(inmateFormSchema),
   });
@@ -423,8 +427,8 @@ export default function InmatesPage() {
               inmates.map((inmate) => (
                 <TableRow key={inmate.id} className="hover:bg-soft-cloud/60">
                   <TableCell className="font-mono text-body-strong">{inmate.prison_number}</TableCell>
-                  <TableCell className="font-medium text-ink">{inmate.full_name}</TableCell>
-                  <TableCell>{inmate.date_of_birth}</TableCell>
+                  <TableCell className="font-medium text-ink">{toTitleCaseName(inmate.full_name)}</TableCell>
+                  <TableCell>{formatDateVN(inmate.date_of_birth)}</TableCell>
                   <TableCell>{inmate.classification}</TableCell>
                   <TableCell>
                     <Badge
@@ -515,11 +519,18 @@ export default function InmatesPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="add-dob">Ngày sinh *</Label>
-                <Input
-                  id="add-dob"
-                  type="date"
-                  {...registerAdd('date_of_birth')}
-                  className={errorsAdd.date_of_birth ? 'border-sale' : ''}
+                <Controller
+                  name="date_of_birth"
+                  control={controlAdd}
+                  render={({ field }) => (
+                    <DateInput
+                      id="add-dob"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      className={errorsAdd.date_of_birth ? 'border-sale' : ''}
+                    />
+                  )}
                 />
                 {errorsAdd.date_of_birth && (
                   <p className="text-caption-sm text-sale">{errorsAdd.date_of_birth.message}</p>
@@ -580,11 +591,18 @@ export default function InmatesPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="add-arrest-date">Ngày bắt tạm giam</Label>
-                <Input
-                  id="add-arrest-date"
-                  type="date"
-                  {...registerAdd('arrest_date')}
-                  className={errorsAdd.arrest_date ? 'border-sale' : ''}
+                <Controller
+                  name="arrest_date"
+                  control={controlAdd}
+                  render={({ field }) => (
+                    <DateInput
+                      id="add-arrest-date"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      className={errorsAdd.arrest_date ? 'border-sale' : ''}
+                    />
+                  )}
                 />
                 {errorsAdd.arrest_date && (
                   <p className="text-caption-sm text-sale">{errorsAdd.arrest_date.message}</p>
@@ -593,11 +611,18 @@ export default function InmatesPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="add-admission-date">Ngày nhập trại</Label>
-                <Input
-                  id="add-admission-date"
-                  type="date"
-                  {...registerAdd('admission_date')}
-                  className={errorsAdd.admission_date ? 'border-sale' : ''}
+                <Controller
+                  name="admission_date"
+                  control={controlAdd}
+                  render={({ field }) => (
+                    <DateInput
+                      id="add-admission-date"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      className={errorsAdd.admission_date ? 'border-sale' : ''}
+                    />
+                  )}
                 />
                 {errorsAdd.admission_date && (
                   <p className="text-caption-sm text-sale">{errorsAdd.admission_date.message}</p>
@@ -692,11 +717,18 @@ export default function InmatesPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="edit-dob">Ngày sinh *</Label>
-                <Input
-                  id="edit-dob"
-                  type="date"
-                  {...registerEdit('date_of_birth')}
-                  className={errorsEdit.date_of_birth ? 'border-sale' : ''}
+                <Controller
+                  name="date_of_birth"
+                  control={controlEdit}
+                  render={({ field }) => (
+                    <DateInput
+                      id="edit-dob"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      className={errorsEdit.date_of_birth ? 'border-sale' : ''}
+                    />
+                  )}
                 />
                 {errorsEdit.date_of_birth && (
                   <p className="text-caption-sm text-sale">{errorsEdit.date_of_birth.message}</p>
@@ -757,11 +789,18 @@ export default function InmatesPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="edit-arrest-date">Ngày bắt tạm giam</Label>
-                <Input
-                  id="edit-arrest-date"
-                  type="date"
-                  {...registerEdit('arrest_date')}
-                  className={errorsEdit.arrest_date ? 'border-sale' : ''}
+                <Controller
+                  name="arrest_date"
+                  control={controlEdit}
+                  render={({ field }) => (
+                    <DateInput
+                      id="edit-arrest-date"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      className={errorsEdit.arrest_date ? 'border-sale' : ''}
+                    />
+                  )}
                 />
                 {errorsEdit.arrest_date && (
                   <p className="text-caption-sm text-sale">{errorsEdit.arrest_date.message}</p>
@@ -770,11 +809,18 @@ export default function InmatesPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="edit-admission-date">Ngày nhập trại</Label>
-                <Input
-                  id="edit-admission-date"
-                  type="date"
-                  {...registerEdit('admission_date')}
-                  className={errorsEdit.admission_date ? 'border-sale' : ''}
+                <Controller
+                  name="admission_date"
+                  control={controlEdit}
+                  render={({ field }) => (
+                    <DateInput
+                      id="edit-admission-date"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      className={errorsEdit.admission_date ? 'border-sale' : ''}
+                    />
+                  )}
                 />
                 {errorsEdit.admission_date && (
                   <p className="text-caption-sm text-sale">{errorsEdit.admission_date.message}</p>

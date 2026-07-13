@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2, ShieldAlert, CheckCircle2, Loader2, CalendarClock } from 'lucide-react';
 
@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -32,6 +33,7 @@ import {
 } from '@/lib/validations/registration';
 
 import { submitRegistration } from '@/actions/registration';
+import { formatDateVN, toTitleCaseName } from '@/lib/format';
 
 // Default prison ID for single-prison system
 const DEFAULT_PRISON_ID = '11111111-1111-1111-1111-111111111111';
@@ -158,12 +160,7 @@ export default function PublicRegistrationPage() {
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  const formatDateVietnamese = (dateStr: string) => {
-    if (!dateStr) return '';
-    const parts = dateStr.split('-');
-    if (parts.length !== 3) return dateStr;
-    return `Ngày ${parts[2]} tháng ${parts[1]} năm ${parts[0]}`;
-  };
+  const formatDateVietnamese = (dateStr: string) => formatDateVN(dateStr);
 
   const getDayOfWeekVietnamese = (dateStr: string) => {
     if (!dateStr) return '';
@@ -327,7 +324,12 @@ export default function PublicRegistrationPage() {
                         <FormItem>
                           <FormLabel className="text-body-strong">Ngày sinh phạm nhân <span className="text-sale">*</span></FormLabel>
                           <FormControl>
-                            <Input type="date" {...field} className="rounded-md" />
+                            <DateInput
+                              value={field.value}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              className="rounded-md"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -447,10 +449,17 @@ export default function PublicRegistrationPage() {
                           <FormItem>
                             <FormLabel className="text-body-strong">Ngày sinh <span className="text-sale">*</span></FormLabel>
                             <FormControl>
-                              <Input
-                                type="date"
-                                {...register(`visitors.${index}.date_of_birth` as const)}
-                                className="rounded-md"
+                              <Controller
+                                control={control}
+                                name={`visitors.${index}.date_of_birth` as const}
+                                render={({ field }) => (
+                                  <DateInput
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    onBlur={field.onBlur}
+                                    className="rounded-md"
+                                  />
+                                )}
                               />
                             </FormControl>
                             {errors.visitors?.[index]?.date_of_birth && (
@@ -597,7 +606,7 @@ export default function PublicRegistrationPage() {
               </div>
               <div className="flex justify-between border-b border-hairline pb-2">
                 <span className="font-semibold text-ink">Phạm nhân:</span>
-                <span>{successData.inmate.full_name} ({successData.inmate.prison_number})</span>
+                <span>{toTitleCaseName(successData.inmate.full_name)} ({successData.inmate.prison_number})</span>
               </div>
               <div className="flex justify-between border-b border-hairline pb-2">
                 <span className="font-semibold text-ink">Phân loại:</span>
@@ -620,7 +629,7 @@ export default function PublicRegistrationPage() {
                     .sort((a, b) => a.display_order - b.display_order)
                     .map((v, i) => (
                       <li key={i}>
-                        {v.full_name} ({v.relationship}) - CCCD: {v.citizen_id}
+                        {toTitleCaseName(v.full_name)} ({v.relationship}) - CCCD: {v.citizen_id}
                       </li>
                     ))}
                 </ul>

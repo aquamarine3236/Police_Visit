@@ -3,6 +3,7 @@ import PdfPrinter from 'pdfmake';
 import type { TDocumentDefinitions, TFontDictionary } from 'pdfmake/interfaces';
 
 import { requireAdminAuth, errorResponse } from '@/lib/api-helpers';
+import { formatDateVN, formatDateTimeVN, toTitleCaseName } from '@/lib/format';
 
 // ─── Status labels ──────────────────────────────────────────────────────────
 
@@ -98,8 +99,8 @@ export async function GET(
     ],
     ...visitors.map((v, idx) => [
       (idx + 1).toString(),
-      v.full_name,
-      v.date_of_birth,
+      toTitleCaseName(v.full_name),
+      formatDateVN(v.date_of_birth),
       v.citizen_id,
       v.relationship,
     ]),
@@ -117,7 +118,7 @@ export async function GET(
         margin: [0, 0, 0, 20],
       },
       {
-        text: `Ngày tạo: ${new Date(registration.created_at).toLocaleString('vi-VN')}`,
+        text: `Ngày tạo: ${formatDateTimeVN(registration.created_at)}`,
         alignment: 'right',
         fontSize: 9,
         color: '#666666',
@@ -137,8 +138,8 @@ export async function GET(
       },
       {
         columns: [
-          { text: `Họ và tên: ${inmate.full_name}`, width: '50%' },
-          { text: `Ngày sinh: ${inmate.date_of_birth}`, width: '50%' },
+          { text: `Họ và tên: ${toTitleCaseName(inmate.full_name)}`, width: '50%' },
+          { text: `Ngày sinh: ${formatDateVN(inmate.date_of_birth)}`, width: '50%' },
         ],
         margin: [0, 0, 0, 15],
       },
@@ -149,7 +150,7 @@ export async function GET(
       },
       {
         columns: [
-          { text: `Ngày thăm: ${registration.visit_date}`, width: '50%' },
+          { text: `Ngày thăm: ${formatDateVN(registration.visit_date)}`, width: '50%' },
           {
             text: `Thời gian: ${registration.time_slot_start} - ${registration.time_slot_end}`,
             width: '50%',

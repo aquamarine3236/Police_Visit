@@ -16,6 +16,7 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Badge, type BadgeVariant } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Pagination } from '@/components/ui/pagination';
@@ -38,6 +39,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { updateRegistrationStatus } from '@/actions/registrations';
 import { createBrowserClient } from '@/lib/supabase/client';
+import { formatDateVN, toTitleCaseName } from '@/lib/format';
 import type { VisitRegistration } from '@/types';
 
 interface VisitorDetail {
@@ -308,28 +310,26 @@ export default function AdminDashboardPage() {
           <div className="grid grid-cols-2 gap-2 md:col-span-6">
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mute pointer-events-none" />
-              <Input
-                type="date"
+              <DateInput
                 value={dateFrom}
-                onChange={(e) => {
-                  setDateFrom(e.target.value);
+                onChange={(iso) => {
+                  setDateFrom(iso);
                   setPage(1);
                 }}
+                aria-label="Từ ngày"
                 className="h-11 pl-9 text-caption-md"
-                placeholder="Từ ngày"
               />
             </div>
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mute pointer-events-none" />
-              <Input
-                type="date"
+              <DateInput
                 value={dateTo}
-                onChange={(e) => {
-                  setDateTo(e.target.value);
+                onChange={(iso) => {
+                  setDateTo(iso);
                   setPage(1);
                 }}
+                aria-label="Đến ngày"
                 className="h-11 pl-9 text-caption-md"
-                placeholder="Đến ngày"
               />
             </div>
           </div>
@@ -370,7 +370,7 @@ export default function AdminDashboardPage() {
               </TableRow>
             ) : (
               registrations.map((reg) => {
-                const primaryVisitor = reg.visitors?.find(v => v.display_order === 1)?.full_name || 'N/A';
+                const primaryVisitor = toTitleCaseName(reg.visitors?.find(v => v.display_order === 1)?.full_name) || 'N/A';
                 const visitorsCount = reg.visitors?.length || 0;
                 const visitorLabel = visitorsCount > 1 
                   ? `${primaryVisitor} (+${visitorsCount - 1} người)` 
@@ -388,10 +388,10 @@ export default function AdminDashboardPage() {
                     </TableCell>
                     <TableCell className="font-semibold text-ink">{visitorLabel}</TableCell>
                     <TableCell>
-                      <p className="font-medium text-ink">{reg.inmate?.full_name}</p>
+                      <p className="font-medium text-ink">{toTitleCaseName(reg.inmate?.full_name)}</p>
                       <p className="text-caption-sm text-mute font-mono">{reg.inmate?.prison_number}</p>
                     </TableCell>
-                    <TableCell className="font-medium">{reg.visit_date}</TableCell>
+                    <TableCell className="font-medium">{formatDateVN(reg.visit_date)}</TableCell>
                     <TableCell className="font-mono text-caption-md">
                       {reg.time_slot_start.substring(0, 5)} - {reg.time_slot_end.substring(0, 5)}
                     </TableCell>
@@ -450,7 +450,7 @@ export default function AdminDashboardPage() {
                     Hồ sơ người bị giam giữ
                   </h3>
                   <div className="space-y-1 text-caption-md bg-soft-cloud/40 border border-hairline-soft p-3">
-                    <p>Họ tên: <strong className="text-ink">{selectedReg.inmate?.full_name}</strong></p>
+                    <p>Họ tên: <strong className="text-ink">{toTitleCaseName(selectedReg.inmate?.full_name)}</strong></p>
                     <p>Số giam: <span className="font-mono text-ink font-semibold">{selectedReg.inmate?.prison_number}</span></p>
                   </div>
                 </div>
@@ -462,7 +462,7 @@ export default function AdminDashboardPage() {
                     Lịch hẹn thăm gặp
                   </h3>
                   <div className="space-y-1 text-caption-md bg-soft-cloud/40 border border-hairline-soft p-3">
-                    <p>Ngày thăm: <strong className="text-ink">{selectedReg.visit_date}</strong></p>
+                    <p>Ngày thăm: <strong className="text-ink">{formatDateVN(selectedReg.visit_date)}</strong></p>
                     <p>Giờ hẹn: <span className="font-semibold text-ink font-mono">{selectedReg.time_slot_start.substring(0, 5)} - {selectedReg.time_slot_end.substring(0, 5)}</span></p>
                     <p className="mt-0.5 flex items-center gap-1.5">Trạng thái: 
                       <Badge variant={getStatusVariant(selectedReg.status)} dot>
@@ -491,8 +491,8 @@ export default function AdminDashboardPage() {
                       {selectedReg.visitors?.sort((a, b) => a.display_order - b.display_order).map((vis, i) => (
                         <TableRow key={vis.id} className="hover:bg-soft-cloud/20">
                           <TableCell className="py-2 text-caption-md font-mono">{i + 1}</TableCell>
-                          <TableCell className="py-2 text-caption-md font-semibold text-ink">{vis.full_name}</TableCell>
-                          <TableCell className="py-2 text-caption-md">{vis.date_of_birth}</TableCell>
+                          <TableCell className="py-2 text-caption-md font-semibold text-ink">{toTitleCaseName(vis.full_name)}</TableCell>
+                          <TableCell className="py-2 text-caption-md">{formatDateVN(vis.date_of_birth)}</TableCell>
                           <TableCell className="py-2 text-caption-md font-mono">{vis.citizen_id}</TableCell>
                           <TableCell className="py-2 text-caption-md">{vis.relationship}</TableCell>
                         </TableRow>
