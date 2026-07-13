@@ -44,7 +44,9 @@ export async function POST(request: NextRequest) {
   const auth = await requireAdminAuth();
   if ('error' in auth) return auth.error;
 
-  const { supabase, prisonId, userId } = auth;
+  // `db` bypasses RLS (service role) for trusted admin writes; the admin has
+  // already been authorised by requireAdminAuth above.
+  const { db, prisonId, userId } = auth;
 
   // Parse multipart form data
   let formData: FormData;
@@ -157,7 +159,7 @@ export async function POST(request: NextRequest) {
   // If append mode, preload existing prison_numbers for dedup
   const existingNumbers = new Set<string>();
   if (importMode === 'append') {
-    const { data: existing } = await supabase
+    const { data: existing } = await db
       .from('inmates')
       .select('prison_number')
       .eq('prison_id', prisonId)
@@ -220,7 +222,7 @@ export async function POST(request: NextRequest) {
 
   // Replace mode: soft-delete all existing active inmates first
   if (importMode === 'replace') {
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await db
       .from('inmates')
       .update({ deleted_at: new Date().toISOString(), updated_by: userId })
       .eq('prison_id', prisonId)
@@ -235,7 +237,7 @@ export async function POST(request: NextRequest) {
   let imported = 0;
   for (let i = 0; i < validRecords.length; i += BATCH_SIZE) {
     const batch = validRecords.slice(i, i + BATCH_SIZE);
-    const { error: insertError, data: insertedData } = await supabase
+    const { error: insertError, data: insertedData } = await db
       .from('inmates')
       .insert(batch)
       .select('id');

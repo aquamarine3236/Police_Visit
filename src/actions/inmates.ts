@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { createServerClient } from '@/lib/supabase/server';
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server';
 import * as inmateService from '@/lib/services/inmates';
 import type { InmateFormData, InmateListQuery } from '@/lib/validations/inmate';
 import type { ServiceResult, Inmate, PaginatedResponse } from '@/types';
@@ -15,7 +15,8 @@ export async function createInmate(
     return { success: false, message: 'Supabase chưa được cấu hình.' };
   }
 
-  const result = await inmateService.createInmate(supabase, formData);
+  const db = createServiceRoleClient() ?? supabase;
+  const result = await inmateService.createInmate(supabase, formData, db);
 
   if (result.success) {
     revalidatePath('/admin');
@@ -33,7 +34,8 @@ export async function updateInmate(
     return { success: false, message: 'Supabase chưa được cấu hình.' };
   }
 
-  const result = await inmateService.updateInmate(supabase, id, formData);
+  const db = createServiceRoleClient() ?? supabase;
+  const result = await inmateService.updateInmate(supabase, id, formData, db);
 
   if (result.success) {
     revalidatePath('/admin');
@@ -50,7 +52,8 @@ export async function deleteInmate(
     return { success: false, message: 'Supabase chưa được cấu hình.' };
   }
 
-  const result = await inmateService.deleteInmate(supabase, id);
+  const db = createServiceRoleClient() ?? supabase;
+  const result = await inmateService.deleteInmate(supabase, id, db);
 
   if (result.success) {
     revalidatePath('/admin');

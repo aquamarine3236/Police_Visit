@@ -6,6 +6,8 @@ import { login } from '@/actions/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PoliceLogo } from '@/components/shared/police-logo';
+import { ThemeToggle } from '@/components/shared/theme-toggle';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -49,27 +51,30 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-soft-cloud flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
+    <div className="relative flex min-h-screen items-center justify-center bg-soft-cloud px-4 py-12">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
+      <div className="w-full max-w-md animate-fade-in-up">
         {/* Logo / Branding */}
-        <div className="text-center mb-8">
-          <div className="mx-auto h-16 w-16 rounded-full bg-ink flex items-center justify-center text-on-primary font-bold text-xl tracking-tighter mb-4">
-            VN
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-xl border border-hairline bg-surface shadow-sm">
+            <PoliceLogo size={52} priority />
           </div>
-          <h1 className="text-heading-xl font-bold tracking-tight text-ink uppercase">
+          <h1 className="text-heading-xl font-bold tracking-tight text-ink">
             Đăng nhập quản trị
           </h1>
-          <p className="text-body-md text-mute mt-2">
+          <p className="mt-2 text-body-md text-mute">
             Hệ thống Quản lý Đăng ký Thăm gặp
           </p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-canvas border border-hairline p-8 shadow-sm">
+        <div className="rounded-xl border border-hairline bg-surface p-6 shadow-md sm:p-8">
           {/* Error Banner */}
           {error && (
-            <div className="mb-6 p-4 bg-sale-deep/5 border border-sale text-sale text-caption-md flex items-start gap-3 animate-in fade-in duration-200">
-              <ShieldAlert className="h-5 w-5 shrink-0 mt-0.5" />
+            <div className="mb-6 flex items-start gap-3 rounded-lg border border-danger/25 bg-danger-soft p-4 text-caption-md text-danger animate-fade-in">
+              <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" />
               <div>
                 <p className="font-semibold">Đăng nhập thất bại</p>
                 <p className="mt-0.5">{error}</p>
@@ -122,8 +127,9 @@ export default function AdminLoginPage() {
             {/* Submit Button */}
             <Button
               type="submit"
+              size="lg"
               disabled={isSubmitting}
-              className="w-full h-12 rounded-full bg-ink text-on-primary hover:bg-ink/90 font-bold text-body-md"
+              className="w-full"
             >
               {isSubmitting ? (
                 <>

@@ -10,15 +10,17 @@ import {
   Upload, 
   Edit, 
   Trash2, 
-  ChevronLeft, 
-  ChevronRight, 
   CheckCircle2, 
-  AlertTriangle 
+  AlertTriangle,
+  Users
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Pagination } from '@/components/ui/pagination';
 import {
   Select,
   SelectContent,
@@ -98,7 +100,7 @@ export default function InmatesPage() {
 
       const res = await fetch(`/api/v1/admin/inmates?${params.toString()}`);
       if (!res.ok) {
-        throw new Error('Không thể tải danh sách phạm nhân.');
+        throw new Error('Không thể tải danh sách người bị giam giữ.');
       }
       const json = await res.json();
       setInmates(json.data);
@@ -167,7 +169,7 @@ export default function InmatesPage() {
     if (res.success) {
       toast({
         title: 'Thành công',
-        description: 'Đã thêm phạm nhân mới.',
+        description: 'Đã thêm hồ sơ người bị giam giữ mới.',
         variant: 'default',
       });
       setIsAddOpen(false);
@@ -176,7 +178,7 @@ export default function InmatesPage() {
     } else {
       toast({
         title: 'Thất bại',
-        description: res.message || 'Lỗi xảy ra khi lưu phạm nhân.',
+        description: res.message || 'Lỗi xảy ra khi lưu hồ sơ người bị giam giữ.',
         variant: 'destructive',
       });
     }
@@ -188,7 +190,7 @@ export default function InmatesPage() {
     if (res.success) {
       toast({
         title: 'Thành công',
-        description: 'Đã cập nhật thông tin phạm nhân.',
+        description: 'Đã cập nhật thông tin người bị giam giữ.',
         variant: 'default',
       });
       setIsEditOpen(false);
@@ -196,7 +198,7 @@ export default function InmatesPage() {
     } else {
       toast({
         title: 'Thất bại',
-        description: res.message || 'Lỗi xảy ra khi lưu phạm nhân.',
+        description: res.message || 'Lỗi xảy ra khi lưu hồ sơ người bị giam giữ.',
         variant: 'destructive',
       });
     }
@@ -208,7 +210,7 @@ export default function InmatesPage() {
     if (res.success) {
       toast({
         title: 'Thành công',
-        description: 'Đã xóa phạm nhân khỏi hệ thống.',
+        description: 'Đã xóa hồ sơ người bị giam giữ khỏi hệ thống.',
         variant: 'default',
       });
       setIsDeleteOpen(false);
@@ -216,7 +218,7 @@ export default function InmatesPage() {
     } else {
       toast({
         title: 'Thất bại',
-        description: res.message || 'Không thể xóa phạm nhân này.',
+        description: res.message || 'Không thể xóa hồ sơ người bị giam giữ này.',
         variant: 'destructive',
       });
     }
@@ -272,7 +274,7 @@ export default function InmatesPage() {
 
       toast({
         title: 'Hoàn thành nhập dữ liệu',
-        description: `Đã nhập thành công ${json.imported} phạm nhân.`,
+        description: `Đã nhập thành công ${json.imported} hồ sơ người bị giam giữ.`,
         variant: 'default',
       });
 
@@ -294,42 +296,32 @@ export default function InmatesPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-heading-xl font-bold tracking-tight text-ink">Quản lý phạm nhân</h1>
+          <h1 className="text-heading-xl font-bold tracking-tight text-ink">Quản lý người bị giam giữ</h1>
           <p className="text-caption-md text-mute">
-            Danh sách và hồ sơ chi tiết của các phạm nhân trong trại giam ({totalInmates} hồ sơ).
+            Danh sách và hồ sơ chi tiết của những người đang bị quản lý giam giữ ({totalInmates} hồ sơ).
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <Button 
-            variant="outline" 
-            onClick={() => setIsImportOpen(true)}
-            className="rounded-full"
-          >
+          <Button variant="outline" onClick={() => setIsImportOpen(true)}>
             <Upload className="mr-2 h-4 w-4" />
             Nhập Excel
           </Button>
-          
-          <Button 
-            variant="outline"
-            asChild
-            className="rounded-full"
-          >
+
+          <Button variant="outline" asChild>
             <a href="/api/v1/admin/inmates/export" download>
               <Download className="mr-2 h-4 w-4" />
               Xuất Excel
             </a>
           </Button>
-          
-          <Button 
-            variant="default"
+
+          <Button
             onClick={() => {
               resetAdd();
               setIsAddOpen(true);
             }}
-            className="rounded-full"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Thêm phạm nhân
+            Thêm hồ sơ
           </Button>
         </div>
       </div>
@@ -339,13 +331,13 @@ export default function InmatesPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mute" />
           <Input
-            placeholder="Tìm theo số hiệu hoặc họ tên..."
+            placeholder="Tìm theo số giam hoặc họ tên..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="pl-9 h-11 bg-canvas border border-hairline focus-ring rounded-md"
+            className="h-11 pl-9"
           />
         </div>
         
@@ -358,7 +350,7 @@ export default function InmatesPage() {
             }}
           >
             <SelectTrigger className="h-11">
-              <SelectValue placeholder="Phân loại phạm nhân" />
+              <SelectValue placeholder="Phân loại đối tượng" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả phân loại</SelectItem>
@@ -373,11 +365,11 @@ export default function InmatesPage() {
       </div>
 
       {/* Inmates List Table */}
-      <div className="bg-canvas border border-hairline overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-hairline bg-surface shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[120px] font-semibold">Số hiệu</TableHead>
+              <TableHead className="w-[120px] font-semibold">Số giam</TableHead>
               <TableHead className="font-semibold">Họ và tên</TableHead>
               <TableHead className="font-semibold">Ngày sinh</TableHead>
               <TableHead className="font-semibold">Phân loại</TableHead>
@@ -389,33 +381,34 @@ export default function InmatesPage() {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-40 text-center">
-                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-ink border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
                   <p className="mt-2 text-caption-md text-mute">Đang tải dữ liệu...</p>
                 </TableCell>
               </TableRow>
             ) : inmates.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-40 text-center text-mute text-body-md">
-                  Không tìm thấy phạm nhân nào khớp với điều kiện lọc.
+                <TableCell colSpan={6} className="p-0">
+                  <EmptyState
+                    icon={Users}
+                    title="Chưa có hồ sơ"
+                    description="Không tìm thấy người bị giam giữ nào khớp với điều kiện lọc. Thêm mới hoặc điều chỉnh bộ lọc."
+                  />
                 </TableCell>
               </TableRow>
             ) : (
               inmates.map((inmate) => (
-                <TableRow key={inmate.id} className="hover:bg-soft-cloud/30">
+                <TableRow key={inmate.id} className="hover:bg-soft-cloud/60">
                   <TableCell className="font-mono text-body-strong">{inmate.prison_number}</TableCell>
                   <TableCell className="font-medium text-ink">{inmate.full_name}</TableCell>
                   <TableCell>{inmate.date_of_birth}</TableCell>
                   <TableCell>{inmate.classification}</TableCell>
                   <TableCell>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-caption-sm font-medium ${
-                        inmate.visit_status === 'Có thể thăm gặp'
-                          ? 'bg-success/10 text-success'
-                          : 'bg-sale/10 text-sale'
-                      }`}
+                    <Badge
+                      variant={inmate.visit_status === 'Có thể thăm gặp' ? 'success' : 'danger'}
+                      dot
                     >
                       {inmate.visit_status}
-                    </span>
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1.5">
@@ -424,8 +417,8 @@ export default function InmatesPage() {
                         size="icon"
                         onClick={() => openEditModal(inmate)}
                         title="Sửa thông tin"
-                        aria-label={`Sửa thông tin phạm nhân ${inmate.full_name}`}
-                        className="h-8 w-8 rounded-full"
+                        aria-label={`Sửa thông tin người bị giam giữ ${inmate.full_name}`}
+                        className="h-8 w-8"
                       >
                         <Edit className="h-4 w-4" aria-hidden="true" />
                       </Button>
@@ -434,8 +427,8 @@ export default function InmatesPage() {
                         size="icon"
                         onClick={() => openDeleteModal(inmate)}
                         title="Xóa"
-                        aria-label={`Xóa phạm nhân ${inmate.full_name}`}
-                        className="h-8 w-8 rounded-full text-sale hover:text-sale hover:bg-sale/5"
+                        aria-label={`Xóa hồ sơ người bị giam giữ ${inmate.full_name}`}
+                        className="h-8 w-8 text-danger hover:bg-danger-soft hover:text-danger"
                       >
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </Button>
@@ -449,63 +442,32 @@ export default function InmatesPage() {
 
         {/* Pagination */}
         {!loading && totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-hairline px-6 py-4 bg-canvas">
+          <div className="flex flex-col items-center justify-between gap-3 border-t border-hairline px-4 py-4 sm:flex-row sm:px-6">
             <span className="text-caption-md text-mute">
-              Hiển thị từ {(page - 1) * limit + 1} đến {Math.min(page * limit, totalInmates)} trong số {totalInmates} phạm nhân
+              Hiển thị từ {(page - 1) * limit + 1} đến {Math.min(page * limit, totalInmates)} trong số {totalInmates} hồ sơ
             </span>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                disabled={page === 1}
-                aria-label="Trang trước"
-                className="h-9 w-9 rounded-full"
-              >
-                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-              </Button>
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <Button
-                  key={i}
-                  variant={page === i + 1 ? 'default' : 'outline'}
-                  onClick={() => setPage(i + 1)}
-                  className={`h-9 w-9 rounded-full p-0 text-caption-md ${page === i + 1 ? 'font-semibold' : ''}`}
-                >
-                  {i + 1}
-                </Button>
-              ))}
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-                disabled={page === totalPages}
-                aria-label="Trang sau"
-                className="h-9 w-9 rounded-full"
-              >
-                <ChevronRight className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </div>
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
           </div>
         )}
       </div>
 
       {/* Add Inmate Dialog */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent className="max-w-2xl bg-canvas p-6 border border-hairline-soft rounded-none">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-heading-lg font-bold">Thêm phạm nhân mới</DialogTitle>
+            <DialogTitle className="text-heading-lg font-bold">Thêm hồ sơ người bị giam giữ</DialogTitle>
             <DialogDescription className="text-body-md text-mute">
-              Vui lòng điền đầy đủ các thông tin bắt buộc (*) dưới đây để lập hồ sơ phạm nhân mới.
+              Vui lòng điền đầy đủ các thông tin bắt buộc (*) dưới đây để lập hồ sơ người bị giam giữ mới.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmitAdd(onAddSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="add-prison-number">Số hiệu phạm nhân *</Label>
+                <Label htmlFor="add-prison-number">Số giam *</Label>
                 <Input
                   id="add-prison-number"
-                  placeholder="Nhập số hiệu (ví dụ: PMN0123)"
+                  placeholder="Nhập số giam (ví dụ: PMN0123)"
                   {...registerAdd('prison_number')}
                   className={errorsAdd.prison_number ? 'border-sale' : ''}
                 />
@@ -515,7 +477,7 @@ export default function InmatesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="add-full-name">Họ và tên phạm nhân *</Label>
+                <Label htmlFor="add-full-name">Họ và tên *</Label>
                 <Input
                   id="add-full-name"
                   placeholder="Nhập họ và tên có dấu"
@@ -528,7 +490,7 @@ export default function InmatesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="add-dob">Ngày sinh phạm nhân *</Label>
+                <Label htmlFor="add-dob">Ngày sinh *</Label>
                 <Input
                   id="add-dob"
                   type="date"
@@ -555,7 +517,7 @@ export default function InmatesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Phân loại phạm nhân *</Label>
+                <Label>Phân loại đối tượng *</Label>
                 <Select
                   value={addClassification}
                   onValueChange={(val) => setValueAdd('classification', val as typeof INMATE_CLASSIFICATIONS[number])}
@@ -668,21 +630,21 @@ export default function InmatesPage() {
 
       {/* Edit Inmate Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-2xl bg-canvas p-6 border border-hairline-soft rounded-none">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-heading-lg font-bold">Chỉnh sửa hồ sơ phạm nhân</DialogTitle>
+            <DialogTitle className="text-heading-lg font-bold">Chỉnh sửa hồ sơ người bị giam giữ</DialogTitle>
             <DialogDescription className="text-body-md text-mute">
-              Cập nhật thông tin chi tiết cho số hiệu: <span className="font-semibold font-mono text-ink">{selectedInmate?.prison_number}</span>
+              Cập nhật thông tin chi tiết cho số giam: <span className="font-semibold font-mono text-ink">{selectedInmate?.prison_number}</span>
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmitEdit(onEditSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="edit-prison-number">Số hiệu phạm nhân *</Label>
+                <Label htmlFor="edit-prison-number">Số giam *</Label>
                 <Input
                   id="edit-prison-number"
-                  placeholder="Nhập số hiệu"
+                  placeholder="Nhập số giam"
                   {...registerEdit('prison_number')}
                   className={errorsEdit.prison_number ? 'border-sale' : ''}
                 />
@@ -692,7 +654,7 @@ export default function InmatesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="edit-full-name">Họ và tên phạm nhân *</Label>
+                <Label htmlFor="edit-full-name">Họ và tên *</Label>
                 <Input
                   id="edit-full-name"
                   placeholder="Nhập họ và tên"
@@ -705,7 +667,7 @@ export default function InmatesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="edit-dob">Ngày sinh phạm nhân *</Label>
+                <Label htmlFor="edit-dob">Ngày sinh *</Label>
                 <Input
                   id="edit-dob"
                   type="date"
@@ -732,7 +694,7 @@ export default function InmatesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Phân loại phạm nhân *</Label>
+                <Label>Phân loại đối tượng *</Label>
                 <Select
                   value={editClassification}
                   onValueChange={(val) => setValueEdit('classification', val as typeof INMATE_CLASSIFICATIONS[number])}
@@ -847,8 +809,8 @@ export default function InmatesPage() {
       <ConfirmDialog
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
-        title="Xác nhận xóa phạm nhân"
-        description={`Bạn có chắc chắn muốn xóa phạm nhân "${selectedInmate?.full_name}" (Số hiệu: ${selectedInmate?.prison_number}) ra khỏi hệ thống? Hành động này sẽ chuyển trạng thái của hồ sơ này sang Đã xóa và ẩn đi.`}
+        title="Xác nhận xóa hồ sơ"
+        description={`Bạn có chắc chắn muốn xóa hồ sơ "${selectedInmate?.full_name}" (Số giam: ${selectedInmate?.prison_number}) ra khỏi hệ thống? Hành động này sẽ chuyển trạng thái của hồ sơ này sang Đã xóa và ẩn đi.`}
         confirmLabel="Xóa hồ sơ"
         cancelLabel="Bỏ qua"
         destructive
@@ -868,7 +830,7 @@ export default function InmatesPage() {
           <DialogHeader>
             <DialogTitle className="text-heading-lg font-bold">Nhập danh sách từ Excel</DialogTitle>
             <DialogDescription className="text-body-md text-mute">
-              Tải lên bảng tính chứa thông tin danh sách phạm nhân để cập nhật số lượng lớn vào hệ thống.
+              Tải lên bảng tính chứa thông tin danh sách người bị giam giữ để cập nhật số lượng lớn vào hệ thống.
             </DialogDescription>
           </DialogHeader>
 
@@ -885,7 +847,7 @@ export default function InmatesPage() {
                     onChange={() => setImportMode('append')}
                     className="h-4 w-4 accent-ink"
                   />
-                  <span>Ghi thêm (Bỏ qua số hiệu đã tồn tại)</span>
+                  <span>Ghi thêm (Bỏ qua số giam đã tồn tại)</span>
                 </label>
                 <label className="flex items-center gap-2.5 cursor-pointer text-body-md">
                   <input

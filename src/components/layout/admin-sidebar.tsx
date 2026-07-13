@@ -4,63 +4,102 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ClipboardList, Settings, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PoliceLogo } from '@/components/shared/police-logo';
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  /** Called when a nav link is clicked (used to close the mobile drawer). */
+  onNavigate?: () => void;
+}
+
+interface NavItem {
+  label: string;
+  href: string;
+  icon: typeof ClipboardList;
+  exact?: boolean;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  {
+    label: 'Danh sách đăng ký',
+    href: '/admin',
+    icon: ClipboardList,
+    exact: true,
+  },
+  {
+    label: 'Quản lý người bị giam giữ',
+    href: '/admin/inmates',
+    icon: Users,
+  },
+  {
+    label: 'Cấu hình lịch',
+    href: '/admin/settings',
+    icon: Settings,
+  },
+];
+
+export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
   const pathname = usePathname();
 
-  const navItems = [
-    {
-      label: 'Danh sách đăng ký',
-      href: '/admin',
-      icon: ClipboardList,
-      exact: true,
-    },
-    {
-      label: 'Quản lý phạm nhân',
-      href: '/admin/inmates',
-      icon: Users,
-    },
-    {
-      label: 'Cấu hình lịch',
-      href: '/admin/settings',
-      icon: Settings,
-    },
-  ];
-
   return (
-    <aside className="w-64 border-r border-hairline bg-canvas flex flex-col h-screen sticky top-0 shrink-0">
-      <div className="p-6">
-        <h2 className="text-body-strong tracking-wider uppercase text-mute">
-          Quản trị hệ thống
-        </h2>
+    <aside className="flex h-full min-h-screen w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
+      {/* Brand */}
+      <div className="flex items-center gap-3 border-b border-sidebar-border px-5 py-5">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/95 p-1 shadow-sm">
+          <PoliceLogo size={34} priority />
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-caption-md font-bold uppercase tracking-wide text-sidebar-foreground">
+            Quản trị hệ thống
+          </p>
+          <p className="truncate text-utility-xs text-sidebar-muted">
+            Cổng thăm gặp trực tuyến
+          </p>
+        </div>
       </div>
-      <nav className="flex-1 px-4 space-y-1.5">
-        {navItems.map((item) => {
+
+      {/* Navigation */}
+      <nav className="flex-1 space-y-1 px-3 py-5">
+        <p className="px-3 pb-2 text-utility-xs font-semibold uppercase tracking-wider text-sidebar-muted">
+          Điều hướng
+        </p>
+        {NAV_ITEMS.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
-            : pathname.startsWith(item.href) && (item.href !== '/admin' || pathname === '/admin');
+            : pathname.startsWith(item.href);
           const Icon = item.icon;
 
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
+              aria-current={isActive ? 'page' : undefined}
               className={cn(
-                'flex items-center gap-3 px-4 py-3 text-caption-md font-medium transition-all duration-150 focus-ring',
+                'group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-caption-md font-medium transition-colors duration-150 focus-ring',
                 isActive
-                  ? 'bg-ink text-on-primary rounded-lg font-semibold'
-                  : 'text-mute hover:bg-soft-cloud hover:text-ink rounded-lg'
+                  ? 'bg-sidebar-active font-semibold text-sidebar-foreground'
+                  : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground',
               )}
             >
-              <Icon className="h-5 w-5" />
-              <span>{item.label}</span>
+              {/* Gold active indicator */}
+              <span
+                className={cn(
+                  'absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-gold transition-opacity',
+                  isActive ? 'opacity-100' : 'opacity-0',
+                )}
+              />
+              <Icon className="h-[18px] w-[18px] shrink-0" />
+              <span className="truncate">{item.label}</span>
             </Link>
           );
         })}
       </nav>
-      <div className="p-6 border-t border-hairline">
-        <p className="text-utility-xs text-mute text-center">
-          © 2026 Hệ thống Thăm gặp
+
+      {/* Footer */}
+      <div className="border-t border-sidebar-border px-5 py-4">
+        <p className="text-utility-xs text-sidebar-muted">© 2026 · Bộ Công an</p>
+        <p className="mt-0.5 text-utility-xs text-sidebar-muted/70">
+          Hệ thống quản lý thăm gặp
         </p>
       </div>
     </aside>

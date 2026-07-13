@@ -159,6 +159,8 @@ export async function updateRegistrationStatus(
   supabase: SupabaseClient,
   registrationId: string,
   newStatus: 'completed' | 'no_show',
+  /** Privileged client for the write (bypasses RLS). Defaults to `supabase`. */
+  db: SupabaseClient = supabase,
 ): Promise<ServiceResult<VisitRegistration>> {
   // Verify the caller is an admin
   const { data: { user } } = await supabase.auth.getUser();
@@ -203,7 +205,7 @@ export async function updateRegistrationStatus(
     return { success: false, message: 'Trạng thái không hợp lệ.' };
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('visit_registrations')
     .update({ status: newStatus, updated_by: user.id })
     .eq('id', registrationId)

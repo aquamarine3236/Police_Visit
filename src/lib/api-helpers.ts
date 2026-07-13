@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { createServerClient } from '@/lib/supabase/server';
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server';
 
 // ─── Vietnamese day-of-week labels (ISO: 1=Monday, 7=Sunday) ────────────────
 
@@ -70,8 +70,14 @@ export async function requireAdminAuth() {
     };
   }
 
+  // Privileged client for trusted admin writes. It bypasses RLS, so it is only
+  // returned AFTER the admin has been authorised above. Falls back to the
+  // cookie-based client when the service role key is not configured.
+  const db = createServiceRoleClient() ?? supabase;
+
   return {
     supabase,
+    db,
     userId: user.id,
     prisonId: profile.prison_id as string,
   };

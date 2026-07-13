@@ -1,57 +1,256 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   DESIGN SYSTEM TOKENS — Tailwind CSS v4
-   Source: docs/15-frontend-design.md
+   DESIGN SYSTEM — "CÔNG AN VN" ENTERPRISE THEME
+   Phong cách: Government Digital Service · Minimalism · Flat · Clean UI
+   Palette: Police Green · Gold/Brass · Navy · Slate/Zinc neutrals
+   Hỗ trợ Light Mode + Dark Mode (class `.dark`)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @theme inline {
-  /* ── Colors ─────────────────────────────────────────────────────────── */
-  --color-ink: #111111;
-  --color-on-primary: #ffffff;
-  --color-canvas: #ffffff;
-  --color-soft-cloud: #f5f5f5;
-  --color-charcoal: #39393b;
-  --color-ash: #4b4b4d;
-  --color-mute: #707072;
-  --color-stone: #9e9ea0;
-  --color-hairline: #cacacb;
-  --color-hairline-soft: #e5e5e5;
+  /* ── Brand: Police Green ───────────────────────────────────────────── */
+  --color-primary: var(--c-primary);
+  --color-primary-hover: var(--c-primary-hover);
+  --color-primary-soft: var(--c-primary-soft);
+  --color-primary-deep: var(--c-primary-deep);
+  --color-on-primary: var(--c-on-primary);
 
-  /* Semantic */
-  --color-sale: #d30005;
-  --color-sale-deep: #780700;
-  --color-success: #007d48;
-  --color-success-bright: #1eaa52;
-  --color-info: #1151ff;
-  --color-info-deep: #0034e3;
+  /* ── Secondary: Gold / Brass ───────────────────────────────────────── */
+  --color-gold: var(--c-gold);
+  --color-gold-hover: var(--c-gold-hover);
+  --color-gold-soft: var(--c-gold-soft);
+  --color-on-gold: var(--c-on-gold);
 
-  /* Category Accents */
-  --color-accent-pink: #ed1aa0;
-  --color-accent-pink-soft: #ffb0dd;
-  --color-accent-purple-soft: #beaffd;
-  --color-accent-purple-pale: #d6d1ff;
-  --color-accent-teal: #0a7281;
-  --color-accent-pink-deep: #4c012d;
+  /* ── Accent: Navy / Emerald ────────────────────────────────────────── */
+  --color-navy: var(--c-navy);
+  --color-emerald: var(--c-emerald);
+
+  /* ── Surfaces & Neutrals ───────────────────────────────────────────── */
+  --color-canvas: var(--c-canvas);          /* page/card background */
+  --color-surface: var(--c-surface);        /* raised card */
+  --color-soft-cloud: var(--c-soft-cloud);  /* muted fill / inputs */
+  --color-ink: var(--c-ink);                /* primary text */
+  --color-charcoal: var(--c-charcoal);      /* strong secondary text */
+  --color-ash: var(--c-ash);
+  --color-mute: var(--c-mute);              /* muted text */
+  --color-stone: var(--c-stone);
+  --color-hairline: var(--c-hairline);      /* borders */
+  --color-hairline-soft: var(--c-hairline-soft);
+
+  /* ── Sidebar (dark) ────────────────────────────────────────────────── */
+  --color-sidebar: var(--c-sidebar);
+  --color-sidebar-hover: var(--c-sidebar-hover);
+  --color-sidebar-active: var(--c-sidebar-active);
+  --color-sidebar-foreground: var(--c-sidebar-foreground);
+  --color-sidebar-muted: var(--c-sidebar-muted);
+  --color-sidebar-border: var(--c-sidebar-border);
+
+  /* ── Semantic ──────────────────────────────────────────────────────── */
+  --color-success: var(--c-success);
+  --color-success-soft: var(--c-success-soft);
+  --color-warning: var(--c-warning);
+  --color-warning-soft: var(--c-warning-soft);
+  --color-info: var(--c-info);
+  --color-info-soft: var(--c-info-soft);
+  --color-sale: var(--c-danger);            /* legacy alias → danger */
+  --color-sale-deep: var(--c-danger-deep);  /* legacy alias */
+  --color-danger: var(--c-danger);
+  --color-danger-deep: var(--c-danger-deep);
+  --color-danger-soft: var(--c-danger-soft);
+
+  /* Legacy aliases kept for backward compatibility with existing markup */
+  --color-success-bright: var(--c-success);
+  --color-info-deep: var(--c-info);
 
   /* ── Fonts ──────────────────────────────────────────────────────────── */
-  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-display: var(--font-bebas-neue), "Bebas Neue", "Anton", "Impact", sans-serif;
+  --font-sans: var(--font-be-vietnam-pro), "Be Vietnam Pro", var(--font-inter),
+    "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-be-vietnam-pro), "Be Vietnam Pro", var(--font-inter),
+    "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  /* ── Border Radius ─────────────────────────────────────────────────── */
+  /* ── Border Radius (enterprise — bo góc vừa phải) ──────────────────── */
   --radius-none: 0px;
-  --radius-sm: 18px;
-  --radius-md: 24px;
-  --radius-lg: 30px;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
   --radius-full: 9999px;
 
-  /* ── Spacing Extensions ────────────────────────────────────────────── */
+  /* ── Spacing (hệ 4px / 8px) ────────────────────────────────────────── */
   --spacing-section: 48px;
+
+  /* ── Elevation (shadow nhẹ) ────────────────────────────────────────── */
+  --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+  --shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.06), 0 1px 2px -1px rgb(15 23 42 / 0.06);
+  --shadow-md: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 6px -2px rgb(15 23 42 / 0.05);
+  --shadow-lg: 0 12px 28px -6px rgb(15 23 42 / 0.12), 0 4px 10px -4px rgb(15 23 42 / 0.06);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COLOR VALUES — LIGHT MODE (default)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Police Green */
+  --c-primary: #1e5631;         /* forest green */
+  --c-primary-hover: #164726;
+  --c-primary-soft: #e7f0ea;
+  --c-primary-deep: #0f3d20;    /* dark olive / deep */
+  --c-on-primary: #ffffff;
+
+  /* Gold / Brass */
+  --c-gold: #b7902f;
+  --c-gold-hover: #9c7a24;
+  --c-gold-soft: #f6efdc;
+  --c-on-gold: #ffffff;
+
+  /* Accent */
+  --c-navy: #1e3a5f;
+  --c-emerald: #059669;
+
+  /* Surfaces & neutrals */
+  --c-canvas: #ffffff;
+  --c-surface: #ffffff;
+  --c-soft-cloud: #f3f5f7;      /* light gray fill */
+  --c-ink: #14181d;             /* near-black slate */
+  --c-charcoal: #2b323b;
+  --c-ash: #475467;
+  --c-mute: #667085;            /* muted slate */
+  --c-stone: #98a2b3;
+  --c-hairline: #dfe3e8;
+  --c-hairline-soft: #eef1f4;
+
+  /* Sidebar (deep police green) */
+  --c-sidebar: #0f3d20;
+  --c-sidebar-hover: #17492a;
+  --c-sidebar-active: #1e5631;
+  --c-sidebar-foreground: #eaf1ec;
+  --c-sidebar-muted: #9db8a6;
+  --c-sidebar-border: #1c4a2c;
+
+  /* Semantic */
+  --c-success: #16794c;
+  --c-success-soft: #e3f2ea;
+  --c-warning: #b7791f;
+  --c-warning-soft: #faf0dc;
+  --c-info: #1e3a5f;
+  --c-info-soft: #e6edf4;
+  --c-danger: #c02626;
+  --c-danger-deep: #8f1d1d;
+  --c-danger-soft: #fbe9e9;
+
+  color-scheme: light;
+}
+
+/* Auto dark mode when the OS prefers it AND the user hasn't chosen a theme.
+   The ThemeProvider sets `data-theme` on <html> for explicit choices, which
+   overrides this via the `.dark` class + the guards below. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --c-primary: #4ea373;
+    --c-primary-hover: #63b184;
+    --c-primary-soft: #16311f;
+    --c-primary-deep: #7cc79a;
+    --c-on-primary: #08150d;
+
+    --c-gold: #d8b45c;
+    --c-gold-hover: #e3c377;
+    --c-gold-soft: #2c2413;
+    --c-on-gold: #1a1405;
+
+    --c-navy: #7ba2cc;
+    --c-emerald: #34d399;
+
+    --c-canvas: #101418;
+    --c-surface: #171c22;
+    --c-soft-cloud: #1e242b;
+    --c-ink: #e9edf1;
+    --c-charcoal: #cbd3dc;
+    --c-ash: #9aa5b1;
+    --c-mute: #8b95a1;
+    --c-stone: #6b7580;
+    --c-hairline: #2b333c;
+    --c-hairline-soft: #232a31;
+
+    --c-sidebar: #0c1a12;
+    --c-sidebar-hover: #13271a;
+    --c-sidebar-active: #1e5631;
+    --c-sidebar-foreground: #dfeae2;
+    --c-sidebar-muted: #7f9a89;
+    --c-sidebar-border: #1a3323;
+
+    --c-success: #3cae76;
+    --c-success-soft: #10281c;
+    --c-warning: #d8a13f;
+    --c-warning-soft: #2c2312;
+    --c-info: #7ba2cc;
+    --c-info-soft: #16212e;
+    --c-danger: #e5605f;
+    --c-danger-deep: #f08a89;
+    --c-danger-soft: #2c1616;
+
+    color-scheme: dark;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COLOR VALUES — DARK MODE (explicit, via ThemeProvider → html.dark)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.dark {
+  --c-primary: #4ea373;
+  --c-primary-hover: #63b184;
+  --c-primary-soft: #16311f;
+  --c-primary-deep: #7cc79a;
+  --c-on-primary: #08150d;
+
+  --c-gold: #d8b45c;
+  --c-gold-hover: #e3c377;
+  --c-gold-soft: #2c2413;
+  --c-on-gold: #1a1405;
+
+  --c-navy: #7ba2cc;
+  --c-emerald: #34d399;
+
+  --c-canvas: #101418;
+  --c-surface: #171c22;
+  --c-soft-cloud: #1e242b;
+  --c-ink: #e9edf1;
+  --c-charcoal: #cbd3dc;
+  --c-ash: #9aa5b1;
+  --c-mute: #8b95a1;
+  --c-stone: #6b7580;
+  --c-hairline: #2b333c;
+  --c-hairline-soft: #232a31;
+
+  --c-sidebar: #0c1a12;
+  --c-sidebar-hover: #13271a;
+  --c-sidebar-active: #1e5631;
+  --c-sidebar-foreground: #dfeae2;
+  --c-sidebar-muted: #7f9a89;
+  --c-sidebar-border: #1a3323;
+
+  --c-success: #3cae76;
+  --c-success-soft: #10281c;
+  --c-warning: #d8a13f;
+  --c-warning-soft: #2c2312;
+  --c-info: #7ba2cc;
+  --c-info-soft: #16212e;
+  --c-danger: #e5605f;
+  --c-danger-deep: #f08a89;
+  --c-danger-soft: #2c1616;
+
+  color-scheme: dark;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    BASE STYLES
    ═══════════════════════════════════════════════════════════════════════════ */
+
+html {
+  scroll-behavior: smooth;
+}
 
 body {
   background-color: var(--color-canvas);
@@ -59,93 +258,110 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+::selection {
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary-deep);
+}
+
+/* Custom scrollbar (subtle, enterprise) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-hairline) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-hairline);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-stone);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    TYPOGRAPHY UTILITIES
-   Mapped from design tokens in docs/15-frontend-design.md
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .text-display-campaign {
   font-family: var(--font-display);
-  font-size: 96px;
-  font-weight: 500;
-  line-height: 0.9;
-  letter-spacing: 0;
-  text-transform: uppercase;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
 }
 
 .text-heading-xl {
-  font-family: var(--font-sans);
-  font-size: 32px;
-  font-weight: 500;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
   line-height: 1.2;
-  letter-spacing: 0;
+  letter-spacing: -0.01em;
 }
 
 .text-heading-lg {
   font-family: var(--font-sans);
-  font-size: 24px;
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: 0;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
 }
 
 .text-heading-md {
   font-family: var(--font-sans);
   font-size: 16px;
-  font-weight: 500;
-  line-height: 1.75;
-  letter-spacing: 0;
+  font-weight: 600;
+  line-height: 1.6;
 }
 
 .text-body-md {
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 400;
-  line-height: 1.5;
-  letter-spacing: 0;
+  line-height: 1.6;
 }
 
 .text-body-strong {
   font-family: var(--font-sans);
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.5;
-  letter-spacing: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.6;
 }
 
 .text-button-lg {
   font-family: var(--font-sans);
-  font-size: 24px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
   line-height: 1.2;
-  letter-spacing: 0;
 }
 
 .text-button-md {
   font-family: var(--font-sans);
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.5;
-  letter-spacing: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .text-button-sm {
   font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.5;
-  letter-spacing: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .text-link-md {
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
-  line-height: 1.75;
-  letter-spacing: 0;
+  line-height: 1.6;
   text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .text-caption-md {
@@ -153,7 +369,6 @@ body {
   font-size: 14px;
   font-weight: 500;
   line-height: 1.5;
-  letter-spacing: 0;
 }
 
 .text-caption-sm {
@@ -161,20 +376,18 @@ body {
   font-size: 12px;
   font-weight: 500;
   line-height: 1.5;
-  letter-spacing: 0;
 }
 
 .text-utility-xs {
   font-family: var(--font-sans);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 500;
-  line-height: 1.75;
-  letter-spacing: 0;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   FOCUS STYLES
-   Design spec: 2px solid ink border + soft-cloud halo
+   FOCUS STYLES — 2px primary ring + soft halo
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .focus-ring {
@@ -182,29 +395,38 @@ body {
 }
 
 .focus-ring:focus-visible {
-  outline: 2px solid var(--color-ink);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px var(--color-soft-cloud);
+  box-shadow: 0 0 0 4px var(--color-primary-soft);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   RESPONSIVE TYPOGRAPHY — Campaign display scaling
+   RESPONSIVE TYPOGRAPHY
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @media (max-width: 1023px) {
   .text-display-campaign {
-    font-size: 64px;
+    font-size: 44px;
+  }
+  .text-heading-xl {
+    font-size: 26px;
   }
 }
 
 @media (max-width: 599px) {
   .text-display-campaign {
-    font-size: 48px;
+    font-size: 34px;
+  }
+  .text-heading-xl {
+    font-size: 22px;
+  }
+  .text-heading-lg {
+    font-size: 19px;
   }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   ANIMATION KEYFRAMES
+   ANIMATION KEYFRAMES (nhẹ: fade / slide / scale)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @keyframes spin {
@@ -228,6 +450,17 @@ body {
   }
   to {
     opacity: 0;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -261,7 +494,7 @@ body {
 @keyframes scale-in {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.97);
   }
   to {
     opacity: 1;
@@ -276,6 +509,49 @@ body {
   }
   to {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.97);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Utility animations */
+.animate-fade-in {
+  animation: fade-in 200ms ease-out;
+}
+.animate-fade-in-up {
+  animation: fade-in-up 260ms ease-out;
+}
+.animate-scale-in {
+  animation: scale-in 180ms ease-out;
+}
+
+/* Skeleton shimmer */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-soft-cloud) 25%,
+    var(--color-hairline-soft) 37%,
+    var(--color-soft-cloud) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

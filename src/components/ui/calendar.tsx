@@ -24,9 +24,9 @@ function Calendar({
         caption_label: 'text-body-strong',
         nav: 'flex items-center gap-1',
         button_previous:
-          'absolute left-1 top-0 inline-flex h-8 w-8 items-center justify-center rounded-full bg-soft-cloud text-ink hover:bg-hairline-soft transition-colors focus-ring',
+          'absolute left-1 top-0 inline-flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-canvas text-ink hover:bg-soft-cloud transition-colors focus-ring',
         button_next:
-          'absolute right-1 top-0 inline-flex h-8 w-8 items-center justify-center rounded-full bg-soft-cloud text-ink hover:bg-hairline-soft transition-colors focus-ring',
+          'absolute right-1 top-0 inline-flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-canvas text-ink hover:bg-soft-cloud transition-colors focus-ring',
         month_grid: 'w-full border-collapse',
         weekdays: 'flex',
         weekday:
@@ -39,14 +39,14 @@ function Calendar({
           '[&:has([aria-selected].day-outside)]:bg-soft-cloud/50',
         ),
         day_button: cn(
-          'inline-flex h-9 w-9 items-center justify-center rounded-full text-caption-md transition-colors',
-          'hover:bg-soft-cloud focus-ring',
+          'inline-flex h-9 w-9 items-center justify-center rounded-md text-caption-md transition-colors',
+          'hover:bg-primary-soft hover:text-primary-deep focus-ring',
           'aria-selected:opacity-100',
         ),
         range_end: 'day-range-end',
         selected:
-          'bg-ink text-on-primary hover:bg-ink hover:text-on-primary focus:bg-ink focus:text-on-primary rounded-full',
-        today: 'bg-soft-cloud text-ink font-bold',
+          'bg-primary text-on-primary hover:bg-primary hover:text-on-primary focus:bg-primary focus:text-on-primary rounded-md',
+        today: 'bg-gold-soft text-gold font-bold',
         outside:
           'day-outside text-stone aria-selected:bg-soft-cloud/50 aria-selected:text-stone',
         disabled: 'text-stone opacity-50',

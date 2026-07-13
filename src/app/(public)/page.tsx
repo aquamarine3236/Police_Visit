@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Trash2, ShieldAlert, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, ShieldAlert, CheckCircle2, Loader2, CalendarClock } from 'lucide-react';
 
 import {
   Form,
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -234,44 +235,42 @@ export default function PublicRegistrationPage() {
   };
 
   return (
-    <div className="bg-soft-cloud flex-1 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-canvas border border-hairline p-8 sm:p-12 rounded-none shadow-sm">
-          
-          {/* Form Header */}
-          <div className="border-b border-hairline pb-6 mb-8">
-            <h2 className="text-heading-xl text-ink font-bold tracking-tight text-center">
-              ĐĂNG KÝ LỊCH HẸN THĂM GẶP
-            </h2>
-            <p className="text-body-md text-mute text-center mt-2">
-              Vui lòng điền chính xác thông tin phạm nhân và thân nhân đi kèm.
-            </p>
-          </div>
+    <div className="flex-1 bg-soft-cloud px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-4xl">
+        {/* Hero */}
+        <div className="mb-8 text-center">
+          <span className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1 text-caption-sm font-semibold text-primary-deep">
+            <CalendarClock className="h-4 w-4" />
+            Dịch vụ công trực tuyến
+          </span>
+          <h1 className="mt-4 text-heading-xl font-bold tracking-tight text-ink">
+            Đăng ký lịch hẹn thăm gặp
+          </h1>
+          <p className="mx-auto mt-2 max-w-2xl text-body-md text-mute">
+            Vui lòng điền chính xác thông tin phạm nhân và thân nhân đi kèm để hệ thống tự động sắp xếp lịch hẹn.
+          </p>
+        </div>
 
+        <div className="rounded-xl border border-hairline bg-surface p-6 shadow-sm sm:p-8 lg:p-10">
           {/* Settings Loading / Error State */}
           {settingsLoading && (
             <div className="flex items-center justify-center gap-3 py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-ink" />
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
               <span className="text-body-md text-mute">Đang tải cấu hình lịch thăm gặp...</span>
             </div>
           )}
 
           {settingsError && (
-            <div className="p-4 bg-sale-deep/5 border border-sale text-sale text-body-md flex items-center gap-3 mb-6">
-              <AlertCircle className="h-5 w-5 shrink-0" />
-              <span>{settingsError}</span>
-            </div>
+            <Alert variant="danger" className="mb-6">
+              {settingsError}
+            </Alert>
           )}
 
           {/* Server Error Message */}
           {serverError && (
-            <div className="p-4 bg-sale-deep/5 border border-sale text-sale text-body-md flex items-start gap-3 mb-6 animate-in fade-in duration-200">
-              <ShieldAlert className="h-5 w-5 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold">Đăng ký không thành công</p>
-                <p className="mt-1">{serverError}</p>
-              </div>
-            </div>
+            <Alert variant="danger" title="Đăng ký không thành công" className="mb-6 animate-fade-in">
+              {serverError}
+            </Alert>
           )}
 
           {!settingsLoading && !settingsError && (
@@ -280,13 +279,16 @@ export default function PublicRegistrationPage() {
                 
                 {/* Section 1: Inmate Information */}
                 <div className="space-y-6">
-                  <div className="border-l-4 border-ink pl-4 py-1">
-                    <h3 className="text-heading-lg text-ink font-bold uppercase">
-                      1. Thông tin phạm nhân
-                    </h3>
-                    <p className="text-caption-md text-mute mt-1">
-                      Nhập chính xác thông tin người đang bị tạm giữ, tạm giam hoặc phạm nhân.
-                    </p>
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-caption-md font-bold text-on-primary">
+                      1
+                    </span>
+                    <div>
+                      <h3 className="text-heading-lg font-bold text-ink">Thông tin phạm nhân</h3>
+                      <p className="mt-0.5 text-caption-md text-mute">
+                        Nhập chính xác thông tin người đang bị tạm giữ, tạm giam hoặc phạm nhân.
+                      </p>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -359,14 +361,17 @@ export default function PublicRegistrationPage() {
 
                 {/* Section 2: Visitor Details */}
                 <div className="space-y-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 border-ink pl-4 py-1">
-                    <div>
-                      <h3 className="text-heading-lg text-ink font-bold uppercase">
-                        2. Danh sách người đi thăm
-                      </h3>
-                      <p className="text-caption-md text-mute mt-1">
-                        Đăng ký tối đa 03 thân nhân đi thăm gặp trong một lượt.
-                      </p>
+                  <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-caption-md font-bold text-on-primary">
+                        2
+                      </span>
+                      <div>
+                        <h3 className="text-heading-lg font-bold text-ink">Danh sách người đi thăm</h3>
+                        <p className="mt-0.5 text-caption-md text-mute">
+                          Đăng ký tối đa 03 thân nhân đi thăm gặp trong một lượt.
+                        </p>
+                      </div>
                     </div>
                     <Button
                       type="button"
@@ -400,18 +405,21 @@ export default function PublicRegistrationPage() {
                     {fields.map((field, index) => (
                       <div
                         key={field.id}
-                        className="border border-hairline p-6 relative bg-canvas rounded-none space-y-6"
+                        className="relative space-y-6 rounded-lg border border-hairline bg-canvas p-5 sm:p-6"
                       >
-                        <div className="flex items-center justify-between border-b border-hairline pb-3">
-                          <span className="text-body-strong text-ink font-bold">
-                            Người đi thăm #{index + 1}
+                        <div className="flex items-center justify-between border-b border-hairline-soft pb-3">
+                          <span className="inline-flex items-center gap-2 text-body-strong font-bold text-ink">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gold-soft text-caption-sm font-bold text-gold">
+                              {index + 1}
+                            </span>
+                            Người đi thăm
                           </span>
                           {index > 0 && (
                             <button
                               type="button"
                               onClick={() => remove(index)}
                               aria-label={`Xóa người đi thăm #${index + 1}`}
-                              className="text-sale hover:text-sale-deep flex items-center gap-1 text-caption-sm font-semibold transition-colors focus-ring"
+                              className="flex items-center gap-1 rounded-md px-2 py-1 text-caption-sm font-semibold text-danger transition-colors hover:bg-danger-soft focus-ring"
                             >
                               <Trash2 className="h-4 w-4" aria-hidden="true" />
                               Xóa
@@ -492,26 +500,22 @@ export default function PublicRegistrationPage() {
 
                 {/* Section 3: Visit Date */}
                 <div className="space-y-6">
-                  <div className="border-l-4 border-ink pl-4 py-1">
-                    <h3 className="text-heading-lg text-ink font-bold uppercase">
-                      3. Chọn ngày thăm gặp
-                    </h3>
-                    <p className="text-caption-md text-mute mt-1">
-                      Lựa chọn một ngày trong tương lai được phép tổ chức thăm gặp.
-                    </p>
-                  </div>
-
-                  {/* Dynamic notice from public settings */}
-                  <div className="p-4 bg-soft-cloud border-l-4 border-ink text-body-md text-charcoal flex items-start gap-3">
-                    <ShieldAlert className="h-5 w-5 text-ink shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-caption-md font-bold text-on-primary">
+                      3
+                    </span>
                     <div>
-                      <p className="font-semibold text-ink">Thông báo quy định ngày thăm gặp:</p>
-                      <p className="mt-1">
-                        {publicSettings?.notice_message ||
-                          'Đang tải thông tin ngày thăm gặp...'}
+                      <h3 className="text-heading-lg font-bold text-ink">Chọn ngày thăm gặp</h3>
+                      <p className="mt-0.5 text-caption-md text-mute">
+                        Lựa chọn một ngày trong tương lai được phép tổ chức thăm gặp.
                       </p>
                     </div>
                   </div>
+
+                  {/* Dynamic notice from public settings */}
+                  <Alert variant="info" title="Thông báo quy định ngày thăm gặp">
+                    {publicSettings?.notice_message || 'Đang tải thông tin ngày thăm gặp...'}
+                  </Alert>
 
                   <div className="flex flex-col items-center gap-6">
                     <div className="w-full max-w-sm">
@@ -530,7 +534,7 @@ export default function PublicRegistrationPage() {
                                     field.onChange(date ? formatDateString(date) : '');
                                   }}
                                   disabled={isDateDisabled}
-                                  className="border border-hairline bg-canvas p-4 rounded-none mx-auto w-full max-w-[320px]"
+                                  className="mx-auto w-full max-w-[320px] rounded-lg border border-hairline bg-canvas p-4"
                                 />
                                 {field.value && (
                                   <p className="text-caption-md text-success font-semibold text-center mt-2 flex items-center justify-center gap-1">
@@ -549,12 +553,8 @@ export default function PublicRegistrationPage() {
                 </div>
 
                 {/* Submit Buttons */}
-                <div className="border-t border-hairline pt-8 flex justify-end gap-4">
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="rounded-full px-8 py-3 bg-ink text-on-primary hover:bg-ink/90 font-bold"
-                  >
+                <div className="flex justify-end gap-4 border-t border-hairline pt-8">
+                  <Button type="submit" size="lg" disabled={isSubmitting}>
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -574,13 +574,13 @@ export default function PublicRegistrationPage() {
 
       {/* Success Modal with real assigned slot data */}
       <Dialog open={isSuccessOpen} onOpenChange={(open) => { if (!open) handleSuccessClose(); }}>
-        <DialogContent className="max-w-md rounded-none border border-hairline p-6">
+        <DialogContent className="max-w-md">
           <DialogHeader className="text-center">
-            <div className="mx-auto h-12 w-12 rounded-full bg-success flex items-center justify-center text-on-primary mb-4">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-success-soft text-success">
               <CheckCircle2 className="h-8 w-8" />
             </div>
-            <DialogTitle className="text-heading-xl font-bold uppercase tracking-tight text-ink text-center">
-              Đăng Ký Thành Công!
+            <DialogTitle className="text-center text-heading-lg font-bold tracking-tight text-ink">
+              Đăng ký thành công!
             </DialogTitle>
             <DialogDescription className="text-center mt-2 text-mute">
               Hệ thống đã ghi nhận thông tin đăng ký của bạn. Lịch hẹn thăm gặp đã được tự động phê duyệt.
@@ -629,10 +629,7 @@ export default function PublicRegistrationPage() {
           )}
 
           <div className="mt-8 flex justify-center">
-            <Button
-              onClick={handleSuccessClose}
-              className="rounded-full px-8 py-2 bg-ink text-on-primary hover:bg-ink/90 font-semibold"
-            >
+            <Button onClick={handleSuccessClose} className="w-full sm:w-auto">
               Hoàn tất đăng ký
             </Button>
           </div>

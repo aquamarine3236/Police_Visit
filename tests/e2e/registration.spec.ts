@@ -30,13 +30,19 @@ test.describe('Public registration flow', () => {
     await page.goto('/');
 
     await expect(
-      page.getByRole('heading', { name: 'ĐĂNG KÝ LỊCH HẸN THĂM GẶP' }),
+      page.getByRole('heading', { name: 'Đăng ký lịch hẹn thăm gặp' }),
     ).toBeVisible();
 
     // Section headings prove the form (not the loading/error state) is shown.
-    await expect(page.getByText('1. Thông tin phạm nhân')).toBeVisible();
-    await expect(page.getByText('2. Danh sách người đi thăm')).toBeVisible();
-    await expect(page.getByText('3. Chọn ngày thăm gặp')).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Thông tin phạm nhân' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Danh sách người đi thăm' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Chọn ngày thăm gặp' }),
+    ).toBeVisible();
 
     // The dynamic notice comes from the mocked public settings payload.
     await expect(
@@ -50,7 +56,9 @@ test.describe('Public registration flow', () => {
     page,
   }) => {
     await page.goto('/');
-    await expect(page.getByText('1. Thông tin phạm nhân')).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Thông tin phạm nhân' }),
+    ).toBeVisible();
 
     await clickButtonByText(page, 'Đăng ký lịch hẹn');
 
@@ -63,9 +71,12 @@ test.describe('Public registration flow', () => {
 
   test('validates the visitor citizen id length', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('1. Thông tin phạm nhân')).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Thông tin phạm nhân' }),
+    ).toBeVisible();
 
     // Fill an invalid (too short) CCCD and trigger validation.
+    // (section heading omitted; placeholder presence proves the form rendered)
     await page.getByPlaceholder('Gồm 12 chữ số').fill('12345');
     await clickButtonByText(page, 'Đăng ký lịch hẹn');
 
@@ -102,7 +113,9 @@ test.describe('Public registration flow', () => {
     });
 
     await page.goto('/');
-    await expect(page.getByText('1. Thông tin phạm nhân')).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Thông tin phạm nhân' }),
+    ).toBeVisible();
 
     // ── Inmate section ── (classification keeps its default "Người bị tạm giữ")
     await page.getByPlaceholder('Ví dụ: PMN12345').fill('PN-001');
@@ -125,7 +138,7 @@ test.describe('Public registration flow', () => {
 
     // Success dialog with the assigned slot.
     await expect(
-      page.getByRole('heading', { name: 'Đăng Ký Thành Công!' }),
+      page.getByRole('heading', { name: 'Đăng ký thành công!' }),
     ).toBeVisible();
     await expect(page.getByText('07:30 - 08:00')).toBeVisible();
     await expect(page.getByText('Khung giờ hẹn:')).toBeVisible();
@@ -142,7 +155,9 @@ test.describe('Public registration flow', () => {
     });
 
     await page.goto('/');
-    await expect(page.getByText('1. Thông tin phạm nhân')).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Thông tin phạm nhân' }),
+    ).toBeVisible();
 
     await page.getByPlaceholder('Ví dụ: PMN12345').fill('PN-999');
     await page.getByPlaceholder('NHẬP CHỮ IN HOA CÓ DẤU').fill('Người Không Tồn Tại');

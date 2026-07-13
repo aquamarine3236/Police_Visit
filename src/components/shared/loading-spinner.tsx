@@ -10,7 +10,7 @@ export interface LoadingSpinnerProps {
 export function LoadingSpinner({ size = 24, className }: LoadingSpinnerProps) {
   return (
     <svg
-      className={cn('animate-spin text-ink', className)}
+      className={cn('animate-spin text-primary', className)}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"

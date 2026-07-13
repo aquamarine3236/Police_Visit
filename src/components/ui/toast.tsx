@@ -23,8 +23,8 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 const toastVariantStyles = {
-  default: 'border-hairline-soft bg-canvas text-ink',
-  destructive: 'border-sale/30 bg-sale text-on-primary',
+  default: 'border-hairline bg-surface text-ink',
+  destructive: 'border-danger/30 bg-danger text-on-primary',
   success: 'border-success/30 bg-success text-on-primary',
 } as const;
 

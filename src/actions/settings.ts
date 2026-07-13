@@ -2,7 +2,7 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache';
 
-import { createServerClient } from '@/lib/supabase/server';
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server';
 import * as settingsService from '@/lib/services/settings';
 import {
   SCHEDULING_SETTINGS_CACHE_TAG,
@@ -19,7 +19,8 @@ export async function updateSchedulingSettings(
     return { success: false, message: 'Supabase chưa được cấu hình.' };
   }
 
-  const result = await settingsService.updateSettings(supabase, formData);
+  const db = createServiceRoleClient() ?? supabase;
+  const result = await settingsService.updateSettings(supabase, formData, db);
 
   if (result.success) {
     // Invalidate cached scheduling settings (Phase 36) so the public API and

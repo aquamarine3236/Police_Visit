@@ -5,8 +5,6 @@ import {
   Search, 
   Download, 
   Calendar, 
-  ChevronLeft, 
-  ChevronRight, 
   Eye, 
   FileText, 
   Check, 
@@ -18,6 +16,9 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge, type BadgeVariant } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Pagination } from '@/components/ui/pagination';
 import {
   Table,
   TableBody,
@@ -200,17 +201,17 @@ export default function AdminDashboardPage() {
     setIsDetailsOpen(true);
   };
 
-  // Get status badge styles
-  const getStatusBadge = (statusVal: string) => {
+  // Map status → Badge variant
+  const getStatusVariant = (statusVal: string): BadgeVariant => {
     switch (statusVal) {
       case 'confirmed':
-        return 'bg-info/10 text-info border-info/20';
+        return 'info';
       case 'completed':
-        return 'bg-success/10 text-success border-success/20';
+        return 'success';
       case 'no_show':
-        return 'bg-sale/10 text-sale border-sale/20';
+        return 'danger';
       default:
-        return 'bg-soft-cloud text-mute border-hairline';
+        return 'neutral';
     }
   };
 
@@ -244,15 +245,11 @@ export default function AdminDashboardPage() {
         <div>
           <h1 className="text-heading-xl font-bold tracking-tight text-ink">Danh sách đăng ký thăm gặp</h1>
           <p className="text-caption-md text-mute">
-            Theo dõi, quản lý và cập nhật trạng thái các buổi gặp mặt của thân nhân với phạm nhân ({totalRegs} lịch hẹn).
+            Theo dõi, quản lý và cập nhật trạng thái các buổi gặp mặt của thân nhân với người bị giam giữ ({totalRegs} lịch hẹn).
           </p>
         </div>
         <div>
-          <Button 
-            variant="outline"
-            asChild
-            className="rounded-full"
-          >
+          <Button variant="outline" asChild>
             <a href={exportUrl} download>
               <Download className="mr-2 h-4 w-4" />
               Xuất danh sách Excel
@@ -279,9 +276,9 @@ export default function AdminDashboardPage() {
                   setStatus(tab.value);
                   setPage(1);
                 }}
-                className={`px-4 py-2.5 text-caption-md font-semibold border-b-2 transition-colors -mb-px ${
+                className={`-mb-px border-b-2 px-4 py-2.5 text-caption-md font-semibold transition-colors ${
                   isActive
-                    ? 'border-ink text-ink font-bold'
+                    ? 'border-primary text-primary'
                     : 'border-transparent text-mute hover:text-charcoal'
                 }`}
               >
@@ -297,13 +294,13 @@ export default function AdminDashboardPage() {
           <div className="relative md:col-span-6">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mute" />
             <Input
-              placeholder="Tìm theo số hiệu, tên phạm nhân hoặc người thân..."
+              placeholder="Tìm theo số giam, tên người bị giam giữ hoặc người thân..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="pl-9 h-11 bg-canvas border border-hairline focus-ring rounded-md"
+              className="h-11 pl-9"
             />
           </div>
 
@@ -318,7 +315,7 @@ export default function AdminDashboardPage() {
                   setDateFrom(e.target.value);
                   setPage(1);
                 }}
-                className="pl-9 h-11 bg-canvas border border-hairline focus-ring rounded-md text-caption-md"
+                className="h-11 pl-9 text-caption-md"
                 placeholder="Từ ngày"
               />
             </div>
@@ -331,7 +328,7 @@ export default function AdminDashboardPage() {
                   setDateTo(e.target.value);
                   setPage(1);
                 }}
-                className="pl-9 h-11 bg-canvas border border-hairline focus-ring rounded-md text-caption-md"
+                className="h-11 pl-9 text-caption-md"
                 placeholder="Đến ngày"
               />
             </div>
@@ -340,13 +337,13 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Registrations List Table */}
-      <div className="bg-canvas border border-hairline overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-hairline bg-surface shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[120px] font-semibold">Mã lịch hẹn</TableHead>
               <TableHead className="font-semibold">Thân nhân liên hệ</TableHead>
-              <TableHead className="font-semibold">Phạm nhân thăm gặp</TableHead>
+              <TableHead className="font-semibold">Người bị giam giữ</TableHead>
               <TableHead className="font-semibold">Ngày thăm gặp</TableHead>
               <TableHead className="font-semibold">Ca giờ hẹn</TableHead>
               <TableHead className="font-semibold">Trạng thái</TableHead>
@@ -357,14 +354,18 @@ export default function AdminDashboardPage() {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-40 text-center">
-                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-ink border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
                   <p className="mt-2 text-caption-md text-mute">Đang tải danh sách đăng ký...</p>
                 </TableCell>
               </TableRow>
             ) : registrations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-40 text-center text-mute text-body-md">
-                  Không tìm thấy lịch hẹn nào phù hợp.
+                <TableCell colSpan={7} className="p-0">
+                  <EmptyState
+                    icon={Search}
+                    title="Không tìm thấy lịch hẹn"
+                    description="Không có lịch hẹn nào phù hợp với bộ lọc hiện tại. Thử điều chỉnh từ khóa tìm kiếm hoặc khoảng ngày."
+                  />
                 </TableCell>
               </TableRow>
             ) : (
@@ -379,7 +380,7 @@ export default function AdminDashboardPage() {
                 return (
                   <TableRow 
                     key={reg.id} 
-                    className={`hover:bg-soft-cloud/30 cursor-pointer transition-colors duration-200 ${isHighlighted ? 'bg-success/10 ring-2 ring-success/30' : ''}`}
+                    className={`cursor-pointer transition-colors duration-200 hover:bg-soft-cloud/60 ${isHighlighted ? 'bg-success-soft ring-2 ring-success/30' : ''}`}
                     onClick={() => openDetailsModal(reg)}
                   >
                     <TableCell className="font-mono text-caption-sm text-mute">
@@ -395,16 +396,16 @@ export default function AdminDashboardPage() {
                       {reg.time_slot_start.substring(0, 5)} - {reg.time_slot_end.substring(0, 5)}
                     </TableCell>
                     <TableCell>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-caption-sm font-semibold border ${getStatusBadge(reg.status)}`}>
+                      <Badge variant={getStatusVariant(reg.status)} dot>
                         {getStatusLabel(reg.status)}
-                      </span>
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => openDetailsModal(reg)}
-                        className="h-8 w-8 rounded-full"
+                        className="h-8 w-8"
                         title="Xem chi tiết"
                         aria-label="Xem chi tiết đăng ký"
                       >
@@ -420,49 +421,18 @@ export default function AdminDashboardPage() {
 
         {/* Pagination */}
         {!loading && totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-hairline px-6 py-4 bg-canvas">
+          <div className="flex flex-col items-center justify-between gap-3 border-t border-hairline px-4 py-4 sm:flex-row sm:px-6">
             <span className="text-caption-md text-mute">
               Hiển thị từ {(page - 1) * limit + 1} đến {Math.min(page * limit, totalRegs)} trong số {totalRegs} lịch hẹn
             </span>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                disabled={page === 1}
-                aria-label="Trang trước"
-                className="h-9 w-9 rounded-full"
-              >
-                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-              </Button>
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <Button
-                  key={i}
-                  variant={page === i + 1 ? 'default' : 'outline'}
-                  onClick={() => setPage(i + 1)}
-                  className={`h-9 w-9 rounded-full p-0 text-caption-md ${page === i + 1 ? 'font-semibold' : ''}`}
-                >
-                  {i + 1}
-                </Button>
-              ))}
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-                disabled={page === totalPages}
-                aria-label="Trang sau"
-                className="h-9 w-9 rounded-full"
-              >
-                <ChevronRight className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </div>
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
           </div>
         )}
       </div>
 
       {/* Registration Details Modal */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-3xl bg-canvas p-6 border border-hairline-soft rounded-none">
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="text-heading-lg font-bold">Chi tiết phiếu đăng ký thăm gặp</DialogTitle>
             <DialogDescription className="text-body-md text-mute font-mono">
@@ -477,11 +447,11 @@ export default function AdminDashboardPage() {
                 <div className="space-y-2.5">
                   <h3 className="text-body-strong font-bold text-ink flex items-center gap-2">
                     <User className="h-4 w-4 text-mute" />
-                    Hồ sơ phạm nhân
+                    Hồ sơ người bị giam giữ
                   </h3>
                   <div className="space-y-1 text-caption-md bg-soft-cloud/40 border border-hairline-soft p-3">
                     <p>Họ tên: <strong className="text-ink">{selectedReg.inmate?.full_name}</strong></p>
-                    <p>Số hiệu: <span className="font-mono text-ink font-semibold">{selectedReg.inmate?.prison_number}</span></p>
+                    <p>Số giam: <span className="font-mono text-ink font-semibold">{selectedReg.inmate?.prison_number}</span></p>
                   </div>
                 </div>
 
@@ -494,10 +464,10 @@ export default function AdminDashboardPage() {
                   <div className="space-y-1 text-caption-md bg-soft-cloud/40 border border-hairline-soft p-3">
                     <p>Ngày thăm: <strong className="text-ink">{selectedReg.visit_date}</strong></p>
                     <p>Giờ hẹn: <span className="font-semibold text-ink font-mono">{selectedReg.time_slot_start.substring(0, 5)} - {selectedReg.time_slot_end.substring(0, 5)}</span></p>
-                    <p className="flex items-center gap-1.5 mt-0.5">Trạng thái: 
-                      <span className={`inline-flex items-center px-2 py-0.2 rounded-full text-utility-xs font-semibold border ${getStatusBadge(selectedReg.status)}`}>
+                    <p className="mt-0.5 flex items-center gap-1.5">Trạng thái: 
+                      <Badge variant={getStatusVariant(selectedReg.status)} dot>
                         {getStatusLabel(selectedReg.status)}
-                      </span>
+                      </Badge>
                     </p>
                   </div>
                 </div>
@@ -514,7 +484,7 @@ export default function AdminDashboardPage() {
                         <TableHead className="h-9 py-1 font-semibold">Họ và tên</TableHead>
                         <TableHead className="h-9 py-1 font-semibold">Ngày sinh</TableHead>
                         <TableHead className="h-9 py-1 font-semibold">Số CCCD</TableHead>
-                        <TableHead className="h-9 py-1 font-semibold">Quan hệ với phạm nhân</TableHead>
+                        <TableHead className="h-9 py-1 font-semibold">Quan hệ với người bị giam giữ</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -548,7 +518,6 @@ export default function AdminDashboardPage() {
                     variant="outline" 
                     size="sm" 
                     asChild
-                    className="rounded-full h-9 border-hairline-soft hover:bg-soft-cloud"
                   >
                     <a href={`/api/v1/admin/registrations/${selectedReg.id}/pdf`} target="_blank" rel="noreferrer">
                       <FileText className="mr-1.5 h-4 w-4" />
@@ -559,7 +528,6 @@ export default function AdminDashboardPage() {
                     variant="outline" 
                     size="sm"
                     asChild
-                    className="rounded-full h-9 border-hairline-soft hover:bg-soft-cloud"
                   >
                     <a href={`/api/v1/admin/registrations/${selectedReg.id}/docx`} download>
                       <FileText className="mr-1.5 h-4 w-4" />
@@ -579,11 +547,10 @@ export default function AdminDashboardPage() {
                   <>
                     <Button
                       type="button"
-                      variant="default"
                       size="sm"
                       onClick={() => handleStatusChange('completed')}
                       disabled={actionLoading}
-                      className="rounded-full h-9 bg-success hover:bg-success/90 border-transparent text-white"
+                      className="bg-success text-on-primary hover:bg-success/90"
                     >
                       <Check className="mr-1 h-4 w-4" />
                       Đã hoàn thành
@@ -594,7 +561,7 @@ export default function AdminDashboardPage() {
                       size="sm"
                       onClick={() => handleStatusChange('no_show')}
                       disabled={actionLoading}
-                      className="rounded-full h-9 text-sale hover:bg-sale/5 border-sale/30 hover:border-sale/50"
+                      className="border-danger/30 text-danger hover:border-danger/50 hover:bg-danger-soft"
                     >
                       <UserX className="mr-1 h-4 w-4" />
                       Vắng mặt (No-Show)
@@ -614,7 +581,6 @@ export default function AdminDashboardPage() {
                 variant="secondary"
                 size="sm"
                 onClick={() => setIsDetailsOpen(false)}
-                className="rounded-full h-9"
               >
                 Đóng
               </Button>

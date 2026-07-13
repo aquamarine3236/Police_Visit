@@ -36,8 +36,8 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 bg-canvas p-6',
-        'border border-hairline-soft',
+        'fixed left-1/2 top-1/2 z-50 grid max-h-[90vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-xl bg-surface p-6 shadow-lg',
+        'border border-hairline',
         'data-[state=open]:animate-[scale-in_200ms_ease-out]',
         'data-[state=closed]:animate-[scale-out_200ms_ease-in]',
         className,
@@ -45,7 +45,7 @@ const DialogContent = React.forwardRef<
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-1 text-mute transition-colors hover:bg-soft-cloud hover:text-ink focus-ring disabled:pointer-events-none">
+      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-md p-1.5 text-mute transition-colors hover:bg-soft-cloud hover:text-ink focus-ring disabled:pointer-events-none">
         <X className="h-4 w-4" />
         <span className="sr-only">Đóng</span>
       </DialogPrimitive.Close>
@@ -85,7 +85,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn('text-heading-lg text-ink', className)}
+    className={cn('text-heading-lg font-semibold text-ink', className)}
     {...props}
   />
 ));

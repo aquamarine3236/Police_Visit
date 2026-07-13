@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { createServerClient } from '@/lib/supabase/server';
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server';
 import * as schedulingService from '@/lib/services/scheduling';
 import type { ServiceResult, VisitRegistration } from '@/types';
 
@@ -15,10 +15,12 @@ export async function updateRegistrationStatus(
     return { success: false, message: 'Supabase chưa được cấu hình.' };
   }
 
+  const db = createServiceRoleClient() ?? supabase;
   const result = await schedulingService.updateRegistrationStatus(
     supabase,
     registrationId,
     newStatus,
+    db,
   );
 
   if (result.success) {

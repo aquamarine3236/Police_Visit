@@ -149,6 +149,8 @@ export async function getCachedSettings(
 export async function updateSettings(
   supabase: SupabaseClient,
   formData: SchedulingSettingsFormData,
+  /** Privileged client for the write (bypasses RLS). Defaults to `supabase`. */
+  db: SupabaseClient = supabase,
 ): Promise<ServiceResult<SchedulingSettings>> {
   const parsed = schedulingSettingsSchema.safeParse(formData);
   if (!parsed.success) {
@@ -172,8 +174,8 @@ export async function updateSettings(
 
   const payload = { ...parsed.data, updated_by: admin.userId };
   const result = existing
-    ? await supabase.from('scheduling_settings').update(payload).eq('prison_id', admin.prisonId).select().single()
-    : await supabase.from('scheduling_settings').insert({ ...payload, prison_id: admin.prisonId }).select().single();
+    ? await db.from('scheduling_settings').update(payload).eq('prison_id', admin.prisonId).select().single()
+    : await db.from('scheduling_settings').insert({ ...payload, prison_id: admin.prisonId }).select().single();
 
   if (result.error) return { success: false, message: result.error.message };
   return { success: true, data: result.data as SchedulingSettings };

@@ -193,7 +193,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-4">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-ink border-r-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent" />
         <p className="text-caption-md text-mute">Đang tải cấu hình lịch thăm gặp...</p>
       </div>
     );
@@ -211,7 +211,7 @@ export default function SettingsPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Settings Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 lg:col-span-7 bg-canvas border border-hairline p-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 rounded-lg border border-hairline bg-surface p-6 shadow-sm lg:col-span-7">
           {/* Days selector */}
           <div className="space-y-3">
             <div>
@@ -227,10 +227,10 @@ export default function SettingsPage() {
                     key={day}
                     type="button"
                     onClick={() => handleDayToggle(day)}
-                    className={`px-4 py-2 text-caption-md font-medium border rounded-full transition-colors focus-ring ${
+                    className={`rounded-md border px-4 py-2 text-caption-md font-medium transition-colors focus-ring ${
                       isSelected
-                        ? 'bg-ink text-on-primary border-ink'
-                        : 'bg-canvas text-charcoal border-hairline hover:bg-soft-cloud'
+                        ? 'border-primary bg-primary text-on-primary'
+                        : 'border-hairline bg-canvas text-charcoal hover:border-stone hover:bg-soft-cloud'
                     }`}
                   >
                     {label}
@@ -347,12 +347,8 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="flex justify-end pt-4 border-t border-hairline-soft">
-            <Button
-              type="submit"
-              disabled={saving}
-              className="rounded-full px-6"
-            >
+          <div className="flex justify-end border-t border-hairline-soft pt-4">
+            <Button type="submit" disabled={saving}>
               {saving ? (
                 <>
                   <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
@@ -369,10 +365,10 @@ export default function SettingsPage() {
         </form>
 
         {/* Live Preview Panel */}
-        <div className="lg:col-span-5 space-y-6">
-          <div className="bg-soft-cloud border border-hairline p-6 space-y-4">
-            <h3 className="text-body-strong font-bold text-ink flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-mute" />
+        <div className="space-y-6 lg:col-span-5">
+          <div className="space-y-4 rounded-lg border border-hairline bg-surface p-6 shadow-sm lg:sticky lg:top-24">
+            <h3 className="flex items-center gap-2 text-body-strong font-bold text-ink">
+              <Calendar className="h-5 w-5 text-primary" />
               Xem trước ca thăm gặp
             </h3>
             <p className="text-caption-md text-charcoal">

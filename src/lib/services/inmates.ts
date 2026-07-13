@@ -117,6 +117,8 @@ export async function listInmates(
 export async function createInmate(
   supabase: SupabaseClient,
   formData: InmateFormData,
+  /** Privileged client for the write (bypasses RLS). Defaults to `supabase`. */
+  db: SupabaseClient = supabase,
 ): Promise<ServiceResult<Inmate>> {
   // Validate input
   const parsed = inmateFormSchema.safeParse(formData);
@@ -152,7 +154,7 @@ export async function createInmate(
     };
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('inmates')
     .insert({
       ...parsed.data,
@@ -189,6 +191,8 @@ export async function updateInmate(
   supabase: SupabaseClient,
   id: string,
   formData: InmateFormData,
+  /** Privileged client for the write (bypasses RLS). Defaults to `supabase`. */
+  db: SupabaseClient = supabase,
 ): Promise<ServiceResult<Inmate>> {
   // Validate input
   const parsed = inmateFormSchema.safeParse(formData);
@@ -247,7 +251,7 @@ export async function updateInmate(
     updated_by: admin.userId,
   };
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('inmates')
     .update(updatePayload)
     .eq('id', id)
@@ -273,6 +277,8 @@ export async function updateInmate(
 export async function deleteInmate(
   supabase: SupabaseClient,
   id: string,
+  /** Privileged client for the write (bypasses RLS). Defaults to `supabase`. */
+  db: SupabaseClient = supabase,
 ): Promise<ServiceResult> {
   const admin = await getAdminPrisonId(supabase);
   if (!admin) {
@@ -313,7 +319,7 @@ export async function deleteInmate(
   }
 
   // Perform soft-delete
-  const { error } = await supabase
+  const { error } = await db
     .from('inmates')
     .update({
       deleted_at: new Date().toISOString(),
