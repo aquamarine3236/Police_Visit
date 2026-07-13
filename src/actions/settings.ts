@@ -35,3 +35,28 @@ export async function getSchedulingSettings(
 
   return settingsService.getSettings(supabase, prisonId);
 }
+
+export async function getCurrentAdminSettings(): Promise<ServiceResult<SchedulingSettings>> {
+  const supabase = await createServerClient();
+  if (!supabase) {
+    return { success: false, message: 'Supabase chưa được cấu hình.' };
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, message: 'Vui lòng đăng nhập.' };
+  }
+
+  const { data: profile } = await supabase
+    .from('admin_profiles')
+    .select('prison_id')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!profile) {
+    return { success: false, message: 'Không tìm thấy hồ sơ quản trị.' };
+  }
+
+  return settingsService.getSettings(supabase, profile.prison_id);
+}
+
