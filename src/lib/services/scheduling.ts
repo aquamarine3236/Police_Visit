@@ -10,12 +10,10 @@ import {
 
 interface InmateRecord {
   id: string;
-  prison_id: string;
   full_name: string;
   date_of_birth: string;
   classification: string;
   visit_status: string;
-  deleted_at: string | null;
 }
 
 // ─── submitRegistration ─────────────────────────────────────────────────────
@@ -39,16 +37,21 @@ export async function submitRegistration(
 
   const { visitors, inmate: inmateInput, visit_date } = parsed.data;
 
-  // Step 2: Verify inmate exists (by prison_number in the given prison)
-  const { data: inmate, error: inmateError } = await supabase
-    .from('inmates')
-    .select('id, prison_id, full_name, date_of_birth, classification, visit_status, deleted_at')
-    .eq('prison_id', prisonId)
-    .eq('prison_number', inmateInput.prison_number)
-    .is('deleted_at', null)
-    .maybeSingle();
+  // Step 2: Verify inmate exists (by prison_number in the given prison).
+  // Uses a SECURITY DEFINER RPC so that RESTRICTED inmates are still visible to
+  // the anon role (the public RLS policy hides them), allowing us to return the
+  // correct "restricted" vs "not found" message.
+  const { data: inmateRows, error: inmateError } = await supabase.rpc(
+    'fn_lookup_inmate_for_registration',
+    {
+      p_prison_id: prisonId,
+      p_prison_number: inmateInput.prison_number,
+    },
+  );
 
   if (inmateError) return { success: false, message: inmateError.message };
+
+  const inmate = Array.isArray(inmateRows) ? inmateRows[0] : inmateRows;
 
   if (!inmate) {
     return {
@@ -93,103 +96,59 @@ export async function submitRegistration(
     }
   }
 
-  // Step 5: Check for duplicate registration (same first visitor CCCD + inmate + date)
-  const firstVisitorCccd = visitors[0].citizen_id;
-
-  // Use a more reliable duplicate check via a separate query
-  const { data: existingVisitorRegs } = await supabase
-    .from('registration_visitors')
-    .select('registration_id')
-    .eq('citizen_id', firstVisitorCccd)
-    .eq('display_order', 1);
-
-  if (existingVisitorRegs && existingVisitorRegs.length > 0) {
-    const regIds = existingVisitorRegs.map((r) => r.registration_id);
-    const { count: duplicateCount } = await supabase
-      .from('visit_registrations')
-      .select('id', { count: 'exact', head: true })
-      .in('id', regIds)
-      .eq('inmate_id', inmateRecord.id)
-      .eq('visit_date', visit_date)
-      .in('status', ['confirmed', 'completed', 'no_show']);
-
-    if (duplicateCount && duplicateCount > 0) {
-      return {
-        success: false,
-        message: 'Bạn đã đăng ký thăm gặp người này vào ngày này rồi.',
-      };
-    }
-  }
-
-  // Step 6: Call RPC fn_assign_time_slot for slot allocation
-  const { data: slotData, error: slotError } = await supabase.rpc(
-    'fn_assign_time_slot',
-    {
-      p_prison_id: prisonId,
-      p_visit_date: visit_date,
-      p_inmate_id: inmateRecord.id,
-    },
-  );
-
-  if (slotError) {
-    // Check for monthly limit exceeded error from the DB function
-    if (slotError.message?.includes('monthly') || slotError.message?.includes('limit')) {
-      return { success: false, message: 'Đã quá số lần thăm gặp trong tháng này.' };
-    }
-    return { success: false, message: slotError.message };
-  }
-
-  if (!slotData || (Array.isArray(slotData) && slotData.length === 0)) {
-    return {
-      success: false,
-      message: 'Đã hết lịch thăm gặp trong ngày hôm đó, vui lòng chọn ngày khác.',
-    };
-  }
-
-  const assignedSlot = Array.isArray(slotData) ? slotData[0] : slotData;
-
-  // Step 7: Insert the visit registration
-  const { data: registration, error: regError } = await supabase
-    .from('visit_registrations')
-    .insert({
-      prison_id: prisonId,
-      inmate_id: inmateRecord.id,
-      visit_date,
-      time_slot_start: assignedSlot.slot_start,
-      time_slot_end: assignedSlot.slot_end,
-      status: 'confirmed',
-    })
-    .select()
-    .single();
-
-  if (regError) return { success: false, message: regError.message };
-
-  // Step 8: Insert visitors
-  const visitorInserts = visitors.map((v, idx) => ({
-    registration_id: registration.id,
+  // Steps 5–8: Duplicate check, slot assignment, and the registration + visitor
+  // inserts are executed atomically inside a single SECURITY DEFINER RPC. This
+  // is required because the public flow runs as the `anon` role: RLS hides
+  // existing registrations from `anon`, so any client-side capacity/limit check
+  // or `INSERT ... RETURNING` would be unreliable. The RPC runs as the function
+  // owner, enforces every business rule under an advisory lock, and returns the
+  // created rows (or a structured error code).
+  const visitorPayload = visitors.map((v) => ({
     full_name: v.full_name.trim(),
     date_of_birth: v.date_of_birth,
     citizen_id: v.citizen_id,
     relationship: v.relationship.trim(),
-    display_order: idx + 1,
   }));
 
-  const { data: insertedVisitors, error: visitorError } = await supabase
-    .from('registration_visitors')
-    .insert(visitorInserts)
-    .select();
+  const { data: rpcResult, error: rpcError } = await supabase.rpc(
+    'fn_submit_registration',
+    {
+      p_prison_id: prisonId,
+      p_inmate_id: inmateRecord.id,
+      p_visit_date: visit_date,
+      p_visitors: visitorPayload,
+    },
+  );
 
-  if (visitorError) {
-    // Rollback: delete the registration if visitor insert fails
-    await supabase.from('visit_registrations').delete().eq('id', registration.id);
-    return { success: false, message: visitorError.message };
+  if (rpcError) return { success: false, message: rpcError.message };
+
+  const result = rpcResult as
+    | { error: 'DUPLICATE' | 'MONTHLY_LIMIT' | 'NO_SLOT' }
+    | { registration: VisitRegistration; visitors: RegistrationVisitor[] };
+
+  if ('error' in result) {
+    switch (result.error) {
+      case 'DUPLICATE':
+        return {
+          success: false,
+          message: 'Bạn đã đăng ký thăm gặp người này vào ngày này rồi.',
+        };
+      case 'MONTHLY_LIMIT':
+        return { success: false, message: 'Đã quá số lần thăm gặp trong tháng này.' };
+      case 'NO_SLOT':
+      default:
+        return {
+          success: false,
+          message: 'Đã hết lịch thăm gặp trong ngày hôm đó, vui lòng chọn ngày khác.',
+        };
+    }
   }
 
   return {
     success: true,
     data: {
-      registration: registration as VisitRegistration,
-      visitors: (insertedVisitors ?? []) as RegistrationVisitor[],
+      registration: result.registration,
+      visitors: result.visitors ?? [],
     },
   };
 }
@@ -227,11 +186,15 @@ export async function updateRegistrationStatus(
     return { success: false, message: 'Chỉ có thể cập nhật trạng thái đăng ký đã xác nhận.' };
   }
 
-  // Only allow status update after the visit date
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const visitDate = new Date(reg.visit_date + 'T00:00:00+07:00');
-  if (visitDate >= today) {
+  // Only allow status update strictly after the visit date. Compare on
+  // date-only strings in the Asia/Ho_Chi_Minh (UTC+7) zone so the result is
+  // independent of the server's timezone (e.g. UTC on Vercel), avoiding
+  // off-by-one day boundary errors.
+  const todayVN = new Date(Date.now() + 7 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0];
+  const visitDateStr = String(reg.visit_date).split('T')[0];
+  if (visitDateStr >= todayVN) {
     return { success: false, message: 'Chỉ có thể cập nhật trạng thái sau ngày thăm gặp.' };
   }
 

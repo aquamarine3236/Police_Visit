@@ -146,9 +146,16 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-export interface ServiceResult<T = void> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  errors?: Record<string, string[]>;
-}
+// Discriminated union: when `success` is `true` the `data` payload is present
+// (and typed as `T`), so callers can access `res.data` after a `res.success`
+// guard without extra non-null assertions. On failure `message`/`errors`
+// describe the problem.
+//
+// The success branch uses a mapped-conditional so that `data` is optional when
+// `T` is `void` (data-less operations may return just `{ success: true }`) but
+// required when `T` carries a real payload.
+export type ServiceResult<T = void> =
+  | ({ success: true; message?: string } & (void extends T
+      ? { data?: undefined }
+      : { data: T }))
+  | { success: false; data?: undefined; message?: string; errors?: Record<string, string[]> };

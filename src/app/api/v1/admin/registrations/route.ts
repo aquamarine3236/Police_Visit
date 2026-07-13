@@ -22,6 +22,37 @@ export async function GET(request: NextRequest) {
   const safeSortBy = allowedSortColumns.includes(sortBy) ? sortBy : 'created_at';
   const ascending = sortDir === 'asc';
 
+  // When searching, also match against visitor name / CCCD. PostgREST cannot OR
+  // across two different embedded tables in one filter, so we pre-resolve the
+  // registration IDs whose visitors match the term and fold them into the main
+  // query as an additional OR branch.
+  let matchingRegIds: string[] | null = null;
+  if (search) {
+    const like = `%${search}%`;
+
+    // Registrations whose visitor name / CCCD matches the term.
+    const { data: visitorMatches } = await supabase
+      .from('registration_visitors')
+      .select('registration_id')
+      .or(`full_name.ilike.${like},citizen_id.ilike.${like}`);
+
+    // Registrations whose inmate name / prison number matches the term.
+    const { data: inmateMatches } = await supabase
+      .from('visit_registrations')
+      .select('id, inmate:inmates!inner(id)')
+      .eq('prison_id', prisonId)
+      .or(`full_name.ilike.${like},prison_number.ilike.${like}`, {
+        referencedTable: 'inmates',
+      });
+
+    matchingRegIds = Array.from(
+      new Set([
+        ...(visitorMatches ?? []).map((v) => v.registration_id as string),
+        ...(inmateMatches ?? []).map((r) => r.id as string),
+      ]),
+    );
+  }
+
   // Build the base query on visit_registrations with joined data
   let query = supabase
     .from('visit_registrations')
@@ -54,12 +85,10 @@ export async function GET(request: NextRequest) {
   if (dateTo) {
     query = query.lte('visit_date', dateTo);
   }
-  if (search) {
-    // Search on the inmate's full_name or prison_number
-    query = query.or(
-      `full_name.ilike.%${search}%,prison_number.ilike.%${search}%`,
-      { referencedTable: 'inmates' },
-    );
+  if (matchingRegIds !== null) {
+    // Restrict to the pre-resolved set of matching registration IDs. An empty
+    // set (`in.()`) correctly yields zero results.
+    query = query.in('id', matchingRegIds);
   }
 
   const { data, error, count } = await query;

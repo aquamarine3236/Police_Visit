@@ -424,18 +424,20 @@ export default function InmatesPage() {
                         size="icon"
                         onClick={() => openEditModal(inmate)}
                         title="Sửa thông tin"
+                        aria-label={`Sửa thông tin phạm nhân ${inmate.full_name}`}
                         className="h-8 w-8 rounded-full"
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit className="h-4 w-4" aria-hidden="true" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => openDeleteModal(inmate)}
                         title="Xóa"
+                        aria-label={`Xóa phạm nhân ${inmate.full_name}`}
                         className="h-8 w-8 rounded-full text-sale hover:text-sale hover:bg-sale/5"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </TableCell>
@@ -457,9 +459,10 @@ export default function InmatesPage() {
                 size="icon"
                 onClick={() => setPage((p) => Math.max(p - 1, 1))}
                 disabled={page === 1}
+                aria-label="Trang trước"
                 className="h-9 w-9 rounded-full"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
               </Button>
               {Array.from({ length: totalPages }).map((_, i) => (
                 <Button
@@ -476,9 +479,10 @@ export default function InmatesPage() {
                 size="icon"
                 onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
                 disabled={page === totalPages}
+                aria-label="Trang sau"
                 className="h-9 w-9 rounded-full"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
           </div>

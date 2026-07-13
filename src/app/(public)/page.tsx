@@ -410,9 +410,10 @@ export default function PublicRegistrationPage() {
                             <button
                               type="button"
                               onClick={() => remove(index)}
+                              aria-label={`Xóa người đi thăm #${index + 1}`}
                               className="text-sale hover:text-sale-deep flex items-center gap-1 text-caption-sm font-semibold transition-colors focus-ring"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4" aria-hidden="true" />
                               Xóa
                             </button>
                           )}

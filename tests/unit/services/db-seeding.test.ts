@@ -147,7 +147,7 @@ function generateFillSlotsSQL(visitDate: string): string {
 
   const inserts = slots.flatMap((slot) => {
     // Insert max_visit_per_time (2) registrations per slot
-    return [0, 1].map((n) =>
+    return [0, 1].map((_n) =>
       `INSERT INTO visit_registrations (prison_id, inmate_id, visit_date, time_slot_start, time_slot_end, status)
 VALUES ('${TEST_PRISON_ID}', '${TEST_INMATE_ID_TAM_GIU}', '${visitDate}', '${slot.start}', '${slot.end}', 'confirmed');`
     );

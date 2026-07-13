@@ -406,8 +406,9 @@ export default function AdminDashboardPage() {
                         onClick={() => openDetailsModal(reg)}
                         className="h-8 w-8 rounded-full"
                         title="Xem chi tiết"
+                        aria-label="Xem chi tiết đăng ký"
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -429,9 +430,10 @@ export default function AdminDashboardPage() {
                 size="icon"
                 onClick={() => setPage((p) => Math.max(p - 1, 1))}
                 disabled={page === 1}
+                aria-label="Trang trước"
                 className="h-9 w-9 rounded-full"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
               </Button>
               {Array.from({ length: totalPages }).map((_, i) => (
                 <Button
@@ -448,9 +450,10 @@ export default function AdminDashboardPage() {
                 size="icon"
                 onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
                 disabled={page === totalPages}
+                aria-label="Trang sau"
                 className="h-9 w-9 rounded-full"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
           </div>

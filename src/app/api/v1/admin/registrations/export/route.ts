@@ -15,6 +15,30 @@ export async function GET(request: NextRequest) {
   const { search, status, dateFrom, dateTo } =
     parseQueryParams(request.nextUrl.searchParams);
 
+  // Resolve matching registration IDs the same way as the listing endpoint so
+  // the exported rows mirror the on-screen filter (inmate + visitor search).
+  let matchingRegIds: string[] | null = null;
+  if (search) {
+    const like = `%${search}%`;
+    const { data: visitorMatches } = await supabase
+      .from('registration_visitors')
+      .select('registration_id')
+      .or(`full_name.ilike.${like},citizen_id.ilike.${like}`);
+    const { data: inmateMatches } = await supabase
+      .from('visit_registrations')
+      .select('id, inmate:inmates!inner(id)')
+      .eq('prison_id', prisonId)
+      .or(`full_name.ilike.${like},prison_number.ilike.${like}`, {
+        referencedTable: 'inmates',
+      });
+    matchingRegIds = Array.from(
+      new Set([
+        ...(visitorMatches ?? []).map((v) => v.registration_id as string),
+        ...(inmateMatches ?? []).map((r) => r.id as string),
+      ]),
+    );
+  }
+
   // Build query with same filters as listing endpoint
   let query = supabase
     .from('visit_registrations')
@@ -42,11 +66,8 @@ export async function GET(request: NextRequest) {
   if (dateTo) {
     query = query.lte('visit_date', dateTo);
   }
-  if (search) {
-    query = query.or(
-      `full_name.ilike.%${search}%,prison_number.ilike.%${search}%`,
-      { referencedTable: 'inmates' },
-    );
+  if (matchingRegIds !== null) {
+    query = query.in('id', matchingRegIds);
   }
 
   const { data, error } = await query;

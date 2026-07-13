@@ -22,64 +22,63 @@ function chainable(result: unknown): unknown {
 // ─── Supabase mock factory ──────────────────────────────────────────────────
 
 interface MockOverrides {
-  inmateResult?: unknown;
+  // Result returned by the `fn_lookup_inmate_for_registration` RPC. When a bare
+  // inmate object is provided it is wrapped as `{ data: [inmate], error: null }`.
+  inmateResult?: { data: unknown; error: unknown };
   settingsResult?: unknown;
-  existingVisitorRegsResult?: unknown;
-  duplicateCountResult?: unknown;
-  rpcResult?: { data: unknown; error: unknown };
-  insertRegResult?: unknown;
-  insertVisitorsResult?: unknown;
+  // Result returned by the `fn_submit_registration` RPC.
+  submitResult?: { data: unknown; error: unknown };
   getUserResult?: { data: { user: { id: string } | null } };
   profileResult?: unknown;
   regFetchResult?: unknown;
   updateResult?: unknown;
-  deleteRegResult?: unknown;
 }
 
 function mockSupabase(o: MockOverrides = {}) {
-  const inmateResult = o.inmateResult ?? { data: null, error: null };
   const settingsResult = o.settingsResult ?? { data: { suitable_days: [4, 5] } };
-  const visitorRegsResult = o.existingVisitorRegsResult ?? { data: null };
-  const dupCountResult = o.duplicateCountResult ?? { count: 0, error: null };
-  const insertRegResult = o.insertRegResult ?? { data: { id: 'reg-1', status: 'confirmed' }, error: null };
-  const insertVisitorsResult = o.insertVisitorsResult ?? { data: [{ id: 'v1' }], error: null };
   const profileResult = o.profileResult ?? { data: { prison_id: 'prison-1' } };
   const regFetchResult = o.regFetchResult ?? { data: null };
   const updateResult = o.updateResult ?? { data: null, error: null };
-  const deleteRegResult = o.deleteRegResult ?? { error: null };
 
+  // `fn_lookup_inmate_for_registration` returns rows (array). Accept either a
+  // pre-shaped `{ data, error }` or `undefined` (=> not found).
+  const inmateRpcResult = o.inmateResult ?? { data: [], error: null };
 
+  // `fn_submit_registration` returns a JSONB object. Default = success payload.
+  const submitRpcResult =
+    o.submitResult ?? {
+      data: {
+        registration: { id: 'reg-1', status: 'confirmed' },
+        visitors: [{ id: 'v1' }],
+      },
+      error: null,
+    };
 
   const fromImpl = (table: string) => {
-    if (table === 'inmates') return chainable(inmateResult);
     if (table === 'scheduling_settings') return chainable(settingsResult);
     if (table === 'admin_profiles') return chainable(profileResult);
-
-    if (table === 'registration_visitors') {
-      return {
-        select: (..._a: unknown[]) => chainable(visitorRegsResult),
-        insert: (..._a: unknown[]) => chainable(insertVisitorsResult),
-      };
-    }
-
     if (table === 'visit_registrations') {
-      // Return a proxy that distinguishes between .insert() and .select() chains
       return {
-        select: (..._a: unknown[]) => chainable(dupCountResult),
-        insert: (..._a: unknown[]) => chainable(insertRegResult),
+        select: (..._a: unknown[]) => chainable(regFetchResult),
         update: (..._a: unknown[]) => chainable(updateResult),
-        delete: (..._a: unknown[]) => chainable(deleteRegResult),
       };
     }
-
     return chainable({ data: null, error: null });
+  };
+
+  const rpcImpl = (fn: string) => {
+    if (fn === 'fn_lookup_inmate_for_registration') {
+      return Promise.resolve(inmateRpcResult);
+    }
+    if (fn === 'fn_submit_registration') {
+      return Promise.resolve(submitRpcResult);
+    }
+    return Promise.resolve({ data: null, error: null });
   };
 
   return {
     from: vi.fn().mockImplementation(fromImpl),
-    rpc: vi.fn().mockResolvedValue(
-      o.rpcResult ?? { data: [{ slot_start: '07:30', slot_end: '08:00' }], error: null },
-    ),
+    rpc: vi.fn().mockImplementation(rpcImpl),
     auth: {
       getUser: vi.fn().mockResolvedValue(
         o.getUserResult ?? { data: { user: { id: 'user-1' } } },
@@ -147,12 +146,12 @@ describe('submitRegistration', () => {
     });
     expect(result.success).toBe(false);
     expect(result.message).toBe('Dữ liệu không hợp lệ.');
-    expect(result.errors).toBeDefined();
+    if (!result.success) expect(result.errors).toBeDefined();
   });
 
   it('returns error when inmate is not found', async () => {
     const supabase = mockSupabase({
-      inmateResult: { data: null, error: null },
+      inmateResult: { data: [], error: null },
     });
     const result = await submitRegistration(supabase, 'prison-1', validFormData());
     expect(result.success).toBe(false);
@@ -161,7 +160,7 @@ describe('submitRegistration', () => {
 
   it('returns error when inmate data does not match (name mismatch)', async () => {
     const supabase = mockSupabase({
-      inmateResult: { data: { ...VALID_INMATE_DB, full_name: 'Khác Tên' }, error: null },
+      inmateResult: { data: [{ ...VALID_INMATE_DB, full_name: 'Khác Tên' }], error: null },
     });
     const result = await submitRegistration(supabase, 'prison-1', validFormData());
     expect(result.success).toBe(false);
@@ -170,7 +169,7 @@ describe('submitRegistration', () => {
 
   it('returns error when inmate DOB does not match', async () => {
     const supabase = mockSupabase({
-      inmateResult: { data: { ...VALID_INMATE_DB, date_of_birth: '1995-01-01' }, error: null },
+      inmateResult: { data: [{ ...VALID_INMATE_DB, date_of_birth: '1995-01-01' }], error: null },
     });
     const result = await submitRegistration(supabase, 'prison-1', validFormData());
     expect(result.success).toBe(false);
@@ -179,7 +178,7 @@ describe('submitRegistration', () => {
 
   it('returns error when inmate classification does not match', async () => {
     const supabase = mockSupabase({
-      inmateResult: { data: { ...VALID_INMATE_DB, classification: 'Người bị tạm giữ' }, error: null },
+      inmateResult: { data: [{ ...VALID_INMATE_DB, classification: 'Người bị tạm giữ' }], error: null },
     });
     const result = await submitRegistration(supabase, 'prison-1', validFormData());
     expect(result.success).toBe(false);
@@ -188,7 +187,7 @@ describe('submitRegistration', () => {
 
   it('returns error when inmate has restricted visit status', async () => {
     const supabase = mockSupabase({
-      inmateResult: { data: { ...VALID_INMATE_DB, visit_status: 'Hạn chế thăm gặp' }, error: null },
+      inmateResult: { data: [{ ...VALID_INMATE_DB, visit_status: 'Hạn chế thăm gặp' }], error: null },
     });
     const result = await submitRegistration(supabase, 'prison-1', validFormData());
     expect(result.success).toBe(false);
@@ -204,7 +203,7 @@ describe('submitRegistration', () => {
     const monday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
     const supabase = mockSupabase({
-      inmateResult: { data: VALID_INMATE_DB, error: null },
+      inmateResult: { data: [VALID_INMATE_DB], error: null },
     });
     const formData = { ...validFormData(), visit_date: monday };
     const result = await submitRegistration(supabase, 'prison-1', formData);
@@ -214,27 +213,37 @@ describe('submitRegistration', () => {
 
   it('returns error when no time slot available', async () => {
     const supabase = mockSupabase({
-      inmateResult: { data: VALID_INMATE_DB, error: null },
-      rpcResult: { data: [], error: null },
+      inmateResult: { data: [VALID_INMATE_DB], error: null },
+      submitResult: { data: { error: 'NO_SLOT' }, error: null },
     });
     const result = await submitRegistration(supabase, 'prison-1', validFormData());
     expect(result.success).toBe(false);
     expect(result.message).toContain('Đã hết lịch');
   });
 
-  it('returns error when monthly limit exceeded (via RPC error)', async () => {
+  it('returns error when monthly limit exceeded (via RPC result)', async () => {
     const supabase = mockSupabase({
-      inmateResult: { data: VALID_INMATE_DB, error: null },
-      rpcResult: { data: null, error: { message: 'monthly visit limit exceeded' } },
+      inmateResult: { data: [VALID_INMATE_DB], error: null },
+      submitResult: { data: { error: 'MONTHLY_LIMIT' }, error: null },
     });
     const result = await submitRegistration(supabase, 'prison-1', validFormData());
     expect(result.success).toBe(false);
     expect(result.message).toContain('số lần thăm gặp');
   });
 
+  it('returns error when duplicate registration exists (via RPC result)', async () => {
+    const supabase = mockSupabase({
+      inmateResult: { data: [VALID_INMATE_DB], error: null },
+      submitResult: { data: { error: 'DUPLICATE' }, error: null },
+    });
+    const result = await submitRegistration(supabase, 'prison-1', validFormData());
+    expect(result.success).toBe(false);
+    expect(result.message).toContain('đã đăng ký');
+  });
+
   it('returns success with registration and visitors on valid flow', async () => {
     const supabase = mockSupabase({
-      inmateResult: { data: VALID_INMATE_DB, error: null },
+      inmateResult: { data: [VALID_INMATE_DB], error: null },
     });
     const result = await submitRegistration(supabase, 'prison-1', validFormData());
     expect(result.success).toBe(true);

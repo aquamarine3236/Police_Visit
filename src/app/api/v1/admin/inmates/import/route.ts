@@ -83,6 +83,23 @@ export async function POST(request: NextRequest) {
   // Read file into buffer
   const buffer = Buffer.from(await file.arrayBuffer());
 
+  // Validate file signature (magic bytes). A real .xlsx is a ZIP container,
+  // which always begins with "PK\x03\x04" (0x50 0x4B 0x03 0x04). This defends
+  // against files that merely carry a .xlsx extension or spoofed MIME type.
+  if (
+    buffer.length < 4 ||
+    buffer[0] !== 0x50 ||
+    buffer[1] !== 0x4b ||
+    buffer[2] !== 0x03 ||
+    buffer[3] !== 0x04
+  ) {
+    return errorResponse(
+      400,
+      'INVALID_INPUT',
+      'Tệp không phải định dạng Excel (.xlsx) hợp lệ.',
+    );
+  }
+
   // Parse Excel
   const workbook = new ExcelJS.Workbook();
   try {

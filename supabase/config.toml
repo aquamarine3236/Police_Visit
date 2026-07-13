@@ -1,0 +1,37 @@
+# Supabase CLI configuration.
+# `project_id` is the local project identifier used by the Supabase CLI. When
+# linking to a remote project run:  supabase link --project-ref <project-ref>
+project_id = "prison-visit-system"
+
+[db]
+# Port used by the local Postgres instance (`supabase start`). The remote
+# production database is managed by Supabase and pushed to via `supabase db push`.
+port = 54322
+# Major PostgreSQL version. Must match the remote project (Supabase currently
+# provisions PostgreSQL 15).
+major_version = 15
+
+[db.migrations]
+# Migrations live in supabase/migrations/ and are applied in numerical order.
+schema_paths = []
+
+[auth]
+# Base site URL — override in the Supabase dashboard for production.
+site_url = "http://localhost:3000"
+# Allowed redirect URLs after authentication. Add the production domain in the
+# Supabase dashboard (Authentication -> URL Configuration).
+additional_redirect_urls = ["http://localhost:3000/admin"]
+# JWT expiry (seconds) — 1 hour per docs/07-authentication.md and §12.2.
+jwt_expiry = 3600
+# Admin users are created manually; self sign-up and email confirmations are off.
+enable_signup = false
+
+[auth.email]
+enable_signup = false
+enable_confirmations = false
+
+# Custom access token hook (migration 00011) injects `app_role` and `prison_id`
+# claims into the JWT. Enable it here so local `supabase start` mirrors prod.
+[auth.hook.custom_access_token]
+enabled = true
+uri = "pg-functions://postgres/public/custom_access_token_hook"

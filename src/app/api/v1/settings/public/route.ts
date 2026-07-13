@@ -1,43 +1,47 @@
 import { NextResponse } from 'next/server';
 
-import { createServerClient } from '@/lib/supabase/server';
 import { DAY_LABELS, errorResponse } from '@/lib/api-helpers';
+import { getCachedPublicSettings } from '@/lib/services/settings';
+import { SCHEDULING_SETTINGS_CACHE_TTL } from '@/lib/constants';
 
 // Default prison ID used when the system is single-prison
 const DEFAULT_PRISON_ID = '11111111-1111-1111-1111-111111111111';
 
 export async function GET() {
-  const supabase = await createServerClient();
-  if (!supabase) {
-    return errorResponse(500, 'SERVER_ERROR', 'Supabase chưa được cấu hình.');
+  // Read scheduling settings through the cached fetcher (Phase 36). This avoids
+  // a DB round-trip on every public page load; the cache is invalidated via
+  // `revalidateTag` whenever an admin updates the settings.
+  const result = await getCachedPublicSettings(DEFAULT_PRISON_ID);
+
+  if (!result.success || !result.data) {
+    const message = result.message ?? 'Không thể tải cấu hình lịch thăm gặp.';
+    const isNotFound = message.includes('Chưa có cấu hình');
+    return errorResponse(
+      isNotFound ? 404 : 500,
+      isNotFound ? 'NOT_FOUND' : 'SERVER_ERROR',
+      message,
+    );
   }
 
-  const { data, error } = await supabase
-    .from('scheduling_settings')
-    .select(
-      'suitable_days, visit_time, morning_start_time, morning_end_time, afternoon_start_time, afternoon_end_time',
-    )
-    .eq('prison_id', DEFAULT_PRISON_ID)
-    .maybeSingle();
-
-  if (error) {
-    return errorResponse(500, 'SERVER_ERROR', error.message);
-  }
-
-  if (!data) {
-    return errorResponse(404, 'NOT_FOUND', 'Chưa có cấu hình cho trại giam này.');
-  }
-
-  const suitableDays: number[] = data.suitable_days;
+  const suitableDays: number[] = result.data.suitable_days;
   const suitableDaysLabels = suitableDays.map((d) => DAY_LABELS[d] || `Ngày ${d}`);
 
   const noticeMessage = suitableDaysLabels.length > 0
     ? `Lưu ý: Người dân chỉ có thể đăng ký thăm gặp vào ${suitableDaysLabels.join(' và ')}.`
     : 'Lưu ý: Hiện chưa có ngày thăm gặp nào được cấu hình.';
 
-  return NextResponse.json({
-    suitable_days: suitableDays,
-    suitable_days_labels: suitableDaysLabels,
-    notice_message: noticeMessage,
-  });
+  return NextResponse.json(
+    {
+      suitable_days: suitableDays,
+      suitable_days_labels: suitableDaysLabels,
+      notice_message: noticeMessage,
+    },
+    {
+      headers: {
+        // Allow shared/CDN caches to serve the response while revalidating in
+        // the background. Matches the server-side cache TTL.
+        'Cache-Control': `public, s-maxage=${SCHEDULING_SETTINGS_CACHE_TTL}, stale-while-revalidate=60`,
+      },
+    },
+  );
 }
