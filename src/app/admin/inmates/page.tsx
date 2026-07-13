@@ -64,6 +64,7 @@ export default function InmatesPage() {
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState('');
   const [classification, setClassification] = React.useState<string>('all');
+  const [visitStatus, setVisitStatus] = React.useState<string>('all');
   const [page, setPage] = React.useState(1);
   const [totalPages, setTotalPages] = React.useState(1);
   const [totalInmates, setTotalInmates] = React.useState(0);
@@ -97,6 +98,7 @@ export default function InmatesPage() {
       });
       if (search) params.append('search', search);
       if (classification !== 'all') params.append('classification', classification);
+      if (visitStatus !== 'all') params.append('visit_status', visitStatus);
 
       const res = await fetch(`/api/v1/admin/inmates?${params.toString()}`);
       if (!res.ok) {
@@ -116,7 +118,7 @@ export default function InmatesPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, classification, toast]);
+  }, [page, search, classification, visitStatus, toast]);
 
   React.useEffect(() => {
     fetchInmates();
@@ -357,6 +359,28 @@ export default function InmatesPage() {
               {INMATE_CLASSIFICATIONS.map((c) => (
                 <SelectItem key={c} value={c}>
                   {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-full md:w-64">
+          <Select 
+            value={visitStatus} 
+            onValueChange={(val) => {
+              setVisitStatus(val);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="h-11">
+              <SelectValue placeholder="Trạng thái thăm gặp" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả trạng thái</SelectItem>
+              {INMATE_VISIT_STATUSES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const auth = await requireAdminAuth();
   if ('error' in auth) return auth.error;
 
-  const { supabase, prisonId } = auth;
+  const { db, prisonId } = auth;
   const { page, limit, search, sortBy, sortDir } =
     parseQueryParams(request.nextUrl.searchParams);
 
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
   const safeSortBy = allowedSortColumns.includes(sortBy) ? sortBy : 'created_at';
   const ascending = sortDir === 'asc';
 
-  let query = supabase
+  let query = db
     .from('inmates')
     .select('*', { count: 'exact' })
     .eq('prison_id', prisonId)
