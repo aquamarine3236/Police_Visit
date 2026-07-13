@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { updateRegistrationStatus } from '@/actions/registrations';
+import { createBrowserClient } from '@/lib/supabase/client';
 import type { VisitRegistration } from '@/types';
 
 interface VisitorDetail {
@@ -75,6 +76,8 @@ export default function AdminDashboardPage() {
   const [selectedReg, setSelectedReg] = React.useState<RegistrationWithRelations | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = React.useState(false);
   const [actionLoading, setActionLoading] = React.useState(false);
+  const [highlightedRegistrationId, setHighlightedRegistrationId] = React.useState<string | null>(null);
+  const highlightTimeoutRef = React.useRef<number | null>(null);
 
   // Fetch registrations
   const fetchRegistrations = React.useCallback(async () => {
@@ -112,6 +115,45 @@ export default function AdminDashboardPage() {
   React.useEffect(() => {
     fetchRegistrations();
   }, [fetchRegistrations]);
+
+  React.useEffect(() => {
+    const supabase = createBrowserClient();
+    if (!supabase) {
+      return undefined;
+    }
+
+    const registrationChannel = supabase
+      .channel('public:visit_registrations')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'visit_registrations' }, (payload) => {
+        const record = payload.new as Record<string, unknown>;
+        if (record?.id && typeof record.id === 'string') {
+          setHighlightedRegistrationId(record.id);
+          fetchRegistrations();
+          if (highlightTimeoutRef.current) {
+            window.clearTimeout(highlightTimeoutRef.current);
+          }
+          highlightTimeoutRef.current = window.setTimeout(() => {
+            setHighlightedRegistrationId(null);
+            highlightTimeoutRef.current = null;
+          }, 5000);
+        }
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'visit_registrations' }, (payload) => {
+        const record = payload.new as Record<string, unknown>;
+        if (record?.id && typeof record.id === 'string') {
+          fetchRegistrations();
+        }
+      })
+      .subscribe();
+
+    return () => {
+      if (highlightTimeoutRef.current) {
+        window.clearTimeout(highlightTimeoutRef.current);
+        highlightTimeoutRef.current = null;
+      }
+      supabase.removeChannel(registrationChannel);
+    };
+  }, [fetchRegistrations, selectedReg]);
 
   // Handle status update
   const handleStatusChange = async (newStatus: 'completed' | 'no_show') => {
@@ -332,11 +374,12 @@ export default function AdminDashboardPage() {
                 const visitorLabel = visitorsCount > 1 
                   ? `${primaryVisitor} (+${visitorsCount - 1} người)` 
                   : primaryVisitor;
+                const isHighlighted = reg.id === highlightedRegistrationId;
 
                 return (
                   <TableRow 
                     key={reg.id} 
-                    className="hover:bg-soft-cloud/30 cursor-pointer"
+                    className={`hover:bg-soft-cloud/30 cursor-pointer transition-colors duration-200 ${isHighlighted ? 'bg-success/10 ring-2 ring-success/30' : ''}`}
                     onClick={() => openDetailsModal(reg)}
                   >
                     <TableCell className="font-mono text-caption-sm text-mute">
