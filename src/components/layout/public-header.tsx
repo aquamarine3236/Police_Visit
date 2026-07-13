@@ -27,7 +27,7 @@ export function PublicHeader() {
               Đăng ký thăm gặp
             </p>
             <p className="text-utility-xs text-mute">
-              Dành cho thân nhân phạm nhân
+              Dành cho thân nhân người đang bị quản lý giam giữ
             </p>
           </div>
           <ThemeToggle />

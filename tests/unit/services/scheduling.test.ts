@@ -89,19 +89,31 @@ function mockSupabase(o: MockOverrides = {}) {
 
 // ─── Fixtures ───────────────────────────────────────────────────────────────
 
+/** ISO day-of-week (1=Mon … 7=Sun) of a YYYY-MM-DD date in the Vietnam timezone. */
+function vietnamIsoDay(dateStr: string): number {
+  const weekday = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    weekday: 'short',
+  }).format(new Date(dateStr + 'T12:00:00Z'));
+  return { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 }[weekday]!;
+}
+
+function toDateString(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 /**
- * Returns a future date string where
- * new Date(date + 'T00:00:00+07:00').getUTCDay() is 4 or 5.
- * Midnight+07:00 = previous day 17:00 UTC, so we need a
- * local Friday (getUTCDay=4) or Saturday (getUTCDay=5).
+ * Returns a future date string whose weekday in the Vietnam timezone (GMT+7)
+ * is a suitable day — Friday (ISO 5), which is in the default [4, 5] set.
  */
 function futureSuitableDate(): string {
   const d = new Date();
-  const day = d.getDay(); // 0=Sun
-  // Target: local Friday (day=5)
-  const offset = ((5 - day) + 7) % 7 || 7;
-  d.setDate(d.getDate() + offset);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  d.setDate(d.getDate() + 1);
+  // Advance until the Vietnam-timezone weekday is Friday (ISO 5).
+  while (vietnamIsoDay(toDateString(d)) !== 5) {
+    d.setDate(d.getDate() + 1);
+  }
+  return toDateString(d);
 }
 
 const VALID_INMATE_DB = {
@@ -195,17 +207,18 @@ describe('submitRegistration', () => {
   });
 
   it('returns error when visit date is not a suitable day', async () => {
-    // Use a Wednesday: getUTCDay after +07:00 conversion = Tuesday = 2, not in [4,5]
+    // Use a Wednesday (Vietnam-timezone ISO day 3), not in the default [4, 5] set.
     const d = new Date();
-    const day = d.getDay();
-    const offset = ((3 - day) + 7) % 7 || 7;
-    d.setDate(d.getDate() + offset);
-    const monday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    d.setDate(d.getDate() + 1);
+    while (vietnamIsoDay(toDateString(d)) !== 3) {
+      d.setDate(d.getDate() + 1);
+    }
+    const wednesday = toDateString(d);
 
     const supabase = mockSupabase({
       inmateResult: { data: [VALID_INMATE_DB], error: null },
     });
-    const formData = { ...validFormData(), visit_date: monday };
+    const formData = { ...validFormData(), visit_date: wednesday };
     const result = await submitRegistration(supabase, 'prison-1', formData);
     expect(result.success).toBe(false);
     expect(result.message).toContain('không phải ngày thăm gặp');

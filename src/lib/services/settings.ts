@@ -20,6 +20,7 @@ export interface PublicSchedulingSettings {
   morning_end_time: string;
   afternoon_start_time: string;
   afternoon_end_time: string;
+  max_visit_per_time: number;
 }
 
 async function getAdminPrisonId(
@@ -56,7 +57,7 @@ export async function getPublicSettings(
 ): Promise<ServiceResult<PublicSchedulingSettings>> {
   const { data, error } = await supabase
     .from('scheduling_settings')
-    .select('suitable_days, visit_time, morning_start_time, morning_end_time, afternoon_start_time, afternoon_end_time')
+    .select('suitable_days, visit_time, morning_start_time, morning_end_time, afternoon_start_time, afternoon_end_time, max_visit_per_time')
     .eq('prison_id', prisonId)
     .maybeSingle();
   if (error) return { success: false, message: error.message };

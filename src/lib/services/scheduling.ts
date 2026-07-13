@@ -5,6 +5,7 @@ import {
   registrationFormSchema,
   type RegistrationFormData,
 } from '@/lib/validations/registration';
+import { formatSuitableDays } from '@/lib/constants';
 
 // ─── Cross-verify inmate data against DB ────────────────────────────────────
 
@@ -89,9 +90,12 @@ export async function submitRegistration(
     const dayOfWeek = visitDateObj.getUTCDay() === 0 ? 7 : visitDateObj.getUTCDay();
     const suitableDays: number[] = settings.suitable_days;
     if (!suitableDays.includes(dayOfWeek)) {
+      const allowed = formatSuitableDays(suitableDays);
       return {
         success: false,
-        message: 'Ngày bạn chọn không phải ngày thăm gặp. Vui lòng chọn ngày Thứ Năm hoặc Thứ Sáu.',
+        message: allowed
+          ? `Ngày bạn chọn không phải ngày thăm gặp. Vui lòng chọn ngày ${allowed}.`
+          : 'Ngày bạn chọn không phải ngày thăm gặp.',
       };
     }
   }

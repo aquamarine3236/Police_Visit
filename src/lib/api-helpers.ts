@@ -3,16 +3,9 @@ import { NextResponse } from 'next/server';
 import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server';
 
 // ─── Vietnamese day-of-week labels (ISO: 1=Monday, 7=Sunday) ────────────────
-
-export const DAY_LABELS: Record<number, string> = {
-  1: 'Thứ Hai',
-  2: 'Thứ Ba',
-  3: 'Thứ Tư',
-  4: 'Thứ Năm',
-  5: 'Thứ Sáu',
-  6: 'Thứ Bảy',
-  7: 'Chủ Nhật',
-};
+// Re-exported from the shared constants module so both server and client use
+// the same source of truth.
+export { DAY_LABELS } from '@/lib/constants';
 
 // ─── Consistent error response builder (§6.7) ──────────────────────────────
 

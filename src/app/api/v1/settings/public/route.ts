@@ -35,6 +35,13 @@ export async function GET() {
       suitable_days: suitableDays,
       suitable_days_labels: suitableDaysLabels,
       notice_message: noticeMessage,
+      // Full scheduling configuration mirrored to the public tab (100% sync).
+      visit_time: result.data.visit_time,
+      morning_start_time: result.data.morning_start_time,
+      morning_end_time: result.data.morning_end_time,
+      afternoon_start_time: result.data.afternoon_start_time,
+      afternoon_end_time: result.data.afternoon_end_time,
+      max_visit_per_time: result.data.max_visit_per_time,
     },
     {
       headers: {

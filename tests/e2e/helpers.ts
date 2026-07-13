@@ -155,6 +155,12 @@ export const PUBLIC_SETTINGS = {
   suitable_days_labels: ['Thứ Năm', 'Thứ Sáu'],
   notice_message:
     'Lưu ý: Người dân chỉ có thể đăng ký thăm gặp vào Thứ Năm và Thứ Sáu.',
+  visit_time: 30,
+  morning_start_time: '08:00',
+  morning_end_time: '11:30',
+  afternoon_start_time: '13:30',
+  afternoon_end_time: '16:30',
+  max_visit_per_time: 3,
 };
 
 /**

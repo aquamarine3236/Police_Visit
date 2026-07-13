@@ -35,7 +35,7 @@ test.describe('Public registration flow', () => {
 
     // Section headings prove the form (not the loading/error state) is shown.
     await expect(
-      page.getByRole('heading', { name: 'Thông tin phạm nhân' }),
+      page.getByRole('heading', { name: 'Thông tin người đang bị quản lý giam giữ' }),
     ).toBeVisible();
     await expect(
       page.getByRole('heading', { name: 'Danh sách người đi thăm' }),
@@ -57,7 +57,7 @@ test.describe('Public registration flow', () => {
   }) => {
     await page.goto('/');
     await expect(
-      page.getByRole('heading', { name: 'Thông tin phạm nhân' }),
+      page.getByRole('heading', { name: 'Thông tin người đang bị quản lý giam giữ' }),
     ).toBeVisible();
 
     await clickButtonByText(page, 'Đăng ký lịch hẹn');
@@ -72,7 +72,7 @@ test.describe('Public registration flow', () => {
   test('validates the visitor citizen id length', async ({ page }) => {
     await page.goto('/');
     await expect(
-      page.getByRole('heading', { name: 'Thông tin phạm nhân' }),
+      page.getByRole('heading', { name: 'Thông tin người đang bị quản lý giam giữ' }),
     ).toBeVisible();
 
     // Fill an invalid (too short) CCCD and trigger validation.
@@ -114,12 +114,12 @@ test.describe('Public registration flow', () => {
 
     await page.goto('/');
     await expect(
-      page.getByRole('heading', { name: 'Thông tin phạm nhân' }),
+      page.getByRole('heading', { name: 'Thông tin người đang bị quản lý giam giữ' }),
     ).toBeVisible();
 
     // ── Inmate section ── (classification keeps its default "Người bị tạm giữ")
     await page.getByPlaceholder('Ví dụ: PMN12345').fill('PN-001');
-    await page.getByPlaceholder('NHẬP CHỮ IN HOA CÓ DẤU').fill('Nguyễn Văn An');
+    await page.locator('input[name="inmate.full_name"]').fill('Nguyễn Văn An');
     await page
       .locator('input[name="inmate.date_of_birth"]')
       .fill('1990-05-15');
@@ -156,11 +156,11 @@ test.describe('Public registration flow', () => {
 
     await page.goto('/');
     await expect(
-      page.getByRole('heading', { name: 'Thông tin phạm nhân' }),
+      page.getByRole('heading', { name: 'Thông tin người đang bị quản lý giam giữ' }),
     ).toBeVisible();
 
     await page.getByPlaceholder('Ví dụ: PMN12345').fill('PN-999');
-    await page.getByPlaceholder('NHẬP CHỮ IN HOA CÓ DẤU').fill('Người Không Tồn Tại');
+    await page.locator('input[name="inmate.full_name"]').fill('Người Không Tồn Tại');
     await page.locator('input[name="inmate.date_of_birth"]').fill('1990-05-15');
 
     await page.getByPlaceholder('Nhập họ và tên thân nhân').fill('Trần Thị Mai');

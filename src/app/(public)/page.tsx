@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Trash2, ShieldAlert, CheckCircle2, Loader2, CalendarClock } from 'lucide-react';
+import { Plus, Trash2, ShieldAlert, CheckCircle2, XCircle, Loader2, CalendarClock } from 'lucide-react';
 
 import {
   Form,
@@ -42,6 +42,12 @@ interface PublicSettings {
   suitable_days: number[];
   suitable_days_labels: string[];
   notice_message: string;
+  visit_time: number;
+  morning_start_time: string;
+  morning_end_time: string;
+  afternoon_start_time: string;
+  afternoon_end_time: string;
+  max_visit_per_time: number;
 }
 
 interface SuccessResult {
@@ -69,11 +75,14 @@ export default function PublicRegistrationPage() {
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
 
   // Success state
   const [successData, setSuccessData] = useState<SuccessResult | null>(null);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+
+  // Error dialog state
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isErrorOpen, setIsErrorOpen] = useState(false);
 
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationFormSchema),
@@ -178,7 +187,7 @@ export default function PublicRegistrationPage() {
   // ─── Handle form submission (wired to Server Action) ─────────────────────
   const onSubmit = async (data: RegistrationFormData) => {
     setIsSubmitting(true);
-    setServerError(null);
+    setErrorMessage(null);
 
     try {
       const result = await submitRegistration(DEFAULT_PRISON_ID, data);
@@ -202,11 +211,15 @@ export default function PublicRegistrationPage() {
             });
           });
         }
-        // Display the general error message
-        setServerError(result.message || 'Đã xảy ra lỗi khi đăng ký.');
+        // Display the general error message in a dialog
+        const message = result.message || 'Đã xảy ra lỗi khi đăng ký.';
+        setErrorMessage(message);
+        setIsErrorOpen(true);
       }
     } catch {
-      setServerError('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
+      const message = 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.';
+      setErrorMessage(message);
+      setIsErrorOpen(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -227,8 +240,13 @@ export default function PublicRegistrationPage() {
   const handleSuccessClose = () => {
     setIsSuccessOpen(false);
     setSuccessData(null);
-    setServerError(null);
+    setErrorMessage(null);
     form.reset();
+  };
+
+  const handleErrorClose = () => {
+    setIsErrorOpen(false);
+    setErrorMessage(null);
   };
 
   return (
@@ -244,7 +262,7 @@ export default function PublicRegistrationPage() {
             Đăng ký lịch hẹn thăm gặp
           </h1>
           <p className="mx-auto mt-2 max-w-2xl text-body-md text-mute">
-            Vui lòng điền chính xác thông tin phạm nhân và thân nhân đi kèm để hệ thống tự động sắp xếp lịch hẹn.
+            Vui lòng điền chính xác thông tin người đang bị quản lý giam giữ và thân nhân đi kèm để hệ thống tự động sắp xếp lịch hẹn.
           </p>
         </div>
 
@@ -263,13 +281,6 @@ export default function PublicRegistrationPage() {
             </Alert>
           )}
 
-          {/* Server Error Message */}
-          {serverError && (
-            <Alert variant="danger" title="Đăng ký không thành công" className="mb-6 animate-fade-in">
-              {serverError}
-            </Alert>
-          )}
-
           {!settingsLoading && !settingsError && (
             <Form {...form}>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
@@ -281,9 +292,9 @@ export default function PublicRegistrationPage() {
                       1
                     </span>
                     <div>
-                      <h3 className="text-heading-lg font-bold text-ink">Thông tin phạm nhân</h3>
+                      <h3 className="text-heading-lg font-bold text-ink">Thông tin người đang bị quản lý giam giữ</h3>
                       <p className="mt-0.5 text-caption-md text-mute">
-                        Nhập chính xác thông tin người đang bị tạm giữ, tạm giam hoặc phạm nhân.
+                        Nhập chính xác thông tin người đang bị quản lý giam giữ.
                       </p>
                     </div>
                   </div>
@@ -294,7 +305,7 @@ export default function PublicRegistrationPage() {
                       name="inmate.prison_number"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-body-strong">Số hiệu phạm nhân <span className="text-sale">*</span></FormLabel>
+                          <FormLabel className="text-body-strong">Số giam <span className="text-sale">*</span></FormLabel>
                           <FormControl>
                             <Input placeholder="Ví dụ: PMN12345" {...field} className="rounded-md" />
                           </FormControl>
@@ -308,9 +319,9 @@ export default function PublicRegistrationPage() {
                       name="inmate.full_name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-body-strong">Họ và tên phạm nhân <span className="text-sale">*</span></FormLabel>
+                          <FormLabel className="text-body-strong">Họ và tên<span className="text-sale">*</span></FormLabel>
                           <FormControl>
-                            <Input placeholder="NHẬP CHỮ IN HOA CÓ DẤU" {...field} className="rounded-md" />
+                            <Input placeholder="Nhập họ và tên" {...field} className="rounded-md" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -322,7 +333,7 @@ export default function PublicRegistrationPage() {
                       name="inmate.date_of_birth"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-body-strong">Ngày sinh phạm nhân <span className="text-sale">*</span></FormLabel>
+                          <FormLabel className="text-body-strong">Ngày sinh <span className="text-sale">*</span></FormLabel>
                           <FormControl>
                             <DateInput
                               value={field.value}
@@ -487,7 +498,7 @@ export default function PublicRegistrationPage() {
                           </FormItem>
 
                           <FormItem>
-                            <FormLabel className="text-body-strong">Quan hệ với phạm nhân <span className="text-sale">*</span></FormLabel>
+                            <FormLabel className="text-body-strong">Quan hệ với người đang bị quản lý giam giữ <span className="text-sale">*</span></FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="Ví dụ: Cha, mẹ, vợ, con..."
@@ -605,7 +616,7 @@ export default function PublicRegistrationPage() {
                 </span>
               </div>
               <div className="flex justify-between border-b border-hairline pb-2">
-                <span className="font-semibold text-ink">Phạm nhân:</span>
+                <span className="font-semibold text-ink">Người đang bị quản lý giam giữ:</span>
                 <span>{toTitleCaseName(successData.inmate.full_name)} ({successData.inmate.prison_number})</span>
               </div>
               <div className="flex justify-between border-b border-hairline pb-2">
@@ -616,6 +627,12 @@ export default function PublicRegistrationPage() {
                 <span className="font-semibold text-ink">Ngày thăm gặp:</span>
                 <span>{getDayOfWeekVietnamese(successData.registration.visit_date)}, {formatDateVietnamese(successData.registration.visit_date)}</span>
               </div>
+              {publicSettings?.suitable_days_labels?.length ? (
+                <div className="flex justify-between border-b border-hairline pb-2">
+                  <span className="font-semibold text-ink">Ngày được phép thăm gặp:</span>
+                  <span>{publicSettings.suitable_days_labels.join(', ')}</span>
+                </div>
+              ) : null}
               <div className="flex justify-between border-b border-hairline pb-2">
                 <span className="font-semibold text-ink">Khung giờ hẹn:</span>
                 <span className="font-semibold text-success font-mono">
@@ -640,6 +657,36 @@ export default function PublicRegistrationPage() {
           <div className="mt-8 flex justify-center">
             <Button onClick={handleSuccessClose} className="w-full sm:w-auto">
               Hoàn tất đăng ký
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Error Modal — mirrors the success dialog layout with an error state */}
+      <Dialog open={isErrorOpen} onOpenChange={(open) => { if (!open) handleErrorClose(); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-danger-soft text-danger">
+              <XCircle className="h-8 w-8" />
+            </div>
+            <DialogTitle className="text-center text-heading-lg font-bold tracking-tight text-ink">
+              Đăng ký không thành công
+            </DialogTitle>
+            <DialogDescription className="text-center mt-2 text-mute">
+              Hệ thống chưa thể ghi nhận đăng ký của bạn. Vui lòng kiểm tra lại thông tin và thử lại.
+            </DialogDescription>
+          </DialogHeader>
+
+          {errorMessage && (
+            <div className="mt-6 flex items-start gap-3 border border-danger/30 bg-danger-soft/40 p-4 text-caption-md text-charcoal">
+              <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-danger" />
+              <span className="text-danger-deep">{errorMessage}</span>
+            </div>
+          )}
+
+          <div className="mt-8 flex justify-center">
+            <Button variant="outline" onClick={handleErrorClose} className="w-full sm:w-auto">
+              Đóng
             </Button>
           </div>
         </DialogContent>

@@ -1,7 +1,38 @@
 import { Clock, Mail, MapPin, Phone } from 'lucide-react';
 import { PoliceLogo } from '@/components/shared/police-logo';
 
-export function PublicFooter() {
+interface PublicFooterProps {
+  /** Labels of the days visits are allowed on (e.g. ["Thứ Năm", "Thứ Sáu"]). */
+  suitableDaysLabels?: string[];
+  morningStartTime?: string;
+  morningEndTime?: string;
+  afternoonStartTime?: string;
+  afternoonEndTime?: string;
+  /** Minutes per visit slot. */
+  visitTime?: number;
+  /** Max registrations accepted per slot. */
+  maxVisitPerTime?: number;
+}
+
+/** Trim seconds off a "HH:mm[:ss]" time string for display. */
+function toHM(time?: string): string {
+  if (!time) return '';
+  return time.substring(0, 5);
+}
+
+export function PublicFooter({
+  suitableDaysLabels = [],
+  morningStartTime,
+  morningEndTime,
+  afternoonStartTime,
+  afternoonEndTime,
+  visitTime,
+  maxVisitPerTime,
+}: PublicFooterProps) {
+  const hasDays = suitableDaysLabels.length > 0;
+  const hasMorning = Boolean(morningStartTime && morningEndTime);
+  const hasAfternoon = Boolean(afternoonStartTime && afternoonEndTime);
+
   return (
     <footer className="mt-auto border-t border-hairline bg-surface">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -46,10 +77,50 @@ export function PublicFooter() {
               <li className="flex items-start gap-2.5">
                 <Clock className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
                 <span>
-                  Lịch thăm gặp tổ chức vào <strong className="text-ink">Thứ Năm</strong> và{' '}
-                  <strong className="text-ink">Thứ Sáu</strong> hàng tuần.
+                  {hasDays ? (
+                    <>
+                      Lịch thăm gặp tổ chức vào{' '}
+                      {suitableDaysLabels.map((label, i) => (
+                        <span key={label}>
+                          {i > 0 && (i === suitableDaysLabels.length - 1 ? ' và ' : ', ')}
+                          <strong className="text-ink">{label}</strong>
+                        </span>
+                      ))}{' '}
+                      hàng tuần.
+                    </>
+                  ) : (
+                    'Lịch thăm gặp sẽ được thông báo theo cấu hình của cơ quan.'
+                  )}
                 </span>
               </li>
+              {(hasMorning || hasAfternoon) && (
+                <li className="flex items-start gap-2.5">
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gold" />
+                  <span>
+                    Giờ làm việc:
+                    {hasMorning && (
+                      <> sáng <strong className="text-ink">{toHM(morningStartTime)}–{toHM(morningEndTime)}</strong></>
+                    )}
+                    {hasMorning && hasAfternoon && ','}
+                    {hasAfternoon && (
+                      <> chiều <strong className="text-ink">{toHM(afternoonStartTime)}–{toHM(afternoonEndTime)}</strong></>
+                    )}
+                    .
+                  </span>
+                </li>
+              )}
+              {typeof visitTime === 'number' && (
+                <li className="flex items-start gap-2.5">
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gold" />
+                  <span>
+                    Mỗi ca thăm gặp kéo dài <strong className="text-ink">{visitTime} phút</strong>
+                    {typeof maxVisitPerTime === 'number' && (
+                      <>, tiếp nhận tối đa <strong className="text-ink">{maxVisitPerTime} lượt/ca</strong></>
+                    )}
+                    .
+                  </span>
+                </li>
+              )}
               <li className="flex items-start gap-2.5">
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gold" />
                 <span>Đăng ký tối thiểu trước 01 ngày (ngày thăm phải trong tương lai).</span>
