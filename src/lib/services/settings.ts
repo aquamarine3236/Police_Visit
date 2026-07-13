@@ -72,16 +72,23 @@ export async function getPublicSettings(
 // NOTE: `unstable_cache` callbacks run outside the request scope and must not
 // access dynamic sources such as `cookies()`. We therefore use a cookie-less
 // anonymous client here (public/RLS-safe read only).
-export function getCachedPublicSettings(
+export async function getCachedPublicSettings(
   prisonId: string,
 ): Promise<ServiceResult<PublicSchedulingSettings>> {
+  // IMPORTANT: only *successful* reads must be cached. The cached callback
+  // therefore THROWS on failure so `unstable_cache` does not persist a
+  // transient error (e.g. a DB blip or a not-yet-seeded row) for the whole TTL.
   const cached = unstable_cache(
-    async (id: string): Promise<ServiceResult<PublicSchedulingSettings>> => {
+    async (id: string): Promise<PublicSchedulingSettings> => {
       const supabase = createAnonClient();
       if (!supabase) {
-        return { success: false, message: 'Supabase chưa được cấu hình.' };
+        throw new Error('Supabase chưa được cấu hình.');
       }
-      return getPublicSettings(supabase, id);
+      const result = await getPublicSettings(supabase, id);
+      if (!result.success || !result.data) {
+        throw new Error(result.message ?? 'Chưa có cấu hình cho trại giam này.');
+      }
+      return result.data;
     },
     ['public-scheduling-settings', prisonId],
     {
@@ -89,23 +96,37 @@ export function getCachedPublicSettings(
       revalidate: SCHEDULING_SETTINGS_CACHE_TTL,
     },
   );
-  return cached(prisonId);
+
+  try {
+    const data = await cached(prisonId);
+    return { success: true, data };
+  } catch (err) {
+    return {
+      success: false,
+      message: err instanceof Error ? err.message : 'Không thể tải cấu hình lịch thăm gặp.',
+    };
+  }
 }
 
 // ─── Cached full settings (Phase 36) ─────────────────────────────────────────
 // Caches the full scheduling-settings row by prisonId for admin/read flows.
 // The `public_settings_read` RLS policy permits anonymous SELECT on this table,
 // so a cookie-less anonymous client is safe to use inside `unstable_cache`.
-export function getCachedSettings(
+export async function getCachedSettings(
   prisonId: string,
 ): Promise<ServiceResult<SchedulingSettings>> {
+  // Only cache successful reads (see note in getCachedPublicSettings).
   const cached = unstable_cache(
-    async (id: string): Promise<ServiceResult<SchedulingSettings>> => {
+    async (id: string): Promise<SchedulingSettings> => {
       const supabase = createAnonClient();
       if (!supabase) {
-        return { success: false, message: 'Supabase chưa được cấu hình.' };
+        throw new Error('Supabase chưa được cấu hình.');
       }
-      return getSettings(supabase, id);
+      const result = await getSettings(supabase, id);
+      if (!result.success || !result.data) {
+        throw new Error(result.message ?? 'Chưa có cấu hình cho trại giam này.');
+      }
+      return result.data;
     },
     ['scheduling-settings', prisonId],
     {
@@ -113,7 +134,16 @@ export function getCachedSettings(
       revalidate: SCHEDULING_SETTINGS_CACHE_TTL,
     },
   );
-  return cached(prisonId);
+
+  try {
+    const data = await cached(prisonId);
+    return { success: true, data };
+  } catch (err) {
+    return {
+      success: false,
+      message: err instanceof Error ? err.message : 'Không thể tải cấu hình.',
+    };
+  }
 }
 
 export async function updateSettings(
