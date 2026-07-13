@@ -1,0 +1,124 @@
+import { z } from 'zod';
+
+// ─── Vietnamese name regex (letters, spaces, Vietnamese diacritics) ─────────
+const vietnameseNameRegex =
+  /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵýỷỹ\s]+$/;
+
+// ─── Inmate classification enum ─────────────────────────────────────────────
+const INMATE_CLASSIFICATIONS = [
+  'Người bị tạm giữ',
+  'Người bị tạm giam',
+  'Phạm nhân',
+] as const;
+
+// ─── Visitor sub-schema (1 per visitor, embedded in array) ──────────────────
+
+export const visitorSchema = z.object({
+  full_name: z
+    .string({ required_error: 'Vui lòng nhập họ và tên.' })
+    .min(2, 'Họ và tên phải từ 2 đến 100 ký tự.')
+    .max(100, 'Họ và tên phải từ 2 đến 100 ký tự.')
+    .regex(vietnameseNameRegex, 'Họ và tên chỉ được chứa chữ cái và khoảng trắng.'),
+
+  date_of_birth: z
+    .string({ required_error: 'Vui lòng chọn ngày sinh.' })
+    .min(1, 'Vui lòng chọn ngày sinh.')
+    .refine(
+      (val) => {
+        const d = new Date(val);
+        return !isNaN(d.getTime()) && d < new Date();
+      },
+      { message: 'Ngày sinh phải là ngày trong quá khứ.' },
+    ),
+
+  citizen_id: z
+    .string({ required_error: 'Vui lòng nhập số CCCD.' })
+    .min(1, 'Vui lòng nhập số CCCD.')
+    .regex(/^\d+$/, 'Số CCCD chỉ được chứa chữ số.')
+    .length(12, 'Số CCCD phải gồm đúng 12 chữ số.'),
+
+  relationship: z
+    .string({ required_error: 'Vui lòng nhập mối quan hệ.' })
+    .min(2, 'Mối quan hệ phải từ 2 đến 50 ký tự.')
+    .max(50, 'Mối quan hệ phải từ 2 đến 50 ký tự.'),
+});
+
+// ─── Inmate identification sub-schema ───────────────────────────────────────
+
+export const inmateIdentificationSchema = z.object({
+  prison_number: z
+    .string({ required_error: 'Vui lòng nhập số hiệu phạm nhân.' })
+    .min(1, 'Vui lòng nhập số hiệu phạm nhân.')
+    .max(50, 'Số hiệu phạm nhân tối đa 50 ký tự.'),
+
+  full_name: z
+    .string({ required_error: 'Vui lòng nhập họ và tên phạm nhân.' })
+    .min(2, 'Họ và tên phải từ 2 đến 100 ký tự.')
+    .max(100, 'Họ và tên phải từ 2 đến 100 ký tự.'),
+
+  date_of_birth: z
+    .string({ required_error: 'Vui lòng chọn ngày sinh phạm nhân.' })
+    .min(1, 'Vui lòng chọn ngày sinh phạm nhân.')
+    .refine(
+      (val) => {
+        const d = new Date(val);
+        return !isNaN(d.getTime()) && d < new Date();
+      },
+      { message: 'Ngày sinh phải là ngày trong quá khứ.' },
+    ),
+
+  classification: z.enum(INMATE_CLASSIFICATIONS, {
+    required_error: 'Vui lòng chọn phân loại.',
+    message: 'Phân loại không hợp lệ.',
+  }),
+});
+
+// ─── Full Registration Form schema ──────────────────────────────────────────
+
+export const registrationFormSchema = z
+  .object({
+    visitors: z
+      .array(visitorSchema)
+      .min(1, 'Phải có ít nhất 1 người đi thăm.')
+      .max(3, 'Chỉ được phép tối đa 3 người đi thăm trong một lần đăng ký.'),
+
+    inmate: inmateIdentificationSchema,
+
+    visit_date: z
+      .string({ required_error: 'Vui lòng chọn ngày thăm gặp.' })
+      .min(1, 'Vui lòng chọn ngày thăm gặp.')
+      .refine(
+        (val) => {
+          const d = new Date(val);
+          return !isNaN(d.getTime());
+        },
+        { message: 'Ngày thăm gặp không hợp lệ.' },
+      )
+      .refine(
+        (val) => {
+          const d = new Date(val);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          return d > today;
+        },
+        {
+          message:
+            'Ngày thăm gặp phải là ngày trong tương lai (không bao gồm hôm nay).',
+        },
+      ),
+  })
+  .refine(
+    (data) => {
+      // Ensure no duplicate citizen_id within the same registration
+      const citizenIds = data.visitors.map((v) => v.citizen_id);
+      return new Set(citizenIds).size === citizenIds.length;
+    },
+    {
+      message: 'Số CCCD không được trùng nhau trong cùng một đăng ký.',
+      path: ['visitors'],
+    },
+  );
+
+export type VisitorFormData = z.infer<typeof visitorSchema>;
+export type InmateIdentificationData = z.infer<typeof inmateIdentificationSchema>;
+export type RegistrationFormData = z.infer<typeof registrationFormSchema>;

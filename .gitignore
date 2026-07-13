@@ -56,6 +56,6 @@ supabase/.temp/
 
 docs/
 diagrams/
-IMPLEMENTATION.md
+IMPLEMENTATION_PHASES.md
 AGENTS.md
 CLAUDE.md
