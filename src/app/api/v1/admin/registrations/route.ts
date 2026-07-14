@@ -48,10 +48,29 @@ export async function GET(request: NextRequest) {
         referencedTable: 'inmates',
       });
 
+    // Registrations whose appointment code matches the term. The code shown to
+    // users is the first 8 hex chars of the UUID `id` (uppercased, dashes
+    // stripped). PostgREST cannot `ilike` a UUID column, so we resolve matches
+    // in JS: normalise the search term to lowercase hex and keep every id whose
+    // text form starts with it. Only run this when the term looks like a code
+    // (hex characters, ignoring dashes) to avoid a full scan on plain searches.
+    let codeMatches: string[] = [];
+    const codeTerm = search.trim().toLowerCase().replace(/-/g, '');
+    if (codeTerm.length > 0 && /^[0-9a-f]+$/.test(codeTerm)) {
+      const { data: idRows } = await supabase
+        .from('visit_registrations')
+        .select('id')
+        .eq('prison_id', prisonId);
+      codeMatches = (idRows ?? [])
+        .map((r) => r.id as string)
+        .filter((id) => id.replace(/-/g, '').toLowerCase().startsWith(codeTerm));
+    }
+
     matchingRegIds = Array.from(
       new Set([
         ...(visitorMatches ?? []).map((v) => v.registration_id as string),
         ...(inmateMatches ?? []).map((r) => r.id as string),
+        ...codeMatches,
       ]),
     );
   }

@@ -30,7 +30,7 @@ export interface Inmate {
   prison_id: string;
   prison_number: string;
   full_name: string;
-  date_of_birth: string;
+  date_of_birth: string | null;
   citizen_id: string | null;
   permanent_address: string | null;
   criminal_offense: string | null;
@@ -83,7 +83,7 @@ export interface RegistrationVisitor {
   id: string;
   registration_id: string;
   full_name: string;
-  date_of_birth: string;
+  date_of_birth: string | null;
   citizen_id: string;
   relationship: string;
   display_order: number;

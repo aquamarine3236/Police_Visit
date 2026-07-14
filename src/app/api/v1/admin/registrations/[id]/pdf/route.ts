@@ -96,13 +96,13 @@ export async function GET(
   const inmate = inmateData as unknown as {
     prison_number: string;
     full_name: string;
-    date_of_birth: string;
+    date_of_birth: string | null;
     classification: string;
   };
   const visitors = (
     registration.visitors as {
       full_name: string;
-      date_of_birth: string;
+      date_of_birth: string | null;
       citizen_id: string;
       relationship: string;
       display_order: number;

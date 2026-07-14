@@ -50,7 +50,7 @@ import type { VisitRegistration } from '@/types';
 interface VisitorDetail {
   id: string;
   full_name: string;
-  date_of_birth: string;
+  date_of_birth: string | null;
   citizen_id: string;
   relationship: string;
   display_order: number;
@@ -565,7 +565,7 @@ export default function AdminDashboardPage() {
           <div className="relative flex-1 md:min-w-0">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mute" />
             <Input
-              placeholder="Tìm theo số giam, tên người bị giam giữ hoặc người thân..."
+              placeholder="Tìm theo mã lịch hẹn, số giam, tên người bị giam giữ hoặc người thân..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -799,7 +799,7 @@ export default function AdminDashboardPage() {
                         <TableRow key={vis.id} className="hover:bg-soft-cloud/20">
                           <TableCell className="py-2 text-caption-md font-mono">{i + 1}</TableCell>
                           <TableCell className="py-2 text-caption-md font-semibold text-ink">{toTitleCaseName(vis.full_name)}</TableCell>
-                          <TableCell className="py-2 text-caption-md">{formatDateVN(vis.date_of_birth)}</TableCell>
+                          <TableCell className="py-2 text-caption-md">{formatDateVN(vis.date_of_birth) || '—'}</TableCell>
                           <TableCell className="py-2 text-caption-md font-mono">{vis.citizen_id}</TableCell>
                           <TableCell className="py-2 text-caption-md">{vis.relationship}</TableCell>
                         </TableRow>

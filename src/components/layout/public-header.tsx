@@ -13,10 +13,10 @@ export function PublicHeader() {
           <PoliceLogo size={44} priority />
           <div className="text-left">
             <p className="text-caption-md font-bold uppercase leading-tight tracking-wide text-primary">
-              Bộ Công an
+              Trại tạm giam Triệu Phong
             </p>
             <p className="text-utility-xs font-medium leading-none text-mute">
-              Cổng đăng ký thăm gặp trực tuyến
+              Phân trại tạm giam số 1
             </p>
           </div>
         </Link>
@@ -24,7 +24,7 @@ export function PublicHeader() {
         <div className="flex items-center gap-3">
           <div className="hidden text-right sm:block">
             <p className="text-caption-md font-semibold uppercase tracking-wide text-ink">
-              Đăng ký thăm gặp
+              CỔNG ĐĂNG KÝ THĂM GẶP TRỰC TUYẾN
             </p>
             <p className="text-utility-xs text-mute">
               Dành cho thân nhân người đang bị quản lý giam giữ

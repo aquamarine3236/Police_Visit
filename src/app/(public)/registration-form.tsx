@@ -306,7 +306,7 @@ export default function RegistrationForm({ initialSettings }: RegistrationFormPr
                       name="inmate.date_of_birth"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-body-strong">Ngày sinh <span className="text-sale">*</span></FormLabel>
+                          <FormLabel className="text-body-strong">Ngày sinh</FormLabel>
                           <FormControl>
                             <DateInput
                               value={field.value}
@@ -431,7 +431,7 @@ export default function RegistrationForm({ initialSettings }: RegistrationFormPr
                           </FormItem>
 
                           <FormItem>
-                            <FormLabel className="text-body-strong">Ngày sinh <span className="text-sale">*</span></FormLabel>
+                            <FormLabel className="text-body-strong">Ngày sinh</FormLabel>
                             <FormControl>
                               <Controller
                                 control={control}

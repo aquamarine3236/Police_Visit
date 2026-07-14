@@ -1,5 +1,4 @@
 import { Clock, Mail, MapPin, Phone } from 'lucide-react';
-import { PoliceLogo } from '@/components/shared/police-logo';
 
 interface PublicFooterProps {
   /** Labels of the days visits are allowed on (e.g. ["Thứ Năm", "Thứ Sáu"]). */
@@ -37,19 +36,11 @@ export function PublicFooter({
     <footer className="mt-auto border-t border-hairline bg-surface">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:gap-12">
-          {/* Brand + contact */}
+          {/* Contact */}
           <div>
-            <div className="mb-4 flex items-center gap-3">
-              <PoliceLogo size={40} />
-              <div>
-                <p className="text-caption-md font-bold uppercase tracking-wide text-primary">
-                  Bộ Công an
-                </p>
-                <p className="text-utility-xs text-mute">
-                  Quản lý thi hành án hình sự
-                </p>
-              </div>
-            </div>
+            <h3 className="mb-4 text-body-strong font-semibold uppercase tracking-wide text-ink">
+              Thông tin liên hệ
+            </h3>
             <ul className="space-y-2.5 text-caption-md text-mute">
               <li className="flex items-start gap-2.5">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />

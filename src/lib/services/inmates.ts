@@ -160,6 +160,7 @@ export async function createInmate(
     .insert({
       ...parsed.data,
       prison_id: admin.prisonId,
+      date_of_birth: parsed.data.date_of_birth || null,
       citizen_id: parsed.data.citizen_id || null,
       permanent_address: parsed.data.permanent_address || null,
       criminal_offense: parsed.data.criminal_offense || null,
@@ -244,6 +245,7 @@ export async function updateInmate(
 
   const updatePayload: InmateUpdate = {
     ...parsed.data,
+    date_of_birth: parsed.data.date_of_birth || null,
     citizen_id: parsed.data.citizen_id || null,
     permanent_address: parsed.data.permanent_address || null,
     criminal_offense: parsed.data.criminal_offense || null,

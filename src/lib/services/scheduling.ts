@@ -13,7 +13,7 @@ import { getISODayOfWeekVN, todayVN } from '@/lib/time';
 interface InmateRecord {
   id: string;
   full_name: string;
-  date_of_birth: string;
+  date_of_birth: string | null;
   classification: string;
   visit_status: string;
 }
@@ -67,7 +67,10 @@ export async function submitRegistration(
   // Step 2b: Cross-verify inmate data
   const formName = inmateInput.full_name.trim().toLowerCase();
   const dbName = inmateRecord.full_name.trim().toLowerCase();
-  if (formName !== dbName || inmateInput.date_of_birth !== inmateRecord.date_of_birth || inmateInput.classification !== inmateRecord.classification) {
+  // Ngày sinh không bắt buộc: coi chuỗi rỗng / null / undefined là như nhau.
+  const formDob = inmateInput.date_of_birth || '';
+  const dbDob = inmateRecord.date_of_birth || '';
+  if (formName !== dbName || formDob !== dbDob || inmateInput.classification !== inmateRecord.classification) {
     return {
       success: false,
       message: 'Thông tin phạm nhân không khớp với hệ thống. Vui lòng kiểm tra lại họ tên, ngày sinh và phân loại.',
@@ -110,7 +113,9 @@ export async function submitRegistration(
   // created rows (or a structured error code).
   const visitorPayload = visitors.map((v) => ({
     full_name: v.full_name.trim(),
-    date_of_birth: v.date_of_birth,
+    // Ngày sinh không bắt buộc: gửi null (thay vì chuỗi rỗng) để RPC ép kiểu
+    // sang DATE mà không lỗi.
+    date_of_birth: v.date_of_birth ? v.date_of_birth : null,
     citizen_id: v.citizen_id,
     relationship: v.relationship.trim(),
   }));

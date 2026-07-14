@@ -249,7 +249,7 @@ export default function InmatesPage() {
     resetEdit({
       prison_number: inmate.prison_number,
       full_name: inmate.full_name,
-      date_of_birth: inmate.date_of_birth,
+      date_of_birth: inmate.date_of_birth || '',
       citizen_id: inmate.citizen_id || '',
       permanent_address: inmate.permanent_address || '',
       criminal_offense: inmate.criminal_offense || '',
@@ -475,7 +475,7 @@ export default function InmatesPage() {
                 <TableRow key={inmate.id} className="hover:bg-soft-cloud/60">
                   <TableCell className="font-mono text-body-strong">{inmate.prison_number}</TableCell>
                   <TableCell className="font-medium text-ink">{toTitleCaseName(inmate.full_name)}</TableCell>
-                  <TableCell>{formatDateVN(inmate.date_of_birth)}</TableCell>
+                  <TableCell>{formatDateVN(inmate.date_of_birth) || '—'}</TableCell>
                   <TableCell>{inmate.classification}</TableCell>
                   <TableCell>
                     <Badge
@@ -566,7 +566,7 @@ export default function InmatesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="add-dob">Ngày sinh *</Label>
+                <Label htmlFor="add-dob">Ngày sinh</Label>
                 <Controller
                   name="date_of_birth"
                   control={controlAdd}
@@ -764,7 +764,7 @@ export default function InmatesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="edit-dob">Ngày sinh *</Label>
+                <Label htmlFor="edit-dob">Ngày sinh</Label>
                 <Controller
                   name="date_of_birth"
                   control={controlEdit}

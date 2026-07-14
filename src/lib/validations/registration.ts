@@ -23,11 +23,13 @@ export const visitorSchema = z.object({
     .regex(vietnameseNameRegex, 'Họ và tên chỉ được chứa chữ cái và khoảng trắng.'),
 
   date_of_birth: z
-    .string({ required_error: 'Vui lòng chọn ngày sinh.' })
-    .min(1, 'Vui lòng chọn ngày sinh.')
+    .string()
+    .optional()
+    .or(z.literal(''))
     .refine(
+      // Ngày sinh không bắt buộc; nếu có thì phải là ngày trong quá khứ.
       // So sánh theo ngày ở UTC+7 để tránh lệch múi giờ (server chạy UTC).
-      (val) => isPastDateVN(val),
+      (val) => !val || isPastDateVN(val),
       { message: 'Ngày sinh phải là ngày trong quá khứ.' },
     ),
 
@@ -57,11 +59,13 @@ export const inmateIdentificationSchema = z.object({
     .max(100, 'Họ và tên phải từ 2 đến 100 ký tự.'),
 
   date_of_birth: z
-    .string({ required_error: 'Vui lòng chọn ngày sinh phạm nhân.' })
-    .min(1, 'Vui lòng chọn ngày sinh phạm nhân.')
+    .string()
+    .optional()
+    .or(z.literal(''))
     .refine(
+      // Ngày sinh không bắt buộc; nếu có thì phải là ngày trong quá khứ.
       // So sánh theo ngày ở UTC+7 để tránh lệch múi giờ (server chạy UTC).
-      (val) => isPastDateVN(val),
+      (val) => !val || isPastDateVN(val),
       { message: 'Ngày sinh phải là ngày trong quá khứ.' },
     ),
 

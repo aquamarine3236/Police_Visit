@@ -19,7 +19,7 @@ const COLUMN_MAP: Record<string, string> = {
   'Trạng thái thăm gặp': 'visit_status',
 };
 
-const REQUIRED_COLUMNS = ['Số giam', 'Họ và tên', 'Ngày sinh', 'Phân loại', 'Trạng thái thăm gặp'];
+const REQUIRED_COLUMNS = ['Số giam', 'Họ và tên', 'Phân loại', 'Trạng thái thăm gặp'];
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_ROWS = 5000;
@@ -193,6 +193,7 @@ export async function POST(request: NextRequest) {
     // Validate row against Zod schema
     const parsed = inmateFormSchema.safeParse({
       ...rowData,
+      date_of_birth: rowData.date_of_birth || undefined,
       citizen_id: rowData.citizen_id || undefined,
       permanent_address: rowData.permanent_address || undefined,
       criminal_offense: rowData.criminal_offense || undefined,
@@ -215,6 +216,7 @@ export async function POST(request: NextRequest) {
     validRecords.push({
       ...parsed.data,
       prison_id: prisonId,
+      date_of_birth: parsed.data.date_of_birth || null,
       citizen_id: parsed.data.citizen_id || null,
       permanent_address: parsed.data.permanent_address || null,
       criminal_offense: parsed.data.criminal_offense || null,
