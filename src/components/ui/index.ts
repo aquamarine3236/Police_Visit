@@ -16,5 +16,6 @@ export * from './badge';
 export * from './card';
 export * from './alert';
 export * from './skeleton';
+export * from './table-skeleton';
 export * from './empty-state';
 export * from './pagination';

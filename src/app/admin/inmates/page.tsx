@@ -12,7 +12,8 @@ import {
   Trash2, 
   CheckCircle2, 
   AlertTriangle,
-  Users
+  Users,
+  Loader2
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,9 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Pagination } from '@/components/ui/pagination';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { useDelayedFlag } from '@/hooks/use-delayed-flag';
 import {
   Select,
   SelectContent,
@@ -46,6 +50,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useFileDownload } from '@/hooks/use-file-download';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { FileUpload } from '@/components/shared/file-upload';
 import { 
@@ -60,11 +65,19 @@ import type { Inmate } from '@/types';
 
 export default function InmatesPage() {
   const { toast } = useToast();
+  const { download: downloadExport, downloading: exporting } = useFileDownload();
   
   // Table state
   const [inmates, setInmates] = React.useState<Inmate[]>([]);
   const [loading, setLoading] = React.useState(true);
+  // Only the first load shows a skeleton; later refetches keep the old rows
+  // visible (dimmed) to avoid the table collapsing on every filter change.
+  const [hasLoadedOnce, setHasLoadedOnce] = React.useState(false);
   const [search, setSearch] = React.useState('');
+  // Raw value drives the input; debounced value drives the fetch.
+  const debouncedSearch = useDebouncedValue(search, 300);
+  // Only dim the table on refetches slow enough to notice (>150ms).
+  const showRefetchDim = useDelayedFlag(loading && hasLoadedOnce, 150);
   const [classification, setClassification] = React.useState<string>('all');
   const [visitStatus, setVisitStatus] = React.useState<string>('all');
   const [page, setPage] = React.useState(1);
@@ -98,7 +111,7 @@ export default function InmatesPage() {
         page: page.toString(),
         limit: limit.toString(),
       });
-      if (search) params.append('search', search);
+      if (debouncedSearch) params.append('search', debouncedSearch);
       if (classification !== 'all') params.append('classification', classification);
       if (visitStatus !== 'all') params.append('visit_status', visitStatus);
 
@@ -110,6 +123,7 @@ export default function InmatesPage() {
       setInmates(json.data);
       setTotalPages(json.pagination.total_pages);
       setTotalInmates(json.pagination.total);
+      setHasLoadedOnce(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Không thể kết nối đến máy chủ.';
       toast({
@@ -120,7 +134,7 @@ export default function InmatesPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, classification, visitStatus, toast]);
+  }, [page, debouncedSearch, classification, visitStatus, toast]);
 
   React.useEffect(() => {
     fetchInmates();
@@ -313,11 +327,29 @@ export default function InmatesPage() {
             Nhập Excel
           </Button>
 
-          <Button variant="outline" asChild>
-            <a href="/api/v1/admin/inmates/export" download>
+          <Button
+            variant="outline"
+            disabled={exporting}
+            onClick={async () => {
+              const ok = await downloadExport(
+                '/api/v1/admin/inmates/export',
+                'danh-sach-pham-nhan.xlsx',
+              );
+              if (!ok) {
+                toast({
+                  title: 'Lỗi',
+                  description: 'Không thể xuất danh sách. Vui lòng thử lại.',
+                  variant: 'destructive',
+                });
+              }
+            }}
+          >
+            {exporting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
               <Download className="mr-2 h-4 w-4" />
-              Xuất Excel
-            </a>
+            )}
+            {exporting ? 'Đang xuất...' : 'Xuất Excel'}
           </Button>
 
           <Button
@@ -345,6 +377,9 @@ export default function InmatesPage() {
             }}
             className="h-11 pl-9"
           />
+          {loading && hasLoadedOnce && search !== debouncedSearch && (
+            <div className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-primary border-r-transparent" />
+          )}
         </div>
         
         <div className="w-full md:w-64">
@@ -393,8 +428,14 @@ export default function InmatesPage() {
       </div>
 
       {/* Inmates List Table */}
-      <div className="overflow-hidden rounded-lg border border-hairline bg-surface shadow-sm">
-        <Table>
+      <div className="relative overflow-hidden rounded-lg border border-hairline bg-surface shadow-sm">
+        {showRefetchDim && (
+          <div className="pointer-events-none absolute inset-0 z-10 bg-surface/40" aria-hidden="true" />
+        )}
+        <Table
+          aria-busy={loading}
+          className={showRefetchDim ? 'opacity-60 transition-opacity' : 'transition-opacity'}
+        >
           <TableHeader>
             <TableRow>
               <TableHead className="w-[120px] font-semibold">Số giam</TableHead>
@@ -405,15 +446,21 @@ export default function InmatesPage() {
               <TableHead className="w-[100px] text-right font-semibold">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
+          {loading && !hasLoadedOnce ? (
+            <TableSkeleton
+              rows={limit}
+              columns={[
+                { width: 'w-20' },
+                { width: 'w-40' },
+                { width: 'w-24' },
+                { width: 'w-28' },
+                { width: 'w-32' },
+                { width: 'w-16', align: 'right' },
+              ]}
+            />
+          ) : (
           <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-40 text-center">
-                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-                  <p className="mt-2 text-caption-md text-mute">Đang tải dữ liệu...</p>
-                </TableCell>
-              </TableRow>
-            ) : inmates.length === 0 ? (
+            {inmates.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="p-0">
                   <EmptyState
@@ -466,10 +513,11 @@ export default function InmatesPage() {
               ))
             )}
           </TableBody>
+          )}
         </Table>
 
         {/* Pagination */}
-        {!loading && totalPages > 1 && (
+        {hasLoadedOnce && totalPages > 1 && (
           <div className="flex flex-col items-center justify-between gap-3 border-t border-hairline px-4 py-4 sm:flex-row sm:px-6">
             <span className="text-caption-md text-mute">
               Hiển thị từ {(page - 1) * limit + 1} đến {Math.min(page * limit, totalInmates)} trong số {totalInmates} hồ sơ

@@ -18,6 +18,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { schedulingSettingsSchema, type SchedulingSettingsFormData } from '@/lib/validations/settings';
 import { getCurrentAdminSettings, updateSchedulingSettings } from '@/actions/settings';
+import { SettingsSkeleton } from './settings-skeleton';
 const DAY_LABELS: Record<number, string> = {
   1: 'Thứ Hai',
   2: 'Thứ Ba',
@@ -206,12 +207,7 @@ export default function SettingsPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-64 flex-col items-center justify-center gap-4">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent" />
-        <p className="text-caption-md text-mute">Đang tải cấu hình lịch thăm gặp...</p>
-      </div>
-    );
+    return <SettingsSkeleton />;
   }
 
   return (

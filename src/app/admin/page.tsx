@@ -11,7 +11,8 @@ import {
   Clock,
   User,
   ShieldAlert,
-  Trash2
+  Trash2,
+  Loader2
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,9 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { Badge, type BadgeVariant } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Pagination } from '@/components/ui/pagination';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { useDelayedFlag } from '@/hooks/use-delayed-flag';
 import {
   Table,
   TableBody,
@@ -37,6 +41,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useFileDownload } from '@/hooks/use-file-download';
 import { updateRegistrationStatus, deleteRegistration } from '@/actions/registrations';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { formatDateVN, toTitleCaseName, addDaysISO } from '@/lib/format';
@@ -62,12 +67,24 @@ interface RegistrationWithRelations extends Omit<VisitRegistration, 'inmate_id'>
 
 export default function AdminDashboardPage() {
   const { toast } = useToast();
+  const { download: downloadExport, downloading: exporting } = useFileDownload();
 
   // State
   const [registrations, setRegistrations] = React.useState<RegistrationWithRelations[]>([]);
   const [loading, setLoading] = React.useState(true);
+  // `hasLoadedOnce` gates the skeleton: only the very first load shows it.
+  // Subsequent filter/search/page changes keep the previous rows visible
+  // (dimmed) so the table never collapses — this removes the flash of an empty
+  // table and makes the UI feel instantly responsive.
+  const [hasLoadedOnce, setHasLoadedOnce] = React.useState(false);
   const [search, setSearch] = React.useState('');
+  // The raw `search` drives the controlled input (instant typing); the fetch is
+  // driven by the debounced value so we don't fire a request on every keystroke.
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [status, setStatus] = React.useState<string>('all');
+  // Only dim the table for refetches that actually take a moment (>150ms),
+  // so fast filter changes don't produce a visible flicker.
+  const showRefetchDim = useDelayedFlag(loading && hasLoadedOnce, 150);
   const [dateFrom, setDateFrom] = React.useState('');
   const [dateTo, setDateTo] = React.useState('');
   const [page, setPage] = React.useState(1);
@@ -101,7 +118,7 @@ export default function AdminDashboardPage() {
         page: page.toString(),
         limit: limit.toString(),
       });
-      if (search) params.append('search', search);
+      if (debouncedSearch) params.append('search', debouncedSearch);
       if (status !== 'all') params.append('status', status);
       if (dateFrom) params.append('date_from', dateFrom);
       if (dateTo) params.append('date_to', dateTo);
@@ -114,6 +131,7 @@ export default function AdminDashboardPage() {
       setRegistrations(json.data);
       setTotalPages(json.pagination.total_pages);
       setTotalRegs(json.pagination.total);
+      setHasLoadedOnce(true);
     } catch (err) {
       // Never surface transient background-refresh failures as toasts; the next
       // poll (or realtime event) will reconcile the list.
@@ -128,7 +146,7 @@ export default function AdminDashboardPage() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [page, search, status, dateFrom, dateTo, toast]);
+  }, [page, debouncedSearch, status, dateFrom, dateTo, toast]);
 
   React.useEffect(() => {
     fetchRegistrations();
@@ -487,11 +505,26 @@ export default function AdminDashboardPage() {
           </p>
         </div>
         <div>
-          <Button variant="outline" asChild>
-            <a href={exportUrl} download>
+          <Button
+            variant="outline"
+            disabled={exporting}
+            onClick={async () => {
+              const ok = await downloadExport(exportUrl, 'danh-sach-dang-ky.xlsx');
+              if (!ok) {
+                toast({
+                  title: 'Lỗi',
+                  description: 'Không thể xuất danh sách. Vui lòng thử lại.',
+                  variant: 'destructive',
+                });
+              }
+            }}
+          >
+            {exporting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
               <Download className="mr-2 h-4 w-4" />
-              Xuất danh sách Excel
-            </a>
+            )}
+            {exporting ? 'Đang xuất...' : 'Xuất danh sách Excel'}
           </Button>
         </div>
       </div>
@@ -540,6 +573,11 @@ export default function AdminDashboardPage() {
               }}
               className="h-11 pl-9"
             />
+            {/* Subtle inline spinner while a debounced search request is in flight,
+                so the admin knows the (delayed) search is working. */}
+            {loading && hasLoadedOnce && search !== debouncedSearch && (
+              <div className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-primary border-r-transparent" />
+            )}
           </div>
 
           {/* Date Pickers */}
@@ -575,8 +613,17 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Registrations List Table */}
-      <div className="overflow-hidden rounded-lg border border-hairline bg-surface shadow-sm">
-        <Table>
+      <div className="relative overflow-hidden rounded-lg border border-hairline bg-surface shadow-sm">
+        {/* While a background refetch runs (filter/page change) we keep the old
+            rows and just dim + block the table so the content never disappears.
+            The initial load is handled by the skeleton below instead. */}
+        {showRefetchDim && (
+          <div className="pointer-events-none absolute inset-0 z-10 bg-surface/40" aria-hidden="true" />
+        )}
+        <Table
+          aria-busy={loading}
+          className={showRefetchDim ? 'opacity-60 transition-opacity' : 'transition-opacity'}
+        >
           <TableHeader>
             <TableRow>
               <TableHead className="w-[120px] font-semibold">Mã lịch hẹn</TableHead>
@@ -588,15 +635,22 @@ export default function AdminDashboardPage() {
               <TableHead className="w-[110px] text-right font-semibold">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
+          {loading && !hasLoadedOnce ? (
+            <TableSkeleton
+              rows={limit}
+              columns={[
+                { width: 'w-16' },
+                { width: 'w-40' },
+                { width: 'w-36' },
+                { width: 'w-24' },
+                { width: 'w-24' },
+                { width: 'w-20' },
+                { width: 'w-16', align: 'right' },
+              ]}
+            />
+          ) : (
           <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-40 text-center">
-                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-                  <p className="mt-2 text-caption-md text-mute">Đang tải danh sách đăng ký...</p>
-                </TableCell>
-              </TableRow>
-            ) : registrations.length === 0 ? (
+            {registrations.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="p-0">
                   <EmptyState
@@ -667,10 +721,13 @@ export default function AdminDashboardPage() {
               })
             )}
           </TableBody>
+          )}
         </Table>
 
         {/* Pagination */}
-        {!loading && totalPages > 1 && (
+        {/* Keep pagination visible during background refetches so the page
+            controls don't jump; only hide it before the very first load. */}
+        {hasLoadedOnce && totalPages > 1 && (
           <div className="flex flex-col items-center justify-between gap-3 border-t border-hairline px-4 py-4 sm:flex-row sm:px-6">
             <span className="text-caption-md text-mute">
               Hiển thị từ {(page - 1) * limit + 1} đến {Math.min(page * limit, totalRegs)} trong số {totalRegs} lịch hẹn

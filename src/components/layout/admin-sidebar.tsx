@@ -1,8 +1,9 @@
 'use client';
 
+import { useState, useTransition } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ClipboardList, Settings, Users } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ClipboardList, Loader2, Settings, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PoliceLogo } from '@/components/shared/police-logo';
 
@@ -39,6 +40,28 @@ const NAV_ITEMS: NavItem[] = [
 
 export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  // `useTransition` lets us give instant feedback the moment a nav item is
+  // clicked: we mark the target as "navigating" (a spinner replaces its icon)
+  // while Next.js prepares the next route, instead of the click feeling dead
+  // until the new screen is ready.
+  const [isPending, startTransition] = useTransition();
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+
+  const handleNavigate = (href: string) => (e: React.MouseEvent) => {
+    // Let modifier/middle clicks (open in new tab) use the native <Link>.
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    if (href === pathname) {
+      onNavigate?.();
+      return;
+    }
+    e.preventDefault();
+    setPendingHref(href);
+    startTransition(() => {
+      router.push(href);
+      onNavigate?.();
+    });
+  };
 
   return (
     <aside className="flex h-full min-h-screen w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
@@ -67,13 +90,16 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
             ? pathname === item.href
             : pathname.startsWith(item.href);
           const Icon = item.icon;
+          const isNavigating = isPending && pendingHref === item.href;
 
           return (
             <Link
               key={item.href}
               href={item.href}
-              onClick={onNavigate}
+              prefetch
+              onClick={handleNavigate(item.href)}
               aria-current={isActive ? 'page' : undefined}
+              aria-busy={isNavigating || undefined}
               className={cn(
                 'group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-caption-md font-medium transition-colors duration-150 focus-ring',
                 isActive
@@ -88,7 +114,11 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
                   isActive ? 'opacity-100' : 'opacity-0',
                 )}
               />
-              <Icon className="h-[18px] w-[18px] shrink-0" />
+              {isNavigating ? (
+                <Loader2 className="h-[18px] w-[18px] shrink-0 animate-spin" />
+              ) : (
+                <Icon className="h-[18px] w-[18px] shrink-0" />
+              )}
               <span className="truncate">{item.label}</span>
             </Link>
           );
