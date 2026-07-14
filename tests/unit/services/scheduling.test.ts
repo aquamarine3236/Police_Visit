@@ -179,13 +179,12 @@ describe('submitRegistration', () => {
     expect(result.message).toContain('không khớp');
   });
 
-  it('returns error when inmate DOB does not match', async () => {
+  it('succeeds even when inmate DOB does not match', async () => {
     const supabase = mockSupabase({
       inmateResult: { data: [{ ...VALID_INMATE_DB, date_of_birth: '1995-01-01' }], error: null },
     });
     const result = await submitRegistration(supabase, 'prison-1', validFormData());
-    expect(result.success).toBe(false);
-    expect(result.message).toContain('không khớp');
+    expect(result.success).toBe(true);
   });
 
   it('returns error when inmate classification does not match', async () => {

@@ -11,6 +11,7 @@ import {
   AlignmentType,
   HeadingLevel,
   BorderStyle,
+  UnderlineType,
 } from 'docx';
 
 import { requireAdminAuth, errorResponse } from '@/lib/api-helpers';
@@ -28,6 +29,101 @@ const STATUS_LABELS: Record<string, string> = {
 // Windows/Office install, so declaring it by name (docx does not embed fonts)
 // renders the .docx in Times New Roman without shipping any font files.
 const DEFAULT_FONT = 'Times New Roman';
+
+// ─── Vietnamese administrative document header (công văn format) ────────────
+
+const NONE_BORDER = { style: BorderStyle.NONE, size: 0 };
+const NO_BORDERS = {
+  top: NONE_BORDER,
+  bottom: NONE_BORDER,
+  left: NONE_BORDER,
+  right: NONE_BORDER,
+} as const;
+
+/**
+ * Builds the two-column header used in Vietnamese government documents.
+ *
+ * Left column:   TRẠI TẠM GIAM TRIỆU PHONG  (bold)
+ *                PHÂN TRẠI TẠM GIAM SỐ 1     (bold, underlined)
+ *
+ * Right column:  CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM  (bold)
+ *                Độc lập – Tự do – Hạnh phúc              (bold, italic, underlined)
+ */
+function buildAdministrativeHeader(): Table {
+  return new Table({
+    rows: [
+      new TableRow({
+        children: [
+          // ── Left column ──
+          new TableCell({
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 40 },
+                children: [
+                  new TextRun({
+                    text: 'TRẠI TẠM GIAM TRIỆU PHONG',
+                    bold: true,
+                    size: 24,
+                    font: DEFAULT_FONT,
+                  }),
+                ],
+              }),
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [
+                  new TextRun({
+                    text: 'PHÂN TRẠI TẠM GIAM SỐ 1',
+                    bold: true,
+                    size: 22,
+                    font: DEFAULT_FONT,
+                    underline: { type: UnderlineType.SINGLE },
+                  }),
+                ],
+              }),
+            ],
+            width: { size: 50, type: WidthType.PERCENTAGE },
+            borders: NO_BORDERS,
+          }),
+
+          // ── Right column ──
+          new TableCell({
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 40 },
+                children: [
+                  new TextRun({
+                    text: 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM',
+                    bold: true,
+                    size: 24,
+                    font: DEFAULT_FONT,
+                  }),
+                ],
+              }),
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [
+                  new TextRun({
+                    text: 'Độc lập – Tự do – Hạnh phúc',
+                    bold: true,
+                    size: 24,
+                    font: DEFAULT_FONT,
+                    underline: { type: UnderlineType.SINGLE },
+                  }),
+                ],
+              }),
+            ],
+            width: { size: 50, type: WidthType.PERCENTAGE },
+            borders: NO_BORDERS,
+          }),
+        ],
+      }),
+    ],
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: NO_BORDERS,
+  });
+}
 
 // ─── Helper: create a table cell with consistent styling ────────────────────
 
@@ -89,7 +185,7 @@ export async function GET(
     : registration.inmate;
 
   if (!inmateData) {
-    return errorResponse(404, 'NOT_FOUND', 'Không tìm thấy thông tin phạm nhân.');
+    return errorResponse(404, 'NOT_FOUND', 'Không tìm thấy thông tin người bị quản lý giam giữ.');
   }
 
   const inmate = inmateData as unknown as {
@@ -147,14 +243,31 @@ export async function GET(
     borders: headerBorder,
   });
 
-  // Build sections
+  // Build sections — starting with the administrative header
   const sections = [
+    // ── Vietnamese administrative header (công văn) ──
+    buildAdministrativeHeader(),
+
+    // Spacer between header and content
+    new Paragraph({ spacing: { after: 300 } }),
+
     // Title
     new Paragraph({
       text: 'PHIẾU ĐĂNG KÝ THĂM GẶP',
       heading: HeadingLevel.HEADING_1,
       alignment: AlignmentType.CENTER,
-      spacing: { after: 300 },
+      spacing: { after: 80 },
+    }),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 220 },
+      children: [
+        new TextRun({
+          text: `Mã lịch hẹn: ${id.substring(0, 8).toUpperCase()}`,
+          bold: true,
+          size: 24,
+        }),
+      ],
     }),
 
     // Date created
@@ -172,7 +285,7 @@ export async function GET(
 
     // Inmate section header
     new Paragraph({
-      text: 'THÔNG TIN PHẠM NHÂN',
+      text: 'THÔNG TIN NGƯỜI BỊ QUẢN LÝ GIAM GIỮ',
       heading: HeadingLevel.HEADING_2,
       spacing: { after: 100 },
     }),

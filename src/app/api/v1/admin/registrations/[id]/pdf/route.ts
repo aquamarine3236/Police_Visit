@@ -43,6 +43,70 @@ const fonts: TFontDictionary = {
   },
 };
 
+// ─── Vietnamese administrative document header (công văn format) ────────────
+
+/**
+ * Returns a pdfmake table representing the two-column header used in
+ * Vietnamese government documents:
+ *
+ * Left column:   TRẠI TẠM GIAM TRIỆU PHONG  (bold)
+ *                PHÂN TRẠI TẠM GIAM SỐ 1     (bold, underlined)
+ *
+ * Right column:  CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM  (bold)
+ *                Độc lập – Tự do – Hạnh phúc              (bold, italic, underlined)
+ */
+function buildAdministrativeHeaderPdf() {
+  return {
+    table: {
+      widths: ['50%', '50%'],
+      body: [
+        [
+          // ── Left column ──
+          {
+            stack: [
+              {
+                text: 'TRẠI TẠM GIAM TRIỆU PHONG',
+                bold: true,
+                fontSize: 12,
+                alignment: 'center' as const,
+                margin: [0, 0, 0, 4] as [number, number, number, number],
+              },
+              {
+                text: 'PHÂN TRẠI TẠM GIAM SỐ 1',
+                bold: true,
+                fontSize: 11,
+                alignment: 'center' as const,
+                decoration: 'underline' as const,
+              },
+            ],
+          },
+          // ── Right column ──
+          {
+            stack: [
+              {
+                text: 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM',
+                bold: true,
+                fontSize: 12,
+                alignment: 'center' as const,
+                margin: [0, 0, 0, 4] as [number, number, number, number],
+              },
+              {
+                text: 'Độc lập – Tự do – Hạnh phúc',
+                bold: true,
+                fontSize: 12,
+                alignment: 'center' as const,
+                decoration: 'underline' as const,
+              },
+            ],
+          },
+        ],
+      ],
+    },
+    layout: 'noBorders',
+    margin: [0, 0, 0, 20] as [number, number, number, number],
+  };
+}
+
 // ─── GET handler ────────────────────────────────────────────────────────────
 
 export async function GET(
@@ -90,7 +154,7 @@ export async function GET(
     : registration.inmate;
 
   if (!inmateData) {
-    return errorResponse(404, 'NOT_FOUND', 'Không tìm thấy thông tin phạm nhân.');
+    return errorResponse(404, 'NOT_FOUND', 'Không tìm thấy thông tin người bị quản lý giam giữ.');
   }
 
   const inmate = inmateData as unknown as {
@@ -132,11 +196,21 @@ export async function GET(
     pageSize: 'A4',
     pageMargins: [40, 60, 40, 60],
     content: [
+      // ── Vietnamese administrative header (công văn) ──
+      buildAdministrativeHeaderPdf(),
+
       {
         text: 'PHIẾU ĐĂNG KÝ THĂM GẶP',
         style: 'header',
         alignment: 'center',
-        margin: [0, 0, 0, 20],
+        margin: [0, 0, 0, 5],
+      },
+      {
+        text: `Mã lịch hẹn: ${id.substring(0, 8).toUpperCase()}`,
+        alignment: 'center',
+        bold: true,
+        fontSize: 12,
+        margin: [0, 0, 0, 15],
       },
       {
         text: `Ngày tạo: ${formatDateTimeVN(registration.created_at)}`,
@@ -146,7 +220,7 @@ export async function GET(
         margin: [0, 0, 0, 15],
       },
       {
-        text: 'THÔNG TIN PHẠM NHÂN',
+        text: 'THÔNG TIN NGƯỜI BỊ QUẢN LÝ GIAM GIỮ',
         style: 'sectionHeader',
         margin: [0, 0, 0, 8],
       },

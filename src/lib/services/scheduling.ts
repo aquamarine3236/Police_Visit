@@ -64,16 +64,13 @@ export async function submitRegistration(
 
   const inmateRecord = inmate as InmateRecord;
 
-  // Step 2b: Cross-verify inmate data
+  // Step 2b: Cross-verify inmate data (exclude date_of_birth check)
   const formName = inmateInput.full_name.trim().toLowerCase();
   const dbName = inmateRecord.full_name.trim().toLowerCase();
-  // Ngày sinh không bắt buộc: coi chuỗi rỗng / null / undefined là như nhau.
-  const formDob = inmateInput.date_of_birth || '';
-  const dbDob = inmateRecord.date_of_birth || '';
-  if (formName !== dbName || formDob !== dbDob || inmateInput.classification !== inmateRecord.classification) {
+  if (formName !== dbName || inmateInput.classification !== inmateRecord.classification) {
     return {
       success: false,
-      message: 'Thông tin phạm nhân không khớp với hệ thống. Vui lòng kiểm tra lại họ tên, ngày sinh và phân loại.',
+      message: 'Thông tin phạm nhân không khớp với hệ thống. Vui lòng kiểm tra lại họ tên và phân loại.',
     };
   }
 

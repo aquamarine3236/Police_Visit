@@ -139,12 +139,12 @@ describe('inmateFormSchema', () => {
       expect(result.success).toBe(false);
     });
 
-    it('rejects empty string', () => {
+    it('accepts empty string', () => {
       const result = inmateFormSchema.safeParse({
         ...validInmateForm(),
         date_of_birth: '',
       });
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
     });
   });
 

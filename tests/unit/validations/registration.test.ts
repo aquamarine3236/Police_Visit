@@ -54,8 +54,8 @@ describe('visitorSchema', () => {
   it('accepts Vietnamese diacritics', () => {
     expect(visitorSchema.safeParse(validVisitor({ full_name: 'Lê Thị Hồng Nhung' })).success).toBe(true);
   });
-  it('rejects empty date_of_birth', () => {
-    expect(visitorSchema.safeParse(validVisitor({ date_of_birth: '' })).success).toBe(false);
+  it('accepts empty date_of_birth', () => {
+    expect(visitorSchema.safeParse(validVisitor({ date_of_birth: '' })).success).toBe(true);
   });
   it('rejects future date_of_birth', () => {
     const f = new Date(); f.setFullYear(f.getFullYear() + 1);
