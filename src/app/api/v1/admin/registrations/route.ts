@@ -10,7 +10,10 @@ export async function GET(request: NextRequest) {
   const auth = await requireAdminAuth();
   if ('error' in auth) return auth.error;
 
-  const { supabase, prisonId } = auth;
+  // Use the service-role client for reads so the admin list does not depend on
+  // the JWT `prison_id` claim being present (the RLS policy keys off it). We
+  // still scope every query to `prisonId` below to preserve tenant isolation.
+  const { db: supabase, prisonId } = auth;
   const { page, limit, search, status, dateFrom, dateTo, sortBy, sortDir } =
     parseQueryParams(request.nextUrl.searchParams);
 

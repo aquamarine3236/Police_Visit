@@ -11,7 +11,9 @@ export async function GET(request: NextRequest) {
   const auth = await requireAdminAuth();
   if ('error' in auth) return auth.error;
 
-  const { supabase, prisonId } = auth;
+  // Service-role client for reads (see listing route): avoids dependency on the
+  // JWT `prison_id` claim while still scoping every query to `prisonId`.
+  const { db: supabase, prisonId } = auth;
   const { search, status, dateFrom, dateTo } =
     parseQueryParams(request.nextUrl.searchParams);
 
