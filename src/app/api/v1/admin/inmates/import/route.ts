@@ -30,7 +30,12 @@ const BATCH_SIZE = 100;
 function cellToString(cell: ExcelJS.CellValue): string {
   if (cell === null || cell === undefined) return '';
   if (cell instanceof Date) {
-    return cell.toISOString().split('T')[0];
+    // ExcelJS parse ô ngày về nửa đêm UTC. Đọc trực tiếp thành phần UTC để
+    // lấy đúng ngày trong file, không phụ thuộc timezone của server (Vercel=UTC).
+    const yyyy = cell.getUTCFullYear();
+    const mm = String(cell.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(cell.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
   if (typeof cell === 'object' && 'text' in cell) {
     return String((cell as { text: string }).text).trim();

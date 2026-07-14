@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { isPastDateVN } from '@/lib/time';
+
 // ─── Vietnamese name regex (letters, spaces, Vietnamese diacritics) ─────────
 const vietnameseNameRegex =
   /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵýỷỹ\s]+$/;
@@ -34,10 +36,8 @@ export const inmateFormSchema = z.object({
     .string({ required_error: 'Vui lòng chọn ngày sinh phạm nhân.' })
     .min(1, 'Vui lòng chọn ngày sinh phạm nhân.')
     .refine(
-      (val) => {
-        const d = new Date(val);
-        return !isNaN(d.getTime()) && d < new Date();
-      },
+      // So sánh theo ngày ở UTC+7 để tránh lệch múi giờ (server chạy UTC).
+      (val) => isPastDateVN(val),
       { message: 'Ngày sinh phải là ngày trong quá khứ.' },
     ),
 
@@ -65,11 +65,7 @@ export const inmateFormSchema = z.object({
     .string()
     .optional()
     .refine(
-      (val) => {
-        if (!val) return true;
-        const d = new Date(val);
-        return !isNaN(d.getTime()) && d < new Date();
-      },
+      (val) => !val || isPastDateVN(val),
       { message: 'Ngày bắt phải là ngày trong quá khứ.' },
     ),
 
@@ -77,11 +73,7 @@ export const inmateFormSchema = z.object({
     .string()
     .optional()
     .refine(
-      (val) => {
-        if (!val) return true;
-        const d = new Date(val);
-        return !isNaN(d.getTime()) && d < new Date();
-      },
+      (val) => !val || isPastDateVN(val),
       { message: 'Ngày nhập trại phải là ngày trong quá khứ.' },
     ),
 

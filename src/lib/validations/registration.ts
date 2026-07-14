@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { isFutureDateVN, isPastDateVN } from '@/lib/time';
+
 // ─── Vietnamese name regex (letters, spaces, Vietnamese diacritics) ─────────
 const vietnameseNameRegex =
   /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵýỷỹ\s]+$/;
@@ -24,10 +26,8 @@ export const visitorSchema = z.object({
     .string({ required_error: 'Vui lòng chọn ngày sinh.' })
     .min(1, 'Vui lòng chọn ngày sinh.')
     .refine(
-      (val) => {
-        const d = new Date(val);
-        return !isNaN(d.getTime()) && d < new Date();
-      },
+      // So sánh theo ngày ở UTC+7 để tránh lệch múi giờ (server chạy UTC).
+      (val) => isPastDateVN(val),
       { message: 'Ngày sinh phải là ngày trong quá khứ.' },
     ),
 
@@ -60,10 +60,8 @@ export const inmateIdentificationSchema = z.object({
     .string({ required_error: 'Vui lòng chọn ngày sinh phạm nhân.' })
     .min(1, 'Vui lòng chọn ngày sinh phạm nhân.')
     .refine(
-      (val) => {
-        const d = new Date(val);
-        return !isNaN(d.getTime()) && d < new Date();
-      },
+      // So sánh theo ngày ở UTC+7 để tránh lệch múi giờ (server chạy UTC).
+      (val) => isPastDateVN(val),
       { message: 'Ngày sinh phải là ngày trong quá khứ.' },
     ),
 
@@ -88,19 +86,12 @@ export const registrationFormSchema = z
       .string({ required_error: 'Vui lòng chọn ngày thăm gặp.' })
       .min(1, 'Vui lòng chọn ngày thăm gặp.')
       .refine(
-        (val) => {
-          const d = new Date(val);
-          return !isNaN(d.getTime());
-        },
+        (val) => /^\d{4}-\d{2}-\d{2}$/.test(val.split('T')[0]),
         { message: 'Ngày thăm gặp không hợp lệ.' },
       )
       .refine(
-        (val) => {
-          const d = new Date(val);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          return d > today;
-        },
+        // Phải là ngày trong tương lai theo UTC+7 (không gồm hôm nay).
+        (val) => isFutureDateVN(val),
         {
           message:
             'Ngày thăm gặp phải là ngày trong tương lai (không bao gồm hôm nay).',

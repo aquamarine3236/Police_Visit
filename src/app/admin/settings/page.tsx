@@ -3,11 +3,18 @@
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Save, Calendar, Clock, AlertCircle, RefreshCw } from 'lucide-react';
+import { Save, Calendar, Clock, AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { schedulingSettingsSchema, type SchedulingSettingsFormData } from '@/lib/validations/settings';
 import { getCurrentAdminSettings, updateSchedulingSettings } from '@/actions/settings';
@@ -21,10 +28,18 @@ const DAY_LABELS: Record<number, string> = {
   7: 'Chủ Nhật',
 };
 
+// Normalize a DB time value (`HH:mm:ss` or `HH:mm`) down to `HH:mm` so it
+// matches the form schema and the native <input type="time"> value format.
+function toHHmm(value: string | null | undefined): string {
+  if (!value) return '';
+  return value.slice(0, 5);
+}
+
 export default function SettingsPage() {
   const { toast } = useToast();
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
+  const [isSuccessOpen, setIsSuccessOpen] = React.useState(false);
 
   const {
     register,
@@ -61,12 +76,16 @@ export default function SettingsPage() {
       try {
         const res = await getCurrentAdminSettings();
         if (res.success && res.data) {
+          // The database stores TIME values as `HH:mm:ss`, but both the form
+          // schema (regex HH:mm) and the native <input type="time"> work with
+          // `HH:mm`. Trim the seconds so untouched fields stay valid and don't
+          // force the admin to re-enter them on save.
           reset({
             visit_time: res.data.visit_time,
-            morning_start_time: res.data.morning_start_time,
-            morning_end_time: res.data.morning_end_time,
-            afternoon_start_time: res.data.afternoon_start_time,
-            afternoon_end_time: res.data.afternoon_end_time,
+            morning_start_time: toHHmm(res.data.morning_start_time),
+            morning_end_time: toHHmm(res.data.morning_end_time),
+            afternoon_start_time: toHHmm(res.data.afternoon_start_time),
+            afternoon_end_time: toHHmm(res.data.afternoon_end_time),
             max_visit_per_time: res.data.max_visit_per_time,
             suitable_days: res.data.suitable_days,
           });
@@ -166,11 +185,7 @@ export default function SettingsPage() {
     try {
       const res = await updateSchedulingSettings(data);
       if (res.success) {
-        toast({
-          title: 'Thành công',
-          description: 'Cấu hình lịch thăm gặp đã được lưu.',
-          variant: 'default',
-        });
+        setIsSuccessOpen(true);
       } else {
         toast({
           title: 'Thất bại',
@@ -421,6 +436,29 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Success dialog — confirms the scheduling configuration was saved */}
+      <Dialog open={isSuccessOpen} onOpenChange={setIsSuccessOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-success-soft text-success ring-8 ring-success-soft/30">
+              <CheckCircle2 className="h-8 w-8" />
+            </div>
+            <DialogTitle className="text-center text-heading-lg font-bold tracking-tight text-ink">
+              Cập nhật cấu hình thành công!
+            </DialogTitle>
+            <DialogDescription className="text-center mt-2 text-mute">
+              Cấu hình lịch thăm gặp đã được lưu và áp dụng. Các lượt đăng ký mới sẽ tuân theo khung giờ và ngày làm việc vừa thiết lập.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-6">
+            <Button onClick={() => setIsSuccessOpen(false)} className="w-full">
+              Đã hiểu
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

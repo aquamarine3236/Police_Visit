@@ -65,3 +65,6 @@ diagrams/
 IMPLEMENTATION_PHASES.md
 AGENTS.md
 CLAUDE.md
+
+# admin bootstrap scripts (chứa/nhận thông tin nhạy cảm)
+/scripts/create-admin.mjs

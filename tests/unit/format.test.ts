@@ -29,16 +29,18 @@ describe('formatDateVN', () => {
 });
 
 describe('formatDateTimeVN', () => {
-  it('chuyển timestamp ISO sang dd/mm/yyyy HH:mm', () => {
-    // Dùng giờ địa phương; tạo Date rồi so lại theo cùng logic.
-    const iso = '2026-07-14T08:05:00';
-    const d = new Date(iso);
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    const hh = String(d.getHours()).padStart(2, '0');
-    const min = String(d.getMinutes()).padStart(2, '0');
-    expect(formatDateTimeVN(iso)).toBe(`${dd}/${mm}/${yyyy} ${hh}:${min}`);
+  it('chuyển timestamp UTC sang dd/mm/yyyy HH:mm theo giờ VN (+7)', () => {
+    // 08:05 UTC -> 15:05 giờ VN (+7), cùng ngày.
+    expect(formatDateTimeVN('2026-07-14T08:05:00Z')).toBe('14/07/2026 15:05');
+  });
+
+  it('xử lý đúng ranh giới ngày: 18:00 UTC -> 01:00 hôm sau (VN)', () => {
+    // 2026-07-14T18:00Z + 7h = 2026-07-15T01:00 (giờ VN).
+    expect(formatDateTimeVN('2026-07-14T18:00:00Z')).toBe('15/07/2026 01:00');
+  });
+
+  it('nửa đêm UTC -> 07:00 sáng cùng ngày (VN)', () => {
+    expect(formatDateTimeVN('2026-07-14T00:00:00Z')).toBe('14/07/2026 07:00');
   });
 
   it('trả về rỗng khi đầu vào rỗng', () => {

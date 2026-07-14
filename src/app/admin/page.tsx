@@ -119,44 +119,93 @@ export default function AdminDashboardPage() {
     fetchRegistrations();
   }, [fetchRegistrations]);
 
+  // Keep the latest fetchRegistrations in a ref so the realtime subscription can
+  // be created exactly once on mount without re-subscribing on every filter change.
+  const fetchRegistrationsRef = React.useRef(fetchRegistrations);
+  React.useEffect(() => {
+    fetchRegistrationsRef.current = fetchRegistrations;
+  }, [fetchRegistrations]);
+
   React.useEffect(() => {
     const supabase = createBrowserClient();
     if (!supabase) {
       return undefined;
     }
 
-    const registrationChannel = supabase
-      .channel('public:visit_registrations')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'visit_registrations' }, (payload) => {
-        const record = payload.new as Record<string, unknown>;
-        if (record?.id && typeof record.id === 'string') {
-          setHighlightedRegistrationId(record.id);
-          fetchRegistrations();
-          if (highlightTimeoutRef.current) {
-            window.clearTimeout(highlightTimeoutRef.current);
-          }
-          highlightTimeoutRef.current = window.setTimeout(() => {
-            setHighlightedRegistrationId(null);
-            highlightTimeoutRef.current = null;
-          }, 5000);
+    // Realtime `postgres_changes` events are filtered by RLS. The
+    // `admin_visit_registrations_prison` policy keys off the `prison_id` claim
+    // in the admin's JWT, so the realtime socket MUST authenticate with the
+    // logged-in user's access token — otherwise it connects as `anon` (no
+    // `prison_id`), every INSERT/UPDATE is filtered out, and the list never
+    // syncs. Push the token before subscribing and refresh it on token rotation.
+    //
+    // The channel is set up ONCE on mount. `.on(...)` handlers must be attached
+    // before `.subscribe()`; re-running this effect (or racing an async token
+    // fetch against teardown) would attempt to reuse the same topic after it is
+    // already subscribed and throw "cannot add postgres_changes callbacks ...".
+    let cancelled = false;
+    let registrationChannel: ReturnType<typeof supabase.channel> | null = null;
+
+    const handleInsert = (payload: { new: Record<string, unknown> }) => {
+      const record = payload.new as Record<string, unknown>;
+      if (record?.id && typeof record.id === 'string') {
+        setHighlightedRegistrationId(record.id);
+        fetchRegistrationsRef.current();
+        if (highlightTimeoutRef.current) {
+          window.clearTimeout(highlightTimeoutRef.current);
         }
-      })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'visit_registrations' }, (payload) => {
-        const record = payload.new as Record<string, unknown>;
-        if (record?.id && typeof record.id === 'string') {
-          fetchRegistrations();
-        }
-      })
-      .subscribe();
+        highlightTimeoutRef.current = window.setTimeout(() => {
+          setHighlightedRegistrationId(null);
+          highlightTimeoutRef.current = null;
+        }, 5000);
+      }
+    };
+
+    const handleUpdate = (payload: { new: Record<string, unknown> }) => {
+      const record = payload.new as Record<string, unknown>;
+      if (record?.id && typeof record.id === 'string') {
+        fetchRegistrationsRef.current();
+      }
+    };
+
+    const setupSubscription = () => {
+      if (cancelled) return;
+      registrationChannel = supabase
+        .channel('admin-visit-registrations')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'visit_registrations' }, handleInsert)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'visit_registrations' }, handleUpdate)
+        .subscribe();
+    };
+
+    // Authenticate the realtime socket with the current session, then subscribe.
+    supabase.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
+      const token = data.session?.access_token;
+      if (token) {
+        supabase.realtime.setAuth(token);
+      }
+      setupSubscription();
+    });
+
+    // Keep the realtime token in sync when Supabase refreshes the session.
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.access_token) {
+        supabase.realtime.setAuth(session.access_token);
+      }
+    });
 
     return () => {
+      cancelled = true;
       if (highlightTimeoutRef.current) {
         window.clearTimeout(highlightTimeoutRef.current);
         highlightTimeoutRef.current = null;
       }
-      supabase.removeChannel(registrationChannel);
+      authListener.subscription.unsubscribe();
+      if (registrationChannel) {
+        supabase.removeChannel(registrationChannel);
+      }
     };
-  }, [fetchRegistrations, selectedReg]);
+  }, []);
 
   // Handle status update
   const handleStatusChange = async (newStatus: 'completed' | 'no_show') => {

@@ -4,9 +4,14 @@
  * Quy ước:
  * - Ngày lưu trong DB / truyền qua API ở dạng ISO `yyyy-mm-dd`.
  * - Ngày HIỂN THỊ luôn ở dạng `dd/mm/yyyy` (toàn số).
+ * - Giờ HIỂN THỊ luôn tính theo múi giờ nghiệp vụ UTC+7 (xem `@/lib/time`).
  * - Họ tên HIỂN THỊ viết hoa chữ cái đầu mỗi từ (Title Case), giữ nguyên dấu.
  *   Lưu ý: chỉ chuẩn hóa khi hiển thị, KHÔNG thay đổi dữ liệu lưu trong DB.
  */
+
+// Timestamp luôn hiển thị theo giờ VN (+7); nguồn chân lý duy nhất là `@/lib/time`.
+// Re-export để giữ backward-compatible import `formatDateTimeVN` từ `@/lib/format`.
+export { formatDateTimeVN } from '@/lib/time';
 
 // ─── Ngày ───────────────────────────────────────────────────────────────────
 
@@ -28,27 +33,6 @@ export function formatDateVN(value: string | null | undefined): string {
 
   const [, yyyy, mm, dd] = match;
   return `${dd}/${mm}/${yyyy}`;
-}
-
-/**
- * Chuyển timestamp ISO sang `dd/mm/yyyy HH:mm` (giờ địa phương VN).
- *
- * @param value Timestamp ISO (ví dụ `2026-07-14T08:30:00Z`).
- * @returns Chuỗi `dd/mm/yyyy HH:mm`, hoặc rỗng nếu đầu vào rỗng/không hợp lệ.
- */
-export function formatDateTimeVN(value: string | null | undefined): string {
-  if (!value) return '';
-
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return value;
-
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const yyyy = d.getFullYear();
-  const hh = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-
-  return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
 }
 
 /**

@@ -7,6 +7,7 @@ import type {
   ServiceResult,
 } from '@/types';
 import { inmateFormSchema, type InmateFormData, type InmateListQuery } from '@/lib/validations/inmate';
+import { todayVN } from '@/lib/time';
 
 // ─── Helper: get admin's prison_id from session ─────────────────────────────
 
@@ -297,8 +298,9 @@ export async function deleteInmate(
     return { success: false, message: 'Không tìm thấy phạm nhân.' };
   }
 
-  // Block soft-deletion if future confirmed registrations exist
-  const today = new Date().toISOString().split('T')[0];
+  // Block soft-deletion if future confirmed registrations exist.
+  // "Hôm nay" tính theo UTC+7 để tránh lệch ngày khi server chạy UTC.
+  const today = todayVN();
   const { count: futureCount, error: countError } = await supabase
     .from('visit_registrations')
     .select('id', { count: 'exact', head: true })

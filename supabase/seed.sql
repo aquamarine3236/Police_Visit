@@ -1,7 +1,7 @@
 INSERT INTO prisons (id, name, code, address, phone, is_active)
 VALUES (
   '11111111-1111-1111-1111-111111111111',
-  'Trại giam mẫu',
+  'Trại giam NK',
   'PRISON-001',
   'Địa chỉ mẫu',
   '0123456789',

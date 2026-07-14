@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Trash2, ShieldAlert, CheckCircle2, XCircle, Loader2, CalendarClock } from 'lucide-react';
+import { Plus, Trash2, ShieldAlert, CheckCircle2, XCircle, Loader2, CalendarClock, Hash, User, CalendarDays, Clock, Users, Tag } from 'lucide-react';
 
 import {
   Form,
@@ -34,6 +34,12 @@ import {
 
 import { submitRegistration } from '@/actions/registration';
 import { formatDateVN, toTitleCaseName } from '@/lib/format';
+import {
+  todayVN,
+  calendarDateToISO,
+  getISODayOfWeekVN,
+  getWeekdayNameVN,
+} from '@/lib/time';
 
 // Default prison ID for single-prison system
 const DEFAULT_PRISON_ID = '11111111-1111-1111-1111-111111111111';
@@ -133,28 +139,18 @@ export default function PublicRegistrationPage() {
   }, []);
 
   // ─── Date disabled logic (uses dynamic suitable_days from settings) ──────
-  // Maps JS Date.getDay() (0=Sun,1=Mon,...,6=Sat) to ISO day (1=Mon,...,7=Sun)
-  const jsToIsoDayMap: Record<number, number> = {
-    0: 7, // Sunday
-    1: 1, // Monday
-    2: 2, // Tuesday
-    3: 3, // Wednesday
-    4: 4, // Thursday
-    5: 5, // Friday
-    6: 6, // Saturday
-  };
-
+  // Mọi phép tính "hôm nay / thứ trong tuần" đều theo UTC+7 (nghiệp vụ duy nhất),
+  // độc lập với timezone của trình duyệt người dùng.
   const isDateDisabled = (date: Date) => {
-    const tomorrow = new Date();
-    tomorrow.setHours(0, 0, 0, 0);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    // Ngày người dùng nhìn thấy trên lịch, quy về chuỗi ISO `yyyy-mm-dd`.
+    const isoDate = calendarDateToISO(date);
 
-    // Must be in the future
-    if (date < tomorrow) return true;
+    // Phải là ngày trong tương lai theo +7 (không gồm hôm nay).
+    if (isoDate <= todayVN()) return true;
 
-    // Must be a suitable day (dynamic from settings)
+    // Phải là ngày thăm gặp hợp lệ (lấy động từ settings).
     if (publicSettings?.suitable_days) {
-      const isoDay = jsToIsoDayMap[date.getDay()];
+      const isoDay = getISODayOfWeekVN(isoDate);
       return !publicSettings.suitable_days.includes(isoDay);
     }
 
@@ -162,20 +158,13 @@ export default function PublicRegistrationPage() {
     return true;
   };
 
-  const formatDateString = (date: Date) => {
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  };
+  const formatDateString = (date: Date) => calendarDateToISO(date);
 
   const formatDateVietnamese = (dateStr: string) => formatDateVN(dateStr);
 
   const getDayOfWeekVietnamese = (dateStr: string) => {
     if (!dateStr) return '';
-    const d = new Date(dateStr);
-    const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
-    return days[d.getDay()];
+    return getWeekdayNameVN(dateStr);
   };
 
   const formatTimeSlot = (timeStr: string) => {
@@ -594,10 +583,10 @@ export default function PublicRegistrationPage() {
 
       {/* Success Modal with real assigned slot data */}
       <Dialog open={isSuccessOpen} onOpenChange={(open) => { if (!open) handleSuccessClose(); }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-success-soft text-success">
-              <CheckCircle2 className="h-8 w-8" />
+        <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden flex max-h-[90vh] flex-col">
+          <DialogHeader className="shrink-0 text-center px-6 pt-8 pb-6 border-b border-hairline bg-gradient-to-b from-success-soft/40 to-transparent">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success-soft text-success ring-8 ring-success-soft/30">
+              <CheckCircle2 className="h-9 w-9" />
             </div>
             <DialogTitle className="text-center text-heading-lg font-bold tracking-tight text-ink">
               Đăng ký thành công!
@@ -608,54 +597,85 @@ export default function PublicRegistrationPage() {
           </DialogHeader>
 
           {successData && (
-            <div className="mt-6 border border-hairline-soft bg-soft-cloud p-4 space-y-3 text-caption-md text-charcoal">
-              <div className="flex justify-between border-b border-hairline pb-2">
-                <span className="font-semibold text-ink">Mã lịch hẹn:</span>
-                <span className="font-mono font-semibold text-ink">
+            <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5">
+              {/* Booking code — the hero of the receipt */}
+              <div className="flex items-center justify-between rounded-lg border border-hairline bg-soft-cloud px-4 py-3">
+                <div className="flex items-center gap-2 text-caption-md text-mute">
+                  <Hash className="h-4 w-4 text-primary" />
+                  <span className="font-medium">Mã lịch hẹn</span>
+                </div>
+                <span className="font-mono text-heading-sm font-bold tracking-widest text-ink">
                   {successData.registration.id.substring(0, 8).toUpperCase()}
                 </span>
               </div>
-              <div className="flex justify-between border-b border-hairline pb-2">
-                <span className="font-semibold text-ink">Người đang bị quản lý giam giữ:</span>
-                <span>{toTitleCaseName(successData.inmate.full_name)} ({successData.inmate.prison_number})</span>
-              </div>
-              <div className="flex justify-between border-b border-hairline pb-2">
-                <span className="font-semibold text-ink">Phân loại:</span>
-                <span>{successData.inmate.classification}</span>
-              </div>
-              <div className="flex justify-between border-b border-hairline pb-2">
-                <span className="font-semibold text-ink">Ngày thăm gặp:</span>
-                <span>{getDayOfWeekVietnamese(successData.registration.visit_date)}, {formatDateVietnamese(successData.registration.visit_date)}</span>
-              </div>
-              {publicSettings?.suitable_days_labels?.length ? (
-                <div className="flex justify-between border-b border-hairline pb-2">
-                  <span className="font-semibold text-ink">Ngày được phép thăm gặp:</span>
-                  <span>{publicSettings.suitable_days_labels.join(', ')}</span>
+
+              {/* Time slot — highlighted */}
+              <div className="flex items-center justify-between rounded-lg border border-success/30 bg-success-soft/40 px-4 py-3">
+                <div className="flex items-center gap-2 text-caption-md text-success">
+                  <Clock className="h-4 w-4" />
+                  <span className="font-medium">Khung giờ hẹn</span>
                 </div>
-              ) : null}
-              <div className="flex justify-between border-b border-hairline pb-2">
-                <span className="font-semibold text-ink">Khung giờ hẹn:</span>
-                <span className="font-semibold text-success font-mono">
-                  {formatTimeSlot(successData.registration.time_slot_start)} - {formatTimeSlot(successData.registration.time_slot_end)}
+                <span className="font-mono text-heading-sm font-bold text-success">
+                  {formatTimeSlot(successData.registration.time_slot_start)} – {formatTimeSlot(successData.registration.time_slot_end)}
                 </span>
               </div>
-              <div className="space-y-1">
-                <span className="font-semibold text-ink">Người đi thăm đi kèm:</span>
-                <ul className="list-disc pl-5 space-y-0.5 text-mute">
-                  {successData.visitors
-                    .sort((a, b) => a.display_order - b.display_order)
-                    .map((v, i) => (
-                      <li key={i}>
-                        {toTitleCaseName(v.full_name)} ({v.relationship}) - CCCD: {v.citizen_id}
-                      </li>
-                    ))}
-                </ul>
-              </div>
+
+              {/* Details grid */}
+              <dl className="space-y-3 text-caption-md">
+                <div className="flex items-start gap-3">
+                  <User className="mt-0.5 h-4 w-4 shrink-0 text-mute" />
+                  <div className="flex-1">
+                    <dt className="text-mute">Người đang bị quản lý giam giữ</dt>
+                    <dd className="font-semibold text-ink">
+                      {toTitleCaseName(successData.inmate.full_name)}{' '}
+                      <span className="font-mono text-charcoal">({successData.inmate.prison_number})</span>
+                    </dd>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Tag className="mt-0.5 h-4 w-4 shrink-0 text-mute" />
+                  <div className="flex-1">
+                    <dt className="text-mute">Phân loại</dt>
+                    <dd className="font-semibold text-ink">{successData.inmate.classification}</dd>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-mute" />
+                  <div className="flex-1">
+                    <dt className="text-mute">Ngày thăm gặp</dt>
+                    <dd className="font-semibold text-ink">
+                      {getDayOfWeekVietnamese(successData.registration.visit_date)}, {formatDateVietnamese(successData.registration.visit_date)}
+                    </dd>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Users className="mt-0.5 h-4 w-4 shrink-0 text-mute" />
+                  <div className="flex-1">
+                    <dt className="text-mute">Người đi thăm đi kèm</dt>
+                    <dd>
+                      <ul className="mt-1 space-y-1.5">
+                        {successData.visitors
+                          .sort((a, b) => a.display_order - b.display_order)
+                          .map((v, i) => (
+                            <li key={i} className="rounded-md bg-soft-cloud px-3 py-2 text-charcoal">
+                              <span className="font-semibold text-ink">{toTitleCaseName(v.full_name)}</span>
+                              <span className="text-mute"> · {v.relationship}</span>
+                              <span className="block font-mono text-caption-sm text-mute">CCCD: {v.citizen_id}</span>
+                            </li>
+                          ))}
+                      </ul>
+                    </dd>
+                  </div>
+                </div>
+              </dl>
             </div>
           )}
 
-          <div className="mt-8 flex justify-center">
-            <Button onClick={handleSuccessClose} className="w-full sm:w-auto">
+          <div className="shrink-0 border-t border-hairline bg-surface px-6 py-4">
+            <Button onClick={handleSuccessClose} className="w-full">
               Hoàn tất đăng ký
             </Button>
           </div>

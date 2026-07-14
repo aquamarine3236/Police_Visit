@@ -6,6 +6,7 @@ import {
   type RegistrationFormData,
 } from '@/lib/validations/registration';
 import { formatSuitableDays } from '@/lib/constants';
+import { getISODayOfWeekVN, todayVN } from '@/lib/time';
 
 // ─── Cross-verify inmate data against DB ────────────────────────────────────
 
@@ -79,7 +80,7 @@ export async function submitRegistration(
   }
 
   // Step 4: Check visit_date is a suitable day
-  const visitDateObj = new Date(visit_date + 'T00:00:00+07:00');
+  // Day-of-week được tính theo lịch UTC+7 (độc lập timezone server/trình duyệt).
   const { data: settings } = await supabase
     .from('scheduling_settings')
     .select('suitable_days')
@@ -87,7 +88,7 @@ export async function submitRegistration(
     .maybeSingle();
 
   if (settings) {
-    const dayOfWeek = visitDateObj.getUTCDay() === 0 ? 7 : visitDateObj.getUTCDay();
+    const dayOfWeek = getISODayOfWeekVN(visit_date);
     const suitableDays: number[] = settings.suitable_days;
     if (!suitableDays.includes(dayOfWeek)) {
       const allowed = formatSuitableDays(suitableDays);
@@ -196,11 +197,9 @@ export async function updateRegistrationStatus(
   // date-only strings in the Asia/Ho_Chi_Minh (UTC+7) zone so the result is
   // independent of the server's timezone (e.g. UTC on Vercel), avoiding
   // off-by-one day boundary errors.
-  const todayVN = new Date(Date.now() + 7 * 60 * 60 * 1000)
-    .toISOString()
-    .split('T')[0];
+  const today = todayVN();
   const visitDateStr = String(reg.visit_date).split('T')[0];
-  if (visitDateStr >= todayVN) {
+  if (visitDateStr >= today) {
     return { success: false, message: 'Chỉ có thể cập nhật trạng thái sau ngày thăm gặp.' };
   }
 
