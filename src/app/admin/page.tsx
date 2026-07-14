@@ -87,9 +87,16 @@ export default function AdminDashboardPage() {
   const [highlightedRegistrationId, setHighlightedRegistrationId] = React.useState<string | null>(null);
   const highlightTimeoutRef = React.useRef<number | null>(null);
 
-  // Fetch registrations
-  const fetchRegistrations = React.useCallback(async () => {
-    setLoading(true);
+  // Fetch registrations.
+  //
+  // `silent` refreshes (realtime events, polling, tab re-focus) skip the loading
+  // spinner and the error toast so an auto-update never blanks the table or
+  // interrupts the admin. The query is always built from the CURRENT filter /
+  // search / page state, so those are preserved across every refresh. New rows
+  // sort to the top because the API defaults to `created_at desc`.
+  const fetchRegistrations = React.useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) setLoading(true);
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -109,14 +116,18 @@ export default function AdminDashboardPage() {
       setTotalPages(json.pagination.total_pages);
       setTotalRegs(json.pagination.total);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Không thể thực hiện hành động.';
-      toast({
-        title: 'Lỗi',
-        description: message,
-        variant: 'destructive',
-      });
+      // Never surface transient background-refresh failures as toasts; the next
+      // poll (or realtime event) will reconcile the list.
+      if (!silent) {
+        const message = err instanceof Error ? err.message : 'Không thể thực hiện hành động.';
+        toast({
+          title: 'Lỗi',
+          description: message,
+          variant: 'destructive',
+        });
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [page, search, status, dateFrom, dateTo, toast]);
 
@@ -133,80 +144,161 @@ export default function AdminDashboardPage() {
 
   React.useEffect(() => {
     const supabase = createBrowserClient();
-    if (!supabase) {
-      return undefined;
+
+    // Poll cadences: tight when realtime is NOT confirmed healthy (so the list
+    // still updates within seconds), relaxed when realtime is SUBSCRIBED (a
+    // low-frequency safety net that reconciles anything a dropped event missed).
+    const POLL_MS_FALLBACK = 10_000;
+    const POLL_MS_HEALTHY = 60_000;
+
+    let cancelled = false;
+    let registrationChannel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null;
+    let pollTimer: number | null = null;
+    // Realtime is considered healthy only after the channel reports SUBSCRIBED.
+    let realtimeHealthy = false;
+
+    const silentRefresh = () => {
+      // Never refresh a hidden tab; the visibilitychange handler refreshes once
+      // on re-focus instead, avoiding needless load while nobody is watching.
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        return;
+      }
+      fetchRegistrationsRef.current({ silent: true });
+    };
+
+    // (Re)arm the polling interval at the cadence matching realtime health.
+    const startPolling = (intervalMs: number) => {
+      if (pollTimer !== null) {
+        window.clearInterval(pollTimer);
+      }
+      pollTimer = window.setInterval(silentRefresh, intervalMs);
+    };
+
+    const stopPolling = () => {
+      if (pollTimer !== null) {
+        window.clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    };
+
+    // Refresh immediately when the admin returns to the tab so they see the
+    // latest state without waiting for the next poll tick.
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        silentRefresh();
+      }
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
     }
 
-    // Realtime `postgres_changes` events are filtered by RLS. The
+    // Start the fallback poller straight away. If realtime later confirms it is
+    // SUBSCRIBED we relax the cadence; if it errors/closes we tighten it again.
+    startPolling(POLL_MS_FALLBACK);
+
+    // ── Realtime subscription (primary path) ────────────────────────────────
+    // `postgres_changes` events are filtered by RLS. The
     // `admin_visit_registrations_prison` policy keys off the `prison_id` claim
     // in the admin's JWT, so the realtime socket MUST authenticate with the
     // logged-in user's access token — otherwise it connects as `anon` (no
-    // `prison_id`), every INSERT/UPDATE is filtered out, and the list never
-    // syncs. Push the token before subscribing and refresh it on token rotation.
+    // `prison_id`), every INSERT/UPDATE is filtered out, and only the polling
+    // fallback keeps the list in sync. Push the token before subscribing and
+    // refresh it on token rotation.
+    //
+    // NOTE: on hosted Supabase the `custom_access_token_hook` must ALSO be
+    // enabled in the dashboard (Authentication → Hooks); config.toml only wires
+    // it for local. If it is off, JWTs carry no `prison_id`, realtime events are
+    // RLS-filtered out, and the fallback poller (above) is what keeps sync.
     //
     // The channel is set up ONCE on mount. `.on(...)` handlers must be attached
     // before `.subscribe()`; re-running this effect (or racing an async token
     // fetch against teardown) would attempt to reuse the same topic after it is
     // already subscribed and throw "cannot add postgres_changes callbacks ...".
-    let cancelled = false;
-    let registrationChannel: ReturnType<typeof supabase.channel> | null = null;
+    let authListener: ReturnType<NonNullable<typeof supabase>['auth']['onAuthStateChange']>['data'] | null = null;
 
-    const handleInsert = (payload: { new: Record<string, unknown> }) => {
-      const record = payload.new as Record<string, unknown>;
-      if (record?.id && typeof record.id === 'string') {
-        setHighlightedRegistrationId(record.id);
-        fetchRegistrationsRef.current();
-        if (highlightTimeoutRef.current) {
-          window.clearTimeout(highlightTimeoutRef.current);
+    if (supabase) {
+      const handleInsert = (payload: { new: Record<string, unknown> }) => {
+        const record = payload.new as Record<string, unknown>;
+        if (record?.id && typeof record.id === 'string') {
+          setHighlightedRegistrationId(record.id);
+          silentRefresh();
+          if (highlightTimeoutRef.current) {
+            window.clearTimeout(highlightTimeoutRef.current);
+          }
+          highlightTimeoutRef.current = window.setTimeout(() => {
+            setHighlightedRegistrationId(null);
+            highlightTimeoutRef.current = null;
+          }, 5000);
         }
-        highlightTimeoutRef.current = window.setTimeout(() => {
-          setHighlightedRegistrationId(null);
-          highlightTimeoutRef.current = null;
-        }, 5000);
-      }
-    };
+      };
 
-    const handleUpdate = (payload: { new: Record<string, unknown> }) => {
-      const record = payload.new as Record<string, unknown>;
-      if (record?.id && typeof record.id === 'string') {
-        fetchRegistrationsRef.current();
-      }
-    };
+      const handleUpdate = (payload: { new: Record<string, unknown> }) => {
+        const record = payload.new as Record<string, unknown>;
+        if (record?.id && typeof record.id === 'string') {
+          silentRefresh();
+        }
+      };
 
-    const setupSubscription = () => {
-      if (cancelled) return;
-      registrationChannel = supabase
-        .channel('admin-visit-registrations')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'visit_registrations' }, handleInsert)
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'visit_registrations' }, handleUpdate)
-        .subscribe();
-    };
+      const setupSubscription = () => {
+        if (cancelled) return;
+        registrationChannel = supabase
+          .channel('admin-visit-registrations')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'visit_registrations' }, handleInsert)
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'visit_registrations' }, handleUpdate)
+          .subscribe((subscribeStatus) => {
+            if (cancelled) return;
+            if (subscribeStatus === 'SUBSCRIBED') {
+              // Realtime is live: relax polling to a low-frequency reconcile and
+              // pull once immediately in case an event fired before we attached.
+              realtimeHealthy = true;
+              startPolling(POLL_MS_HEALTHY);
+              silentRefresh();
+            } else if (
+              subscribeStatus === 'CHANNEL_ERROR' ||
+              subscribeStatus === 'TIMED_OUT' ||
+              subscribeStatus === 'CLOSED'
+            ) {
+              // Realtime failed/dropped: fall back to tight polling so the list
+              // still updates within a few seconds.
+              if (realtimeHealthy) {
+                realtimeHealthy = false;
+                startPolling(POLL_MS_FALLBACK);
+              }
+            }
+          });
+      };
 
-    // Authenticate the realtime socket with the current session, then subscribe.
-    supabase.auth.getSession().then(({ data }) => {
-      if (cancelled) return;
-      const token = data.session?.access_token;
-      if (token) {
-        supabase.realtime.setAuth(token);
-      }
-      setupSubscription();
-    });
+      // Authenticate the realtime socket with the current session, then subscribe.
+      supabase.auth.getSession().then(({ data }) => {
+        if (cancelled) return;
+        const token = data.session?.access_token;
+        if (token) {
+          supabase.realtime.setAuth(token);
+        }
+        setupSubscription();
+      });
 
-    // Keep the realtime token in sync when Supabase refreshes the session.
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.access_token) {
-        supabase.realtime.setAuth(session.access_token);
-      }
-    });
+      // Keep the realtime token in sync when Supabase refreshes the session.
+      authListener = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.access_token) {
+          supabase.realtime.setAuth(session.access_token);
+        }
+      }).data;
+    }
 
     return () => {
       cancelled = true;
+      stopPolling();
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
       if (highlightTimeoutRef.current) {
         window.clearTimeout(highlightTimeoutRef.current);
         highlightTimeoutRef.current = null;
       }
-      authListener.subscription.unsubscribe();
-      if (registrationChannel) {
+      authListener?.subscription.unsubscribe();
+      if (supabase && registrationChannel) {
         supabase.removeChannel(registrationChannel);
       }
     };
