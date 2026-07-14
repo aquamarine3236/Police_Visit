@@ -72,6 +72,35 @@ export function isValidDateVN(value: string | null | undefined): boolean {
   return parseDateVNtoISO(value) !== '';
 }
 
+/**
+ * Cộng (hoặc trừ) số ngày vào một chuỗi ISO `yyyy-mm-dd` và trả về ISO mới.
+ * Parse thủ công phần ngày để tránh lệch múi giờ khi dùng `new Date(string)`.
+ *
+ * @param iso Chuỗi ISO `yyyy-mm-dd` (phần ngày của timestamp cũng chấp nhận).
+ * @param days Số ngày cần cộng (có thể âm để trừ).
+ * @returns Chuỗi ISO `yyyy-mm-dd` sau khi cộng, hoặc `''` nếu đầu vào không hợp lệ.
+ */
+export function addDaysISO(
+  iso: string | null | undefined,
+  days: number,
+): string {
+  if (!iso) return '';
+
+  const datePart = iso.split('T')[0];
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(datePart);
+  if (!match) return '';
+
+  const [, yyyy, mm, dd] = match;
+  // Dùng UTC để phép cộng ngày không bị ảnh hưởng bởi DST/múi giờ local.
+  const d = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
+  d.setUTCDate(d.getUTCDate() + days);
+
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 // ─── Họ tên ──────────────────────────────────────────────────────────────────
 
 /**

@@ -4,7 +4,6 @@ import * as React from 'react';
 import { 
   Search, 
   Download, 
-  Calendar, 
   Eye, 
   FileText, 
   Check, 
@@ -17,7 +16,7 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { DateInput } from '@/components/ui/date-input';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Badge, type BadgeVariant } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Pagination } from '@/components/ui/pagination';
@@ -40,7 +39,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { updateRegistrationStatus, deleteRegistration } from '@/actions/registrations';
 import { createBrowserClient } from '@/lib/supabase/client';
-import { formatDateVN, toTitleCaseName } from '@/lib/format';
+import { formatDateVN, toTitleCaseName, addDaysISO } from '@/lib/format';
 import type { VisitRegistration } from '@/types';
 
 interface VisitorDetail {
@@ -437,6 +436,46 @@ export default function AdminDashboardPage() {
     return `/api/v1/admin/registrations/export?${params.toString()}`;
   }, [search, status, dateFrom, dateTo]);
 
+  // Date-range filter handlers.
+  //
+  // "Từ ngày": khi chọn/nhập, tự động gán "Đến ngày" = ngày kế tiếp NẾU "Đến
+  // ngày" đang trống hoặc đang nhỏ hơn "Từ ngày" (giữ khoảng hợp lệ). Người
+  // dùng vẫn có thể chỉnh lại "Đến ngày" sau đó.
+  const handleDateFromChange = React.useCallback(
+    (iso: string) => {
+      setDateFrom(iso);
+      setPage(1);
+      if (iso) {
+        setDateTo((prevTo) => {
+          if (!prevTo || prevTo < iso) {
+            return addDaysISO(iso, 1);
+          }
+          return prevTo;
+        });
+      }
+    },
+    [],
+  );
+
+  // "Đến ngày": không tự thay đổi "Từ ngày". Không cho chọn nhỏ hơn "Từ ngày";
+  // nếu xảy ra (qua nhập tay) thì hiển thị thông báo và KHÔNG áp dụng lọc, giữ
+  // nguyên giá trị hợp lệ trước đó.
+  const handleDateToChange = React.useCallback(
+    (iso: string) => {
+      if (iso && dateFrom && iso < dateFrom) {
+        toast({
+          title: 'Khoảng ngày không hợp lệ',
+          description: '“Đến ngày” không được nhỏ hơn “Từ ngày”.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      setDateTo(iso);
+      setPage(1);
+    },
+    [dateFrom, toast],
+  );
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -488,9 +527,9 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Inputs */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:items-center">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center">
           {/* Search bar */}
-          <div className="relative md:col-span-6">
+          <div className="relative flex-1 md:min-w-0">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mute" />
             <Input
               placeholder="Tìm theo số giam, tên người bị giam giữ hoặc người thân..."
@@ -504,29 +543,31 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Date Pickers */}
-          <div className="grid grid-cols-2 gap-2 md:col-span-6">
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mute pointer-events-none" />
-              <DateInput
+          <div className="flex items-center gap-3 md:ml-4">
+            <div className="flex items-center gap-2">
+              <label className="shrink-0 text-caption-sm font-medium text-mute">
+                Từ ngày
+              </label>
+              <DatePicker
                 value={dateFrom}
-                onChange={(iso) => {
-                  setDateFrom(iso);
-                  setPage(1);
-                }}
+                onChange={handleDateFromChange}
                 aria-label="Từ ngày"
-                className="h-11 pl-9 text-caption-md"
+                className="w-40"
+                inputClassName="h-11 text-caption-md"
               />
             </div>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mute pointer-events-none" />
-              <DateInput
+            <div className="flex items-center gap-2">
+              <label className="shrink-0 text-caption-sm font-medium text-mute">
+                Đến ngày
+              </label>
+              <DatePicker
                 value={dateTo}
-                onChange={(iso) => {
-                  setDateTo(iso);
-                  setPage(1);
-                }}
+                onChange={handleDateToChange}
+                disabledBefore={dateFrom || undefined}
                 aria-label="Đến ngày"
-                className="h-11 pl-9 text-caption-md"
+                align="end"
+                className="w-40"
+                inputClassName="h-11 text-caption-md"
               />
             </div>
           </div>
