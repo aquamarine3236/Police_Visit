@@ -90,6 +90,30 @@ export interface RegistrationVisitor {
   created_at: string;
 }
 
+// ─── Inmate Relatives (Thân nhân người bị giam giữ) ─────────────────────────
+
+export interface InmateRelative {
+  id: string;
+  inmate_id: string;
+  full_name: string;
+  date_of_birth: string | null;
+  citizen_id: string;
+  relationship: string;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+  updated_by: string | null;
+}
+
+export type InmateRelativeInsert = Omit<
+  InmateRelative,
+  'id' | 'created_at' | 'updated_at'
+>;
+
+export type InmateRelativeUpdate = Partial<
+  Omit<InmateRelative, 'id' | 'inmate_id' | 'created_at' | 'updated_at'>
+>;
+
 // ─── Scheduling Settings ────────────────────────────────────────────────────
 
 export interface SchedulingSettings {

@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ClipboardList, Loader2, Settings, Users } from 'lucide-react';
+import { ClipboardList, Loader2, Settings, Users, Users2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PoliceLogo } from '@/components/shared/police-logo';
 
@@ -30,6 +30,11 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Quản lý người bị giam giữ',
     href: '/admin/inmates',
     icon: Users,
+  },
+  {
+    label: 'Thân nhân người bị giam giữ',
+    href: '/admin/relatives',
+    icon: Users2,
   },
   {
     label: 'Cấu hình lịch',

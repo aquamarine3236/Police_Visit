@@ -64,7 +64,7 @@ export function AdminLayoutShell({ profile, email, children }: AdminLayoutShellP
           email={email}
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8" style={{ scrollbarGutter: 'stable' }}>
           <div className="mx-auto max-w-7xl animate-fade-in-up">{children}</div>
         </main>
       </div>

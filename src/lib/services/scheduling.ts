@@ -134,6 +134,7 @@ export async function submitRegistration(
 
   const result = rpcResult as
     | { error: 'DUPLICATE' | 'MONTHLY_LIMIT' | 'NO_SLOT' }
+    | { error: 'NOT_RELATIVE'; positions: number[] }
     | { registration: VisitRegistration; visitors: RegistrationVisitor[] };
 
   if ('error' in result) {
@@ -145,6 +146,22 @@ export async function submitRegistration(
         };
       case 'MONTHLY_LIMIT':
         return { success: false, message: 'Đã quá số lần thăm gặp trong tháng này.' };
+      case 'NOT_RELATIVE': {
+        // Bước kiểm tra thân thích (mục 6): RPC trả về vị trí (1-based) của
+        // những người đăng ký KHÔNG có trong danh sách thân thích. Không có
+        // lịch nào được tạo và không có dữ liệu nào được lưu.
+        const positions = result.positions ?? [];
+        if (positions.length <= 1) {
+          return {
+            success: false,
+            message: 'Bạn không nằm trong danh sách thân thích của người này.',
+          };
+        }
+        return {
+          success: false,
+          message: `Người thứ ${positions.join(', ')} không nằm trong danh sách thân thích của người này.`,
+        };
+      }
       case 'NO_SLOT':
       default:
         return {

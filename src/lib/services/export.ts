@@ -141,3 +141,50 @@ export async function exportRegistrationsToExcel(
   const arrayBuffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(arrayBuffer);
 }
+
+// ─── Relative row type for export ───────────────────────────────────────────
+
+interface RelativeExportRow {
+  prison_number: string;
+  full_name: string;
+  date_of_birth: string | null;
+  citizen_id: string;
+  relationship: string;
+}
+
+// ─── Export Relatives to Excel ──────────────────────────────────────────────
+// Cột XUẤT phải KHỚP với cột NHẬP (Số giam, Họ và tên, Ngày sinh, CCCD, Mối
+// quan hệ) để file xuất ra có thể được import lại ngay lập tức.
+
+export async function exportRelativesToExcel(
+  rows: RelativeExportRow[],
+): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook();
+  workbook.created = new Date();
+  workbook.creator = 'Hệ thống Quản lý Đăng ký Thăm gặp';
+
+  const worksheet = workbook.addWorksheet('Danh sách thân thích');
+
+  worksheet.columns = [
+    { header: 'Số giam', key: 'prison_number', width: 15 },
+    { header: 'Họ và tên', key: 'full_name', width: 25 },
+    { header: 'Ngày sinh', key: 'date_of_birth', width: 15 },
+    { header: 'CCCD', key: 'citizen_id', width: 18 },
+    { header: 'Mối quan hệ', key: 'relationship', width: 20 },
+  ];
+
+  styleHeaderRow(worksheet);
+
+  rows.forEach((row) => {
+    worksheet.addRow({
+      prison_number: row.prison_number,
+      full_name: toTitleCaseName(row.full_name),
+      date_of_birth: formatDateVN(row.date_of_birth),
+      citizen_id: row.citizen_id,
+      relationship: row.relationship,
+    });
+  });
+
+  const arrayBuffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(arrayBuffer);
+}
