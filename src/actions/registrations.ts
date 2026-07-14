@@ -29,3 +29,25 @@ export async function updateRegistrationStatus(
 
   return result;
 }
+
+export async function deleteRegistration(
+  registrationId: string,
+): Promise<ServiceResult<{ id: string }>> {
+  const supabase = await createServerClient();
+  if (!supabase) {
+    return { success: false, message: 'Supabase chưa được cấu hình.' };
+  }
+
+  const db = createServiceRoleClient() ?? supabase;
+  const result = await schedulingService.deleteRegistration(
+    supabase,
+    registrationId,
+    db,
+  );
+
+  if (result.success) {
+    revalidatePath('/admin');
+  }
+
+  return result;
+}

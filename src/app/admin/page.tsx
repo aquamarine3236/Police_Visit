@@ -11,7 +11,8 @@ import {
   UserX,
   Clock,
   User,
-  ShieldAlert
+  ShieldAlert,
+  Trash2
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -37,7 +38,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { updateRegistrationStatus } from '@/actions/registrations';
+import { updateRegistrationStatus, deleteRegistration } from '@/actions/registrations';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { formatDateVN, toTitleCaseName } from '@/lib/format';
 import type { VisitRegistration } from '@/types';
@@ -79,6 +80,10 @@ export default function AdminDashboardPage() {
   const [selectedReg, setSelectedReg] = React.useState<RegistrationWithRelations | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = React.useState(false);
   const [actionLoading, setActionLoading] = React.useState(false);
+  // Delete confirmation state
+  const [regToDelete, setRegToDelete] = React.useState<RegistrationWithRelations | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
+  const [deleteLoading, setDeleteLoading] = React.useState(false);
   const [highlightedRegistrationId, setHighlightedRegistrationId] = React.useState<string | null>(null);
   const highlightTimeoutRef = React.useRef<number | null>(null);
 
@@ -252,6 +257,57 @@ export default function AdminDashboardPage() {
     setIsDetailsOpen(true);
   };
 
+  // Open the delete confirmation dialog for a registration.
+  const openDeleteDialog = (reg: RegistrationWithRelations) => {
+    setRegToDelete(reg);
+    setIsDeleteOpen(true);
+  };
+
+  // Confirm & perform the hard delete, then refresh the list in place
+  // (preserving the current page, filters and search term).
+  const handleDeleteConfirm = async () => {
+    if (!regToDelete) return;
+    setDeleteLoading(true);
+    try {
+      const deletedId = regToDelete.id;
+      const res = await deleteRegistration(deletedId);
+      if (res.success) {
+        toast({
+          title: 'Thành công',
+          description: 'Đã xóa lần gặp khỏi hệ thống.',
+          variant: 'default',
+        });
+        setIsDeleteOpen(false);
+        // Close the details modal if it was showing the deleted record.
+        if (selectedReg?.id === deletedId) {
+          setIsDetailsOpen(false);
+        }
+        setRegToDelete(null);
+        // Optimistically remove the row so the UI updates instantly instead of
+        // waiting for the (potentially slow, exact-count) list re-fetch.
+        setRegistrations((prev) => prev.filter((r) => r.id !== deletedId));
+        setTotalRegs((prev) => Math.max(0, prev - 1));
+        // Reconcile pagination / counts in the background.
+        fetchRegistrations();
+      } else {
+        toast({
+          title: 'Thất bại',
+          description: res.message || 'Không thể xóa lần gặp.',
+          variant: 'destructive',
+        });
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Không thể xóa lần gặp.';
+      toast({
+        title: 'Lỗi hệ thống',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   // Map status → Badge variant
   const getStatusVariant = (statusVal: string): BadgeVariant => {
     switch (statusVal) {
@@ -396,7 +452,7 @@ export default function AdminDashboardPage() {
               <TableHead className="font-semibold">Ngày thăm gặp</TableHead>
               <TableHead className="font-semibold">Ca giờ hẹn</TableHead>
               <TableHead className="font-semibold">Trạng thái</TableHead>
-              <TableHead className="w-[80px] text-right font-semibold">Chi tiết</TableHead>
+              <TableHead className="w-[110px] text-right font-semibold">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -450,16 +506,28 @@ export default function AdminDashboardPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openDetailsModal(reg)}
-                        className="h-8 w-8"
-                        title="Xem chi tiết"
-                        aria-label="Xem chi tiết đăng ký"
-                      >
-                        <Eye className="h-4 w-4" aria-hidden="true" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openDetailsModal(reg)}
+                          className="h-8 w-8"
+                          title="Xem chi tiết"
+                          aria-label="Xem chi tiết đăng ký"
+                        >
+                          <Eye className="h-4 w-4" aria-hidden="true" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openDeleteDialog(reg)}
+                          className="h-8 w-8 text-danger hover:bg-danger-soft hover:text-danger"
+                          title="Xóa lần gặp"
+                          aria-label="Xóa lần gặp"
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -624,16 +692,98 @@ export default function AdminDashboardPage() {
                   </p>
                 )}
               </div>
-              
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() => setIsDetailsOpen(false)}
-              >
-                Đóng
-              </Button>
+
+              <div className="flex gap-2">
+                {selectedReg && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openDeleteDialog(selectedReg)}
+                    className="border-danger/30 text-danger hover:border-danger/50 hover:bg-danger-soft"
+                  >
+                    <Trash2 className="mr-1 h-4 w-4" />
+                    Xóa lần gặp
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setIsDetailsOpen(false)}
+                >
+                  Đóng
+                </Button>
+              </div>
             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteOpen} onOpenChange={(open) => !deleteLoading && setIsDeleteOpen(open)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-heading-lg font-bold flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-danger" />
+              Xác nhận xóa lần gặp
+            </DialogTitle>
+            <DialogDescription className="text-body-md text-mute">
+              Bạn có chắc chắn muốn xóa lịch hẹn thăm gặp này? Hành động này không thể hoàn tác.
+            </DialogDescription>
+          </DialogHeader>
+
+          {regToDelete && (
+            <div className="my-2 space-y-1 rounded-lg border border-hairline-soft bg-soft-cloud/40 p-3 text-caption-md">
+              <p>
+                Mã lịch hẹn:{' '}
+                <span className="font-mono font-semibold text-ink">
+                  {regToDelete.id.substring(0, 8).toUpperCase()}
+                </span>
+              </p>
+              <p>
+                Người bị giam giữ:{' '}
+                <strong className="text-ink">{toTitleCaseName(regToDelete.inmate?.full_name)}</strong>{' '}
+                <span className="font-mono text-mute">({regToDelete.inmate?.prison_number})</span>
+              </p>
+              <p>
+                Ngày thăm: <strong className="text-ink">{formatDateVN(regToDelete.visit_date)}</strong> ·{' '}
+                <span className="font-mono">
+                  {regToDelete.time_slot_start.substring(0, 5)} - {regToDelete.time_slot_end.substring(0, 5)}
+                </span>
+              </p>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsDeleteOpen(false)}
+              disabled={deleteLoading}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleDeleteConfirm}
+              disabled={deleteLoading}
+              className="bg-danger text-on-primary hover:bg-danger/90"
+            >
+              {deleteLoading ? (
+                <>
+                  <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent" />
+                  Đang xóa...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="mr-1 h-4 w-4" />
+                  Xóa lần gặp
+                </>
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

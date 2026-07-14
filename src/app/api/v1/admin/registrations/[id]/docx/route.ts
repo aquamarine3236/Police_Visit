@@ -21,8 +21,13 @@ import { formatDateVN, formatDateTimeVN, toTitleCaseName } from '@/lib/format';
 const STATUS_LABELS: Record<string, string> = {
   confirmed: 'Đã xác nhận',
   completed: 'Đã hoàn thành',
-  no_show: 'Không đến',
+  no_show: 'Vắng mặt',
 };
+
+// Default document font. Times New Roman is available on virtually every
+// Windows/Office install, so declaring it by name (docx does not embed fonts)
+// renders the .docx in Times New Roman without shipping any font files.
+const DEFAULT_FONT = 'Times New Roman';
 
 // ─── Helper: create a table cell with consistent styling ────────────────────
 
@@ -245,6 +250,13 @@ export async function GET(
 
   // Generate DOCX
   const doc = new Document({
+    styles: {
+      default: {
+        document: {
+          run: { font: DEFAULT_FONT },
+        },
+      },
+    },
     sections: [
       {
         children: sections,

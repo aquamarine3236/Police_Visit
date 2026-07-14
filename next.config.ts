@@ -37,6 +37,21 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Keep document-generation libraries out of the webpack bundle. pdfmake (via
+  // its `linebreak` dependency) reads a binary `data.trie` asset with
+  // `fs.readFileSync` at import time; webpack bundles the JS into
+  // `vendor-chunks` but does NOT copy that asset, so the runtime read fails
+  // with `ENOENT ... data.trie`. Marking these as server externals makes
+  // Next.js `require()` them directly from `node_modules`, where the asset sits
+  // next to the code. `docx`/`exceljs` are included for the same robustness.
+  serverExternalPackages: ['pdfmake', 'docx', 'exceljs'],
+  // The PDF route reads the bundled Tinos TTF files from `public/fonts` at
+  // runtime via `fs` (pdfmake). Next.js cannot statically detect these dynamic
+  // reads, so on serverless targets (Vercel) the files would be missing from
+  // the traced function bundle. Explicitly include them for the PDF route.
+  outputFileTracingIncludes: {
+    '/api/v1/admin/registrations/[id]/pdf': ['./public/fonts/*.ttf'],
+  },
   async headers() {
     return [
       {

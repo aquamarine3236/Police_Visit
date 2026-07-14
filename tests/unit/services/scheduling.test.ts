@@ -251,7 +251,7 @@ describe('submitRegistration', () => {
     });
     const result = await submitRegistration(supabase, 'prison-1', validFormData());
     expect(result.success).toBe(false);
-    expect(result.message).toContain('đã đăng ký');
+    expect(result.message).toContain('đã có lịch thăm gặp');
   });
 
   it('returns success with registration and visitors on valid flow', async () => {

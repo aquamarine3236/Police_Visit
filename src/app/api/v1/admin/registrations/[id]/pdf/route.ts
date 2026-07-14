@@ -1,26 +1,45 @@
+import { createRequire } from 'node:module';
+import path from 'node:path';
+
 import { NextRequest, NextResponse } from 'next/server';
-import PdfPrinter from 'pdfmake';
 import type { TDocumentDefinitions, TFontDictionary } from 'pdfmake/interfaces';
 
 import { requireAdminAuth, errorResponse } from '@/lib/api-helpers';
 import { formatDateVN, formatDateTimeVN, toTitleCaseName } from '@/lib/format';
+
+// pdfmake 0.2.x ships as CommonJS and, under `serverExternalPackages`, is loaded
+// straight from `node_modules`. Its `module.exports` IS the `PdfPrinter`
+// constructor (no `default`), so an ESM `import PdfPrinter from 'pdfmake'` can
+// receive the interop-wrapped namespace instead of the function — leaving the
+// printer without its font dictionary ("Font 'Tinos' ... is not defined").
+// `createRequire` returns the bare constructor exactly as Node sees it.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const PdfPrinter: new (fonts: TFontDictionary) => any =
+  createRequire(import.meta.url)('pdfmake');
 
 // ─── Status labels ──────────────────────────────────────────────────────────
 
 const STATUS_LABELS: Record<string, string> = {
   confirmed: 'Đã xác nhận',
   completed: 'Đã hoàn thành',
-  no_show: 'Không đến',
+  no_show: 'Vắng mặt',
 };
 
-// ─── Font setup (use Roboto bundled with pdfmake) ───────────────────────────
+// ─── Font setup ─────────────────────────────────────────────────────────────
+// pdfmake's Node printer requires real TTF files (the previous config pointed
+// at `vfs_fonts.js`, a browser VFS bundle, which broke PDF generation). We ship
+// Tinos — a Times New Roman metric-compatible, OFL-licensed font with full
+// Vietnamese coverage — under `public/fonts` and resolve it relative to the
+// project root so it works both in `next dev` and the built server.
+
+const fontDir = path.join(process.cwd(), 'public', 'fonts');
 
 const fonts: TFontDictionary = {
-  Roboto: {
-    normal: 'node_modules/pdfmake/build/vfs_fonts.js',
-    bold: 'node_modules/pdfmake/build/vfs_fonts.js',
-    italics: 'node_modules/pdfmake/build/vfs_fonts.js',
-    bolditalics: 'node_modules/pdfmake/build/vfs_fonts.js',
+  Tinos: {
+    normal: path.join(fontDir, 'Tinos-Regular.ttf'),
+    bold: path.join(fontDir, 'Tinos-Bold.ttf'),
+    italics: path.join(fontDir, 'Tinos-Italic.ttf'),
+    bolditalics: path.join(fontDir, 'Tinos-BoldItalic.ttf'),
   },
 };
 
@@ -206,14 +225,13 @@ export async function GET(
       },
     },
     defaultStyle: {
+      font: 'Tinos',
       fontSize: 10,
     },
   };
 
   // Generate PDF
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const PdfPrinterClass = PdfPrinter as any;
-  const printer = new PdfPrinterClass(fonts);
+  const printer = new PdfPrinter(fonts);
   const pdfDoc = printer.createPdfKitDocument(docDefinition);
 
   // Collect buffer

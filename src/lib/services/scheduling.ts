@@ -136,7 +136,7 @@ export async function submitRegistration(
       case 'DUPLICATE':
         return {
           success: false,
-          message: 'Bạn đã đăng ký thăm gặp người này vào ngày này rồi.',
+          message: 'Phạm nhân này đã có lịch thăm gặp trong khung giờ đã chọn.',
         };
       case 'MONTHLY_LIMIT':
         return { success: false, message: 'Đã quá số lần thăm gặp trong tháng này.' };
@@ -217,4 +217,55 @@ export async function updateRegistrationStatus(
 
   if (error) return { success: false, message: error.message };
   return { success: true, data: data as VisitRegistration };
+}
+
+// ─── deleteRegistration ─────────────────────────────────────────────────────
+
+export async function deleteRegistration(
+  supabase: SupabaseClient,
+  registrationId: string,
+  /** Privileged client for the write (bypasses RLS). Defaults to `supabase`. */
+  db: SupabaseClient = supabase,
+): Promise<ServiceResult<{ id: string }>> {
+  // Verify the caller is an admin and resolve their prison in a single query.
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, message: 'Không có quyền truy cập.' };
+
+  const { data: profile } = await supabase
+    .from('admin_profiles')
+    .select('prison_id')
+    .eq('id', user.id)
+    .maybeSingle();
+  if (!profile) return { success: false, message: 'Không có quyền truy cập.' };
+
+  // Hard delete, scoped to the admin's prison for tenant isolation.
+  // `registration_visitors` rows are removed automatically via the
+  // `ON DELETE CASCADE` foreign key (migration 00005).
+  //
+  // `.select('id')` returns the rows that were actually deleted. This is the
+  // critical part: when the privileged service-role client is NOT configured
+  // (`createServiceRoleClient()` → null) the write falls back to the
+  // cookie-based client, whose RLS DELETE policy requires a `prison_id` claim
+  // in the JWT. If that claim is missing the DELETE matches ZERO rows and
+  // Postgres returns NO error — the old code then reported success while the
+  // row stayed in place ("không xóa được"). Inspecting the deleted rows lets us
+  // surface that as an explicit failure instead of a silent no-op.
+  const { data: deleted, error } = await db
+    .from('visit_registrations')
+    .delete()
+    .eq('id', registrationId)
+    .eq('prison_id', profile.prison_id)
+    .select('id');
+
+  if (error) return { success: false, message: error.message };
+
+  if (!deleted || deleted.length === 0) {
+    return {
+      success: false,
+      message:
+        'Không thể xóa lần gặp. Có thể do thiếu quyền (SUPABASE_SERVICE_ROLE_KEY chưa cấu hình) hoặc bản ghi không thuộc đơn vị của bạn.',
+    };
+  }
+
+  return { success: true, data: { id: registrationId } };
 }

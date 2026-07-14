@@ -32,7 +32,7 @@
     "exceljs": "^4.4.0",
     "lucide-react": "^1.24.0",
     "next": "15.5.20",
-    "pdfmake": "^0.3.11",
+    "pdfmake": "^0.2.23",
     "react": "^19",
     "react-day-picker": "^10.0.1",
     "react-dom": "^19",
