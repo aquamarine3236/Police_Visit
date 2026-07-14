@@ -43,42 +43,34 @@ DECLARE
   v_order INTEGER := 0;
   v_visitors JSONB := '[]'::jsonb;
   v_inserted registration_visitors%ROWTYPE;
-  v_relative_total INTEGER;
   v_match_count INTEGER;
   v_invalid_positions INTEGER[] := ARRAY[]::INTEGER[];
 BEGIN
   -- ─── Bước kiểm tra thân thích (mục 6) ─────────────────────────────────────
-  -- Đếm tổng số thân thích của người bị giam. Nếu = 0 thì bỏ qua bước này
-  -- (fail-open, xem ghi chú "Chế độ áp dụng" ở đầu file).
-  SELECT COUNT(*) INTO v_relative_total
-  FROM inmate_relatives
-  WHERE inmate_id = p_inmate_id;
+  -- Chắc chắn người đi thăm phải nằm trong danh sách thân thích của người bị giam giữ.
+  v_order := 0;
+  FOR v_visitor IN SELECT * FROM jsonb_array_elements(p_visitors)
+  LOOP
+    v_order := v_order + 1;
 
-  IF v_relative_total > 0 THEN
-    v_order := 0;
-    FOR v_visitor IN SELECT * FROM jsonb_array_elements(p_visitors)
-    LOOP
-      v_order := v_order + 1;
+    -- Khớp khi CCCD trùng VÀ họ tên trùng (chuẩn hóa: trim + lower). Không
+    -- xét ngày sinh theo yêu cầu.
+    SELECT COUNT(*) INTO v_match_count
+    FROM inmate_relatives r
+    WHERE r.inmate_id = p_inmate_id
+      AND r.citizen_id = (v_visitor->>'citizen_id')
+      AND lower(btrim(r.full_name)) = lower(btrim(v_visitor->>'full_name'));
 
-      -- Khớp khi CCCD trùng VÀ họ tên trùng (chuẩn hóa: trim + lower). Không
-      -- xét ngày sinh theo yêu cầu.
-      SELECT COUNT(*) INTO v_match_count
-      FROM inmate_relatives r
-      WHERE r.inmate_id = p_inmate_id
-        AND r.citizen_id = (v_visitor->>'citizen_id')
-        AND lower(btrim(r.full_name)) = lower(btrim(v_visitor->>'full_name'));
-
-      IF v_match_count = 0 THEN
-        v_invalid_positions := array_append(v_invalid_positions, v_order);
-      END IF;
-    END LOOP;
-
-    IF array_length(v_invalid_positions, 1) > 0 THEN
-      RETURN jsonb_build_object(
-        'error', 'NOT_RELATIVE',
-        'positions', to_jsonb(v_invalid_positions)
-      );
+    IF v_match_count = 0 THEN
+      v_invalid_positions := array_append(v_invalid_positions, v_order);
     END IF;
+  END LOOP;
+
+  IF array_length(v_invalid_positions, 1) > 0 THEN
+    RETURN jsonb_build_object(
+      'error', 'NOT_RELATIVE',
+      'positions', to_jsonb(v_invalid_positions)
+    );
   END IF;
 
   -- ─── Từ đây trở xuống giữ nguyên logic của migration 00019 ────────────────

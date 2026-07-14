@@ -253,6 +253,26 @@ describe('submitRegistration', () => {
     expect(result.message).toContain('đã có lịch thăm gặp');
   });
 
+  it('returns error when single visitor is not in relative list (NOT_RELATIVE with single position)', async () => {
+    const supabase = mockSupabase({
+      inmateResult: { data: [VALID_INMATE_DB], error: null },
+      submitResult: { data: { error: 'NOT_RELATIVE', positions: [1] }, error: null },
+    });
+    const result = await submitRegistration(supabase, 'prison-1', validFormData());
+    expect(result.success).toBe(false);
+    expect(result.message).toBe('Bạn không nằm trong danh sách thân thích của người này.');
+  });
+
+  it('returns error when multiple visitors are not in relative list (NOT_RELATIVE with multiple positions)', async () => {
+    const supabase = mockSupabase({
+      inmateResult: { data: [VALID_INMATE_DB], error: null },
+      submitResult: { data: { error: 'NOT_RELATIVE', positions: [1, 3] }, error: null },
+    });
+    const result = await submitRegistration(supabase, 'prison-1', validFormData());
+    expect(result.success).toBe(false);
+    expect(result.message).toBe('Người thứ 1, 3 không nằm trong danh sách thân thích của người này.');
+  });
+
   it('returns success with registration and visitors on valid flow', async () => {
     const supabase = mockSupabase({
       inmateResult: { data: [VALID_INMATE_DB], error: null },
