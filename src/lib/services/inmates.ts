@@ -48,7 +48,7 @@ export async function getInmateById(
   if (!data) {
     return {
       success: false,
-      message: 'Không tìm thấy phạm nhân với số hiệu này.',
+      message: 'Không tìm thấy phạm nhân với số giam này.',
     };
   }
 
@@ -150,8 +150,8 @@ export async function createInmate(
   if (existing) {
     return {
       success: false,
-      message: 'Số hiệu phạm nhân đã tồn tại.',
-      errors: { prison_number: ['Số hiệu phạm nhân đã tồn tại.'] },
+      message: 'Số giam phạm nhân đã tồn tại.',
+      errors: { prison_number: ['Số giam phạm nhân đã tồn tại.'] },
     };
   }
 
@@ -176,8 +176,8 @@ export async function createInmate(
     if (error.code === '23505') {
       return {
         success: false,
-        message: 'Số hiệu phạm nhân đã tồn tại.',
-        errors: { prison_number: ['Số hiệu phạm nhân đã tồn tại.'] },
+        message: 'Số giam phạm nhân đã tồn tại.',
+        errors: { prison_number: ['Số giam phạm nhân đã tồn tại.'] },
       };
     }
     return { success: false, message: error.message };
@@ -237,8 +237,8 @@ export async function updateInmate(
   if (duplicate) {
     return {
       success: false,
-      message: 'Số hiệu phạm nhân đã tồn tại.',
-      errors: { prison_number: ['Số hiệu phạm nhân đã tồn tại.'] },
+      message: 'Số giam phạm nhân đã tồn tại.',
+      errors: { prison_number: ['Số giam phạm nhân đã tồn tại.'] },
     };
   }
 
@@ -263,8 +263,8 @@ export async function updateInmate(
     if (error.code === '23505') {
       return {
         success: false,
-        message: 'Số hiệu phạm nhân đã tồn tại.',
-        errors: { prison_number: ['Số hiệu phạm nhân đã tồn tại.'] },
+        message: 'Số giam phạm nhân đã tồn tại.',
+        errors: { prison_number: ['Số giam phạm nhân đã tồn tại.'] },
       };
     }
     return { success: false, message: error.message };

@@ -58,7 +58,7 @@ export async function submitRegistration(
   if (!inmate) {
     return {
       success: false,
-      message: 'Không tìm thấy phạm nhân với số hiệu này. Vui lòng kiểm tra lại.',
+      message: 'Không tìm thấy phạm nhân với số giam này. Vui lòng kiểm tra lại.',
     };
   }
 

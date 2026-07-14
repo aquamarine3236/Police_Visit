@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       created_at,
       updated_at,
       inmate:inmates!inner(id, prison_number, full_name),
-      visitors:registration_visitors(id, full_name, citizen_id, relationship, display_order)
+      visitors:registration_visitors(id, full_name, date_of_birth, citizen_id, relationship, display_order)
       `,
       { count: 'exact' },
     )

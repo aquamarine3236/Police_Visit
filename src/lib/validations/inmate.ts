@@ -22,9 +22,9 @@ export const INMATE_VISIT_STATUSES = [
 
 export const inmateFormSchema = z.object({
   prison_number: z
-    .string({ required_error: 'Vui lòng nhập số hiệu phạm nhân.' })
-    .min(1, 'Vui lòng nhập số hiệu phạm nhân.')
-    .max(50, 'Số hiệu tối đa 50 ký tự.'),
+    .string({ required_error: 'Vui lòng nhập số giam phạm nhân.' })
+    .min(1, 'Vui lòng nhập số giam phạm nhân.')
+    .max(50, 'Số giam tối đa 50 ký tự.'),
 
   full_name: z
     .string({ required_error: 'Vui lòng nhập họ và tên phạm nhân.' })

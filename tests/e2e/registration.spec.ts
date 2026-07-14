@@ -64,7 +64,7 @@ test.describe('Public registration flow', () => {
 
     // Zod messages surface inline for required inmate + visitor fields.
     await expect(
-      page.getByText('Vui lòng nhập số hiệu phạm nhân.'),
+      page.getByText('Vui lòng nhập số giam phạm nhân.'),
     ).toBeVisible();
     await expect(page.getByText('Vui lòng chọn ngày thăm gặp.')).toBeVisible();
   });
@@ -151,7 +151,7 @@ test.describe('Public registration flow', () => {
     await mockServerAction(page, '**/', {
       success: false,
       message:
-        'Không tìm thấy phạm nhân với số hiệu này. Vui lòng kiểm tra lại.',
+        'Không tìm thấy phạm nhân với số giam này. Vui lòng kiểm tra lại.',
     });
 
     await page.goto('/');

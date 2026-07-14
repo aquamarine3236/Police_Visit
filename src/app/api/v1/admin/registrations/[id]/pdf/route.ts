@@ -152,7 +152,7 @@ export async function GET(
       },
       {
         columns: [
-          { text: `Số hiệu: ${inmate.prison_number}`, width: '50%' },
+          { text: `Số giam: ${inmate.prison_number}`, width: '50%' },
           { text: `Phân loại: ${inmate.classification}`, width: '50%' },
         ],
         margin: [0, 0, 0, 4],

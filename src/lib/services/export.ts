@@ -34,7 +34,7 @@ export async function exportInmatesToExcel(
 
   worksheet.columns = [
     { header: 'STT', key: 'stt', width: 8 },
-    { header: 'Số hiệu', key: 'prison_number', width: 15 },
+    { header: 'Số giam', key: 'prison_number', width: 15 },
     { header: 'Họ và tên', key: 'full_name', width: 25 },
     { header: 'Ngày sinh', key: 'date_of_birth', width: 15 },
     { header: 'Số CCCD', key: 'citizen_id', width: 18 },
@@ -111,7 +111,7 @@ export async function exportRegistrationsToExcel(
     { header: 'STT', key: 'stt', width: 8 },
     { header: 'Ngày thăm', key: 'visit_date', width: 15 },
     { header: 'Thời gian', key: 'time_slot', width: 18 },
-    { header: 'Số hiệu phạm nhân', key: 'prison_number', width: 20 },
+    { header: 'Số giam phạm nhân', key: 'prison_number', width: 20 },
     { header: 'Tên phạm nhân', key: 'inmate_name', width: 25 },
     { header: 'Người thăm', key: 'visitor_names', width: 35 },
     { header: 'CCCD người thăm', key: 'visitor_cccd', width: 25 },

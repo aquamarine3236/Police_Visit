@@ -7,7 +7,7 @@ import { inmateFormSchema } from '@/lib/validations/inmate';
 // ─── Column mapping: expected Excel header → DB field ───────────────────────
 
 const COLUMN_MAP: Record<string, string> = {
-  'Số hiệu': 'prison_number',
+  'Số giam': 'prison_number',
   'Họ và tên': 'full_name',
   'Ngày sinh': 'date_of_birth',
   'Số CCCD': 'citizen_id',
@@ -19,7 +19,7 @@ const COLUMN_MAP: Record<string, string> = {
   'Trạng thái thăm gặp': 'visit_status',
 };
 
-const REQUIRED_COLUMNS = ['Số hiệu', 'Họ và tên', 'Ngày sinh', 'Phân loại', 'Trạng thái thăm gặp'];
+const REQUIRED_COLUMNS = ['Số giam', 'Họ và tên', 'Ngày sinh', 'Phân loại', 'Trạng thái thăm gặp'];
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_ROWS = 5000;

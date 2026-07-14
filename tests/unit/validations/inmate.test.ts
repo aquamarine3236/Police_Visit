@@ -63,7 +63,7 @@ describe('inmateFormSchema', () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         const msgs = result.error.issues.map((i) => i.message);
-        expect(msgs).toContain('Vui lòng nhập số hiệu phạm nhân.');
+        expect(msgs).toContain('Vui lòng nhập số giam phạm nhân.');
       }
     });
 

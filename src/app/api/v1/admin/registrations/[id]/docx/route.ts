@@ -178,7 +178,7 @@ export async function GET(
     }),
     new Paragraph({
       children: [
-        new TextRun({ text: 'Số hiệu: ', bold: true, size: 22 }),
+        new TextRun({ text: 'Số giam: ', bold: true, size: 22 }),
         new TextRun({ text: inmate.prison_number, size: 22 }),
         new TextRun({ text: '    Phân loại: ', bold: true, size: 22 }),
         new TextRun({ text: inmate.classification, size: 22 }),
