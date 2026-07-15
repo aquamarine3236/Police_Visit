@@ -257,7 +257,7 @@ export default function RegistrationForm({ initialSettings }: RegistrationFormPr
           {!settingsError && (
             <Form {...form}>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
-                
+
                 {/* Section 1: Inmate Information */}
                 <div className="space-y-6">
                   <div className="flex items-start gap-3">
@@ -333,9 +333,10 @@ export default function RegistrationForm({ initialSettings }: RegistrationFormPr
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Người bị tạm giữ">Người bị tạm giữ (Tối đa 2 lần/tháng)</SelectItem>
-                              <SelectItem value="Người bị tạm giam">Người bị tạm giam (Tối đa 1 lần/tháng)</SelectItem>
-                              <SelectItem value="Phạm nhân">Phạm nhân (Tối đa 1 lần/tháng)</SelectItem>
+                              <SelectItem value="Người bị tạm giữ">Người bị tạm giữ (Tối đa 2 lần)</SelectItem>
+                              <SelectItem value="Người bị tạm giam">Người bị tạm giam (1 lần/tháng)</SelectItem>
+                              <SelectItem value="Người bị kết án tử hình">Người bị kết án tử hình (1 lần/tháng)</SelectItem>
+                              <SelectItem value="Phạm nhân">Phạm nhân (1 lần/tháng)</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

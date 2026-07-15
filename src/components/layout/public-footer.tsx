@@ -131,10 +131,14 @@ export function PublicFooter({
             <ul className="space-y-2.5 text-caption-md text-mute">
               <li className="flex items-center justify-between border-b border-hairline-soft pb-2">
                 <span>Người bị tạm giữ</span>
-                <span className="font-semibold text-ink">02 lần/tháng</span>
+                <span className="font-semibold text-ink">02 lần</span>
               </li>
               <li className="flex items-center justify-between border-b border-hairline-soft pb-2">
                 <span>Người bị tạm giam</span>
+                <span className="font-semibold text-ink">01 lần/tháng</span>
+              </li>
+              <li className="flex items-center justify-between border-b border-hairline-soft pb-2">
+                <span>Người bị kết án tử hình</span>
                 <span className="font-semibold text-ink">01 lần/tháng</span>
               </li>
               <li className="flex items-center justify-between">
@@ -151,7 +155,7 @@ export function PublicFooter({
           </p>
           <div className="flex gap-4 text-utility-xs font-medium text-mute">
             <a href="#" className="transition-colors hover:text-primary">
-              Điều khoản sử dụng
+              Hướng dẫn sử dụng
             </a>
             <span className="text-stone">·</span>
             <a href="#" className="transition-colors hover:text-primary">

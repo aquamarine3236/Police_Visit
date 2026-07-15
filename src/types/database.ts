@@ -21,6 +21,7 @@ export interface Prison {
 export type InmateClassification =
   | 'Người bị tạm giữ'
   | 'Người bị tạm giam'
+  | 'Người bị kết án tử hình'
   | 'Phạm nhân';
 
 export type InmateVisitStatus = 'Có thể thăm gặp' | 'Hạn chế thăm gặp';
@@ -37,6 +38,7 @@ export interface Inmate {
   arrest_date: string | null;
   admission_date: string | null;
   classification: InmateClassification;
+  classification_changed_at: string;
   visit_status: InmateVisitStatus;
   created_at: string;
   updated_at: string;

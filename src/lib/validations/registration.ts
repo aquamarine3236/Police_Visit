@@ -10,6 +10,7 @@ const vietnameseNameRegex =
 const INMATE_CLASSIFICATIONS = [
   'Người bị tạm giữ',
   'Người bị tạm giam',
+  'Người bị kết án tử hình',
   'Phạm nhân',
 ] as const;
 

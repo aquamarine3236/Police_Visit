@@ -216,7 +216,7 @@ export async function updateInmate(
   // Check the inmate exists and belongs to admin's prison
   const { data: existingInmate } = await supabase
     .from('inmates')
-    .select('id, prison_id')
+    .select('id, prison_id, classification')
     .eq('id', id)
     .is('deleted_at', null)
     .maybeSingle();
@@ -243,7 +243,12 @@ export async function updateInmate(
     };
   }
 
-  const updatePayload: InmateUpdate = {
+  // Detect classification change → reset classification_changed_at so that
+  // the visit counter is reset under the new classification's rules.
+  const classificationChanged =
+    existingInmate.classification !== parsed.data.classification;
+
+  const updatePayload: InmateUpdate & { classification_changed_at?: string } = {
     ...parsed.data,
     date_of_birth: parsed.data.date_of_birth || null,
     citizen_id: parsed.data.citizen_id || null,
@@ -252,6 +257,9 @@ export async function updateInmate(
     arrest_date: parsed.data.arrest_date || null,
     admission_date: parsed.data.admission_date || null,
     updated_by: admin.userId,
+    ...(classificationChanged
+      ? { classification_changed_at: new Date().toISOString() }
+      : {}),
   };
 
   const { data, error } = await db
