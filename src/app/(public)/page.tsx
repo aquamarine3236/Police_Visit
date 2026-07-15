@@ -22,7 +22,7 @@ export default async function PublicRegistrationPage() {
     const suitableDaysLabels = suitableDays.map((d) => DAY_LABELS[d] || `Ngày ${d}`);
     const noticeMessage =
       suitableDaysLabels.length > 0
-        ? `Lưu ý: Người dân chỉ có thể đăng ký thăm gặp vào ${suitableDaysLabels.join(' và ')}.`
+        ? `Lưu ý: Người dân chỉ có thể đăng ký thăm gặp vào ${suitableDaysLabels.join(' và ')} hàng tuần.`
         : 'Lưu ý: Hiện chưa có ngày thăm gặp nào được cấu hình.';
 
     initialSettings = {

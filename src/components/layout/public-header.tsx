@@ -13,10 +13,10 @@ export function PublicHeader() {
           <PoliceLogo size={44} priority />
           <div className="text-left">
             <p className="text-caption-md font-bold uppercase leading-tight tracking-wide text-primary">
-              Trại tạm giam Triệu Phong
+              Trại tạm giam số 1
             </p>
             <p className="text-utility-xs font-medium leading-none text-mute">
-              Phân trại tạm giam số 1
+              Phân trại tạm giam Triệu Phong
             </p>
           </div>
         </Link>

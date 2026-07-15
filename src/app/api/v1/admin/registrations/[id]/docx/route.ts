@@ -62,7 +62,7 @@ function buildAdministrativeHeader(): Table {
                 spacing: { after: 40 },
                 children: [
                   new TextRun({
-                    text: 'TRẠI TẠM GIAM TRIỆU PHONG',
+                    text: 'TRẠI TẠM GIAM SỐ 1',
                     bold: true,
                     size: 24,
                     font: DEFAULT_FONT,
@@ -73,7 +73,7 @@ function buildAdministrativeHeader(): Table {
                 alignment: AlignmentType.CENTER,
                 children: [
                   new TextRun({
-                    text: 'PHÂN TRẠI TẠM GIAM SỐ 1',
+                    text: 'PHÂN TRẠI TẠM GIAM TRIỆU PHONG',
                     bold: true,
                     size: 22,
                     font: DEFAULT_FONT,
@@ -107,6 +107,7 @@ function buildAdministrativeHeader(): Table {
                   new TextRun({
                     text: 'Độc lập – Tự do – Hạnh phúc',
                     bold: true,
+                    italics: true,
                     size: 24,
                     font: DEFAULT_FONT,
                     underline: { type: UnderlineType.SINGLE },
@@ -185,7 +186,7 @@ export async function GET(
     : registration.inmate;
 
   if (!inmateData) {
-    return errorResponse(404, 'NOT_FOUND', 'Không tìm thấy thông tin người bị quản lý giam giữ.');
+    return errorResponse(404, 'NOT_FOUND', 'Không tìm thấy thông tin người bị giam.');
   }
 
   const inmate = inmateData as unknown as {
@@ -256,18 +257,7 @@ export async function GET(
       text: 'PHIẾU ĐĂNG KÝ THĂM GẶP',
       heading: HeadingLevel.HEADING_1,
       alignment: AlignmentType.CENTER,
-      spacing: { after: 80 },
-    }),
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 220 },
-      children: [
-        new TextRun({
-          text: `Mã lịch hẹn: ${id.substring(0, 8).toUpperCase()}`,
-          bold: true,
-          size: 24,
-        }),
-      ],
+      spacing: { after: 300 },
     }),
 
     // Date created

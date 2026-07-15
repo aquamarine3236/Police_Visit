@@ -65,14 +65,14 @@ function buildAdministrativeHeaderPdf() {
           {
             stack: [
               {
-                text: 'TRẠI TẠM GIAM TRIỆU PHONG',
+                text: 'TRẠI TẠM GIAM SỐ 1',
                 bold: true,
                 fontSize: 12,
                 alignment: 'center' as const,
                 margin: [0, 0, 0, 4] as [number, number, number, number],
               },
               {
-                text: 'PHÂN TRẠI TẠM GIAM SỐ 1',
+                text: 'PHÂN TRẠI TẠM GIAM TRIỆU PHONG',
                 bold: true,
                 fontSize: 11,
                 alignment: 'center' as const,
@@ -273,13 +273,13 @@ export async function GET(
       },
       ...(registration.notes
         ? [
-            {
-              text: 'GHI CHÚ',
-              style: 'sectionHeader' as const,
-              margin: [0, 0, 0, 8] as [number, number, number, number],
-            },
-            { text: registration.notes, margin: [0, 0, 0, 0] as [number, number, number, number] },
-          ]
+          {
+            text: 'GHI CHÚ',
+            style: 'sectionHeader' as const,
+            margin: [0, 0, 0, 8] as [number, number, number, number],
+          },
+          { text: registration.notes, margin: [0, 0, 0, 0] as [number, number, number, number] },
+        ]
         : []),
     ],
     styles: {
