@@ -528,6 +528,7 @@ export default function RegistrationForm({ initialSettings }: RegistrationFormPr
                                     field.onChange(date ? formatDateString(date) : '');
                                   }}
                                   disabled={isDateDisabled}
+                                  startMonth={new Date()}
                                   className="mx-auto w-full max-w-[320px] rounded-lg border border-hairline bg-canvas p-4"
                                 />
                                 {field.value && (
