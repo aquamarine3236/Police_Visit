@@ -45,7 +45,7 @@ export function PublicFooter({
               <li className="flex items-start gap-2.5">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <span>
-                  Đường số 12, Khu Phố 4, Phường Linh Trung, TP. Thủ Đức, TP. Hồ Chí Minh
+                  79 Trường Chinh, Thôn Phong Sơn, Xã Triệu Phong, Tỉnh Quảng Trị
                 </span>
               </li>
               <li className="flex items-center gap-2.5">
