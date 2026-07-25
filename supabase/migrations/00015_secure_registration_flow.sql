@@ -246,7 +246,7 @@ GRANT EXECUTE ON FUNCTION fn_submit_registration(UUID, UUID, DATE, JSONB)
 
 -- ─── 4. Public inmate lookup for cross-verification ─────────────────────────
 -- The `public_inmates_read` RLS policy only exposes inmates with
--- `visit_status = 'Có thể thăm gặp'`. That means a RESTRICTED inmate would be
+-- `visit_status = 'Được thăm gặp'`. That means a RESTRICTED inmate would be
 -- invisible to `anon`, so the app could not tell "not found" apart from
 -- "restricted" (BR-04). This SECURITY DEFINER lookup returns just the fields
 -- needed to cross-verify identity + visit status, without leaking other PII.

@@ -15,7 +15,7 @@ function validInmateForm() {
     full_name: 'Nguyễn Văn An',
     date_of_birth: '1990-05-15',
     classification: 'Phạm nhân' as const,
-    visit_status: 'Có thể thăm gặp' as const,
+    visit_status: 'Được thăm gặp' as const,
   };
 }
 

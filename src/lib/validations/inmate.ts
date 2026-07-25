@@ -15,7 +15,7 @@ export const INMATE_CLASSIFICATIONS = [
 ] as const;
 
 export const INMATE_VISIT_STATUSES = [
-  'Có thể thăm gặp',
+  'Được thăm gặp',
   'Hạn chế thăm gặp',
 ] as const;
 

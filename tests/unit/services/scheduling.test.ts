@@ -122,7 +122,7 @@ const VALID_INMATE_DB = {
   full_name: 'Nguyễn Văn An',
   date_of_birth: '1990-05-15',
   classification: 'Phạm nhân',
-  visit_status: 'Có thể thăm gặp',
+  visit_status: 'Được thăm gặp',
   deleted_at: null,
 };
 

@@ -24,7 +24,7 @@ export type InmateClassification =
   | 'Người bị kết án tử hình'
   | 'Phạm nhân';
 
-export type InmateVisitStatus = 'Có thể thăm gặp' | 'Hạn chế thăm gặp';
+export type InmateVisitStatus = 'Được thăm gặp' | 'Hạn chế thăm gặp';
 
 export interface Inmate {
   id: string;

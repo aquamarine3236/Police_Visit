@@ -161,7 +161,7 @@ export default function InmatesPage() {
       arrest_date: '',
       admission_date: '',
       classification: 'Phạm nhân',
-      visit_status: 'Có thể thăm gặp',
+      visit_status: 'Được thăm gặp',
     },
   });
 
@@ -479,7 +479,7 @@ export default function InmatesPage() {
                   <TableCell>{inmate.classification}</TableCell>
                   <TableCell>
                     <Badge
-                      variant={inmate.visit_status === 'Có thể thăm gặp' ? 'success' : 'danger'}
+                      variant={inmate.visit_status === 'Được thăm gặp' ? 'success' : 'danger'}
                       dot
                     >
                       {inmate.visit_status}

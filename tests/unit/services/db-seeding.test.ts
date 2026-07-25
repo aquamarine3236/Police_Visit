@@ -66,7 +66,7 @@ VALUES (
   'Nguyễn Văn Tạm Giữ',
   '1990-01-01',
   'Người bị tạm giữ',
-  'Có thể thăm gặp'
+  'Được thăm gặp'
 ) ON CONFLICT DO NOTHING;
 
 -- Inmate type "Phạm nhân" (allowed 1 visit/month)
@@ -78,7 +78,7 @@ VALUES (
   'Nguyễn Văn Phạm Nhân',
   '1988-06-15',
   'Phạm nhân',
-  'Có thể thăm gặp'
+  'Được thăm gặp'
 ) ON CONFLICT DO NOTHING;
 `.trim();
 }
