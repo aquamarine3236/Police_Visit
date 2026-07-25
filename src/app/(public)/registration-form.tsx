@@ -475,7 +475,7 @@ export default function RegistrationForm({ initialSettings }: RegistrationFormPr
                             <FormLabel className="text-body-strong">Quan hệ với người đang bị quản lý giam giữ <span className="text-sale">*</span></FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="Ví dụ: Cha, mẹ, vợ, con..."
+                                placeholder="Ví dụ: Bố, mẹ, vợ, con..."
                                 {...register(`visitors.${index}.relationship` as const)}
                                 className="rounded-md"
                               />

@@ -45,6 +45,7 @@ import { useFileDownload } from '@/hooks/use-file-download';
 import { updateRegistrationStatus, deleteRegistration } from '@/actions/registrations';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { formatDateVN, toTitleCaseName, addDaysISO } from '@/lib/format';
+import { hasSlotEndedVN } from '@/lib/time';
 import type { VisitRegistration } from '@/types';
 
 interface VisitorDetail {
@@ -335,13 +336,20 @@ export default function AdminDashboardPage() {
           }.`,
           variant: 'default',
         });
-        
-        // Refresh details modal local state
-        const updatedReg = { ...selectedReg, status: newStatus };
-        setSelectedReg(updatedReg);
-        
-        // Refresh table list
-        fetchRegistrations();
+
+        // Keep the modal's local copy in sync in case it stays mounted while
+        // the closing animation plays out.
+        setSelectedReg({ ...selectedReg, status: newStatus });
+
+        // The two action buttons only exist for `confirmed` records, so once the
+        // status is changed the phiếu should "move" to its matching tab where it
+        // is view/delete only. Close the details modal and switch the active tab
+        // (which resets to page 1). Changing `status`/`page` triggers the
+        // fetch-on-filter effect, so no manual re-fetch is needed here — calling
+        // `fetchRegistrations()` now would run against the stale filter.
+        setIsDetailsOpen(false);
+        setStatus(newStatus);
+        setPage(1);
       } else {
         toast({
           title: 'Thất bại',
@@ -453,6 +461,17 @@ export default function AdminDashboardPage() {
     if (dateTo) params.append('date_to', dateTo);
     return `/api/v1/admin/registrations/export?${params.toString()}`;
   }, [search, status, dateFrom, dateTo]);
+
+  // Whether the selected registration's assigned time slot has already ended
+  // (in VN/+7 time). The "Hoàn thành" / "Vắng mặt" actions are only meaningful
+  // once the visit slot is over, so we mirror the server-side guard
+  // (`schedulingService.updateRegistrationStatus`) here to enable the buttons
+  // and, otherwise, explain why they are unavailable. Re-computed whenever the
+  // selected record changes (i.e. when the details modal opens).
+  const canUpdateSelectedStatus = React.useMemo(() => {
+    if (!selectedReg) return false;
+    return hasSlotEndedVN(selectedReg.visit_date, selectedReg.time_slot_end);
+  }, [selectedReg]);
 
   // Date-range filter handlers.
   //
@@ -850,7 +869,7 @@ export default function AdminDashboardPage() {
             <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3">
               {/* Status Action Buttons */}
               <div className="flex gap-2">
-                {selectedReg?.status === 'confirmed' && (
+                {selectedReg?.status === 'confirmed' && canUpdateSelectedStatus && (
                   <>
                     <Button
                       type="button"
@@ -859,7 +878,11 @@ export default function AdminDashboardPage() {
                       disabled={actionLoading}
                       className="bg-success text-on-primary hover:bg-success/90"
                     >
-                      <Check className="mr-1 h-4 w-4" />
+                      {actionLoading ? (
+                        <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Check className="mr-1 h-4 w-4" />
+                      )}
                       Đã hoàn thành
                     </Button>
                     <Button
@@ -870,10 +893,20 @@ export default function AdminDashboardPage() {
                       disabled={actionLoading}
                       className="border-danger/30 text-danger hover:border-danger/50 hover:bg-danger-soft"
                     >
-                      <UserX className="mr-1 h-4 w-4" />
+                      {actionLoading ? (
+                        <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                      ) : (
+                        <UserX className="mr-1 h-4 w-4" />
+                      )}
                       Vắng mặt (No-Show)
                     </Button>
                   </>
+                )}
+                {selectedReg?.status === 'confirmed' && !canUpdateSelectedStatus && (
+                  <p className="text-caption-sm text-mute flex items-center gap-1.5">
+                    <Clock className="h-4 w-4" />
+                    Chỉ có thể cập nhật trạng thái sau khi kết thúc thời gian thăm gặp.
+                  </p>
                 )}
                 {selectedReg?.status !== 'confirmed' && (
                   <p className="text-caption-sm text-mute flex items-center gap-1.5">

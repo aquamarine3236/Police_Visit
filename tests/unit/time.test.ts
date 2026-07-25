@@ -7,6 +7,7 @@ import {
   compareISODate,
   isFutureDateVN,
   isPastDateVN,
+  hasSlotEndedVN,
   calendarDateToISO,
   formatDateTimeVN,
 } from '@/lib/time';
@@ -116,6 +117,54 @@ describe('isFutureDateVN / isPastDateVN — dùng mốc "now" cố định', () 
   it('chuỗi không hợp lệ trả false', () => {
     expect(isFutureDateVN('xyz', now)).toBe(false);
     expect(isPastDateVN('xyz', now)).toBe(false);
+  });
+});
+
+describe('hasSlotEndedVN — kết thúc khung giờ thăm gặp theo UTC+7', () => {
+  // Cố định "bây giờ" = 2026-07-14T08:00Z (=> 15:00 VN, ngày 2026-07-14).
+  const now = new Date('2026-07-14T08:00:00Z');
+
+  it('cùng ngày, khung giờ đã kết thúc trước giờ hiện tại -> true', () => {
+    // Kết thúc 11:00 VN, hiện tại 15:00 VN.
+    expect(hasSlotEndedVN('2026-07-14', '11:00', now)).toBe(true);
+    expect(hasSlotEndedVN('2026-07-14', '11:00:00', now)).toBe(true);
+  });
+
+  it('cùng ngày, khung giờ chưa kết thúc -> false', () => {
+    // Kết thúc 16:30 VN, hiện tại 15:00 VN.
+    expect(hasSlotEndedVN('2026-07-14', '16:30', now)).toBe(false);
+  });
+
+  it('cùng ngày, đúng thời điểm kết thúc (biên) -> true', () => {
+    // Kết thúc 15:00 VN, hiện tại 15:00 VN => coi như đã hết.
+    expect(hasSlotEndedVN('2026-07-14', '15:00', now)).toBe(true);
+  });
+
+  it('cùng ngày, kết thúc trễ hơn hiện tại 1 phút -> false', () => {
+    expect(hasSlotEndedVN('2026-07-14', '15:01', now)).toBe(false);
+  });
+
+  it('ngày quá khứ -> true bất kể giờ', () => {
+    expect(hasSlotEndedVN('2026-07-13', '23:59', now)).toBe(true);
+    expect(hasSlotEndedVN('2026-07-13', '00:00', now)).toBe(true);
+  });
+
+  it('ngày tương lai -> false bất kể giờ', () => {
+    expect(hasSlotEndedVN('2026-07-15', '00:00', now)).toBe(false);
+    expect(hasSlotEndedVN('2026-07-15', '23:59', now)).toBe(false);
+  });
+
+  it('ranh giới ngày VN: 17:00 UTC đã là ngày 15 ở VN', () => {
+    const nowBoundary = new Date('2026-07-14T17:00:00Z'); // 00:00 VN ngày 15
+    // Ngày thăm 14 đã hoàn toàn qua.
+    expect(hasSlotEndedVN('2026-07-14', '23:59', nowBoundary)).toBe(true);
+    // Ngày thăm 15, khung giờ 08:00 chưa tới (mới 00:00 VN).
+    expect(hasSlotEndedVN('2026-07-15', '08:00', nowBoundary)).toBe(false);
+  });
+
+  it('đầu vào không hợp lệ -> false', () => {
+    expect(hasSlotEndedVN('xyz', '11:00', now)).toBe(false);
+    expect(hasSlotEndedVN('2026-07-14', 'bad', now)).toBe(false);
   });
 });
 

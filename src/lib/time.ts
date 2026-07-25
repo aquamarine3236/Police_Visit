@@ -147,6 +147,49 @@ export function isPastDateVN(dateStr: string, now: Date = new Date()): boolean {
   return compareISODate(toISODate(parsed.year, parsed.month, parsed.day), todayVN(now)) < 0;
 }
 
+/** Parse chuỗi giờ `HH:mm` hoặc `HH:mm:ss` thành phút trong ngày (0–1439). */
+function parseTimeToMinutes(value: string): number | null {
+  const match = /^(\d{2}):(\d{2})(?::(\d{2}))?/.exec(value);
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour > 23 || minute > 59) return null;
+  return hour * 60 + minute;
+}
+
+/**
+ * Khung giờ thăm gặp (kết thúc tại `timeSlotEnd`) đã TRÔI QUA theo giờ VN (+7)?
+ *
+ * Ghép `visitDate` (`yyyy-mm-dd`) với `timeSlotEnd` (`HH:mm[:ss]`) thành một mốc
+ * thời gian tường (wall-clock) ở +7, rồi so sánh với "bây giờ" cũng quy về +7.
+ * Trả về `true` khi thời điểm hiện tại ĐÃ vượt qua thời điểm kết thúc khung giờ.
+ *
+ * Dùng cho nghiệp vụ "chỉ cho cập nhật trạng thái (Hoàn thành / Vắng mặt) sau
+ * khi kết thúc thời gian thăm gặp" — cho phép ngay trong ngày thăm một khi khung
+ * giờ được phân đã hết, độc lập với timezone server/trình duyệt.
+ */
+export function hasSlotEndedVN(
+  visitDate: string,
+  timeSlotEnd: string,
+  now: Date = new Date(),
+): boolean {
+  const parsedDate = parseISODateString(visitDate);
+  const endMinutes = parseTimeToMinutes(timeSlotEnd);
+  if (!parsedDate || endMinutes === null) return false;
+
+  const nowParts = getVNParts(now);
+  const nowDateStr = toISODate(nowParts.year, nowParts.month, nowParts.day);
+  const visitDateStr = toISODate(parsedDate.year, parsedDate.month, parsedDate.day);
+
+  const cmp = compareISODate(nowDateStr, visitDateStr);
+  if (cmp < 0) return false; // hôm nay vẫn trước ngày thăm → chưa tới.
+  if (cmp > 0) return true; // đã sang ngày sau ngày thăm → chắc chắn đã qua.
+
+  // Cùng ngày thăm: so sánh phút hiện tại với phút kết thúc khung giờ.
+  const nowMinutes = nowParts.hour * 60 + nowParts.minute;
+  return nowMinutes >= endMinutes;
+}
+
 /**
  * Lấy tên thứ trong tuần (tiếng Việt) của một ngày `yyyy-mm-dd` theo lịch +7.
  * Ví dụ: "Thứ Hai", "Chủ Nhật".

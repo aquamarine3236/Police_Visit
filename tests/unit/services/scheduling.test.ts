@@ -316,4 +316,113 @@ describe('updateRegistrationStatus', () => {
     expect(result.success).toBe(false);
     expect(result.message).toContain('Không tìm thấy đăng ký');
   });
+
+  it('rejects when the registration is not in "confirmed" status', async () => {
+    const supabase = mockSupabase({
+      regFetchResult: {
+        data: {
+          id: 'reg-1',
+          status: 'completed',
+          visit_date: '2020-01-01',
+          time_slot_end: '11:00',
+          prison_id: 'prison-1',
+        },
+      },
+    });
+    const result = await updateRegistrationStatus(supabase, 'reg-1', 'completed');
+    expect(result.success).toBe(false);
+    expect(result.message).toContain('đã xác nhận');
+  });
+
+  it('rejects when the assigned time slot has NOT ended yet (future visit)', async () => {
+    // A visit far in the future can never have an ended slot.
+    const supabase = mockSupabase({
+      regFetchResult: {
+        data: {
+          id: 'reg-1',
+          status: 'confirmed',
+          visit_date: '2999-12-31',
+          time_slot_end: '23:59',
+          prison_id: 'prison-1',
+        },
+      },
+    });
+    const result = await updateRegistrationStatus(supabase, 'reg-1', 'no_show');
+    expect(result.success).toBe(false);
+    expect(result.message).toContain('sau khi kết thúc thời gian thăm gặp');
+  });
+
+  it('rejects an invalid target status even after the slot ended', async () => {
+    const supabase = mockSupabase({
+      regFetchResult: {
+        data: {
+          id: 'reg-1',
+          status: 'confirmed',
+          visit_date: '2020-01-01',
+          time_slot_end: '11:00',
+          prison_id: 'prison-1',
+        },
+      },
+    });
+    // @ts-expect-error — intentionally invalid status to exercise the guard.
+    const result = await updateRegistrationStatus(supabase, 'reg-1', 'cancelled');
+    expect(result.success).toBe(false);
+    expect(result.message).toContain('không hợp lệ');
+  });
+
+  it('updates the status when the assigned time slot has ended (past visit)', async () => {
+    const supabase = mockSupabase({
+      regFetchResult: {
+        data: {
+          id: 'reg-1',
+          status: 'confirmed',
+          visit_date: '2020-01-01',
+          time_slot_end: '11:00',
+          prison_id: 'prison-1',
+        },
+      },
+      updateResult: {
+        data: { id: 'reg-1', status: 'completed' },
+        error: null,
+      },
+    });
+    const result = await updateRegistrationStatus(supabase, 'reg-1', 'completed');
+    expect(result.success).toBe(true);
+    expect(result.data).toMatchObject({ id: 'reg-1', status: 'completed' });
+  });
+
+  it('reads profile + registration via the privileged `db` client, not the RLS-bound cookie client', async () => {
+    // Regression for the "Không tìm thấy đăng ký." bug: the RLS SELECT policy
+    // keys off the JWT `prison_id` claim, which the cookie client may lack. If
+    // the reads used the cookie client the row would be filtered out. Here the
+    // cookie client returns NOTHING for every read, while the privileged `db`
+    // client returns the profile + registration. The update must still succeed.
+    const cookieClient = mockSupabase({
+      profileResult: { data: null },
+      regFetchResult: { data: null },
+    });
+    const privilegedDb = mockSupabase({
+      profileResult: { data: { prison_id: 'prison-1' } },
+      regFetchResult: {
+        data: {
+          id: 'reg-1',
+          status: 'confirmed',
+          visit_date: '2020-01-01',
+          time_slot_end: '11:00',
+          prison_id: 'prison-1',
+        },
+      },
+      updateResult: { data: { id: 'reg-1', status: 'no_show' }, error: null },
+    });
+
+    const result = await updateRegistrationStatus(
+      cookieClient,
+      'reg-1',
+      'no_show',
+      privilegedDb,
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.data).toMatchObject({ id: 'reg-1', status: 'no_show' });
+  });
 });

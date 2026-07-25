@@ -6,7 +6,7 @@ import {
   type RegistrationFormData,
 } from '@/lib/validations/registration';
 import { formatSuitableDays } from '@/lib/constants';
-import { getISODayOfWeekVN, todayVN } from '@/lib/time';
+import { getISODayOfWeekVN, hasSlotEndedVN } from '@/lib/time';
 
 // ─── Cross-verify inmate data against DB ────────────────────────────────────
 
@@ -186,19 +186,27 @@ export async function updateRegistrationStatus(
   /** Privileged client for the write (bypasses RLS). Defaults to `supabase`. */
   db: SupabaseClient = supabase,
 ): Promise<ServiceResult<VisitRegistration>> {
-  // Verify the caller is an admin
+  // Verify the caller is an admin using the cookie-based client (identity
+  // comes from the authenticated session, never from a privileged client).
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, message: 'Không có quyền truy cập.' };
 
-  const { data: profile } = await supabase
+  // Resolve the admin's prison and fetch the registration with the PRIVILEGED
+  // client (`db`, service-role). The RLS SELECT policy keys off the JWT
+  // `prison_id` claim, which is not guaranteed to be present on the cookie
+  // client's token — using it here would filter the row out and make the
+  // update fail with a misleading "Không tìm thấy đăng ký." (the same reason
+  // the admin list route reads via the service-role client). Tenant isolation
+  // is still enforced explicitly via `.eq('prison_id', …)` below.
+  const { data: profile } = await db
     .from('admin_profiles')
     .select('prison_id')
     .eq('id', user.id)
     .maybeSingle();
   if (!profile) return { success: false, message: 'Không có quyền truy cập.' };
 
-  // Fetch current registration
-  const { data: reg } = await supabase
+  // Fetch current registration, scoped to the admin's prison.
+  const { data: reg } = await db
     .from('visit_registrations')
     .select('*')
     .eq('id', registrationId)
@@ -212,14 +220,17 @@ export async function updateRegistrationStatus(
     return { success: false, message: 'Chỉ có thể cập nhật trạng thái đăng ký đã xác nhận.' };
   }
 
-  // Only allow status update strictly after the visit date. Compare on
-  // date-only strings in the Asia/Ho_Chi_Minh (UTC+7) zone so the result is
-  // independent of the server's timezone (e.g. UTC on Vercel), avoiding
-  // off-by-one day boundary errors.
-  const today = todayVN();
-  const visitDateStr = String(reg.visit_date).split('T')[0];
-  if (visitDateStr >= today) {
-    return { success: false, message: 'Chỉ có thể cập nhật trạng thái sau ngày thăm gặp.' };
+  // Only allow the status update once the ASSIGNED time slot has ended. This
+  // combines the visit date with `time_slot_end` and compares against "now" in
+  // the Asia/Ho_Chi_Minh (UTC+7) zone, so an admin can mark a visit as
+  // Completed / No-show as soon as its slot finishes on the same day. The
+  // comparison is timezone-independent (server may run in UTC on Vercel),
+  // avoiding off-by-one day / hour boundary errors.
+  if (!hasSlotEndedVN(String(reg.visit_date), String(reg.time_slot_end))) {
+    return {
+      success: false,
+      message: 'Chỉ có thể cập nhật trạng thái sau khi kết thúc thời gian thăm gặp.',
+    };
   }
 
   const validStatuses = ['completed', 'no_show'];
