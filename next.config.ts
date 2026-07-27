@@ -44,13 +44,13 @@ const nextConfig: NextConfig = {
   // with `ENOENT ... data.trie`. Marking these as server externals makes
   // Next.js `require()` them directly from `node_modules`, where the asset sits
   // next to the code. `docx`/`exceljs` are included for the same robustness.
-  serverExternalPackages: ['pdfmake', 'docx', 'exceljs'],
-  // The PDF route reads the bundled Tinos TTF files from `public/fonts` at
-  // runtime via `fs` (pdfmake). Next.js cannot statically detect these dynamic
-  // reads, so on serverless targets (Vercel) the files would be missing from
-  // the traced function bundle. Explicitly include them for the PDF route.
+  serverExternalPackages: ['pdfmake', 'docx', 'exceljs', 'docxtemplater', 'pizzip'],
+  // The DOCX route reads the official Word templates (TG9/TG10/TG12) from
+  // `temp/` at runtime via `fs` (docxtemplater). Next.js cannot statically
+  // detect these dynamic reads, so on serverless targets (Vercel) the files
+  // would be missing from the traced function bundle. Explicitly include them.
   outputFileTracingIncludes: {
-    '/api/v1/admin/registrations/[id]/pdf': ['./public/fonts/*.ttf'],
+    '/api/v1/admin/registrations/[id]/docx': ['./temp/*.docx'],
   },
   async headers() {
     return [

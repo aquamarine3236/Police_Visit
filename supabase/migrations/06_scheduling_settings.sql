@@ -1,4 +1,7 @@
--- Migration 00006: Create scheduling_settings table
+-- ============================================================================
+-- 06_scheduling_settings — Per-prison scheduling configuration
+-- ============================================================================
+-- Source (merged): 00006_create_scheduling_settings.sql
 
 CREATE TABLE IF NOT EXISTS scheduling_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

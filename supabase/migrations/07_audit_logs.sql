@@ -1,4 +1,11 @@
--- Migration 00007: Create audit_logs table
+-- ============================================================================
+-- 07_audit_logs — Immutable audit trail for mutations
+-- ============================================================================
+-- Source (merged): 00007_create_audit_logs.sql
+--
+-- Rows are written exclusively by the SECURITY DEFINER audit trigger functions
+-- (see 10_functions_util.sql / 20_triggers.sql). There is intentionally NO
+-- public/admin INSERT policy — only an admin SELECT policy (see 30_rls.sql).
 
 CREATE TABLE IF NOT EXISTS audit_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

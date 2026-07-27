@@ -1,4 +1,10 @@
--- Migration 00002: Create admin_profiles table
+-- ============================================================================
+-- 02_admin_profiles — Admin user profiles (linked 1:1 to Supabase Auth users)
+-- ============================================================================
+-- Source (merged): 00002_create_admin_profiles.sql
+--
+-- `id` matches the Supabase Auth user id. Passwords are managed by Supabase
+-- Auth; this table only holds application-level profile + role + prison scope.
 
 CREATE TABLE IF NOT EXISTS admin_profiles (
   id UUID PRIMARY KEY,

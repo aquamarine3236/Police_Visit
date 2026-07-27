@@ -44,6 +44,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useFileDownload } from '@/hooks/use-file-download';
 import { updateRegistrationStatus, deleteRegistration } from '@/actions/registrations';
 import { createBrowserClient } from '@/lib/supabase/client';
+import { VISIT_FORM_TYPES, type VisitFormType } from '@/lib/constants';
 import { formatDateVN, toTitleCaseName, addDaysISO } from '@/lib/format';
 import { hasSlotEndedVN } from '@/lib/time';
 import type { VisitRegistration } from '@/types';
@@ -836,30 +837,21 @@ export default function AdminDashboardPage() {
                 </div>
               )}
 
-              {/* Download slip */}
+              {/* Export forms (biểu mẫu) */}
               <div className="space-y-2 border-t border-hairline-soft pt-4">
-                <p className="text-caption-sm font-bold text-ink">Tải file giấy hẹn thăm gặp:</p>
-                <div className="flex gap-3">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    asChild
-                  >
-                    <a href={`/api/v1/admin/registrations/${selectedReg.id}/pdf`} target="_blank" rel="noreferrer">
-                      <FileText className="mr-1.5 h-4 w-4" />
-                      Giấy hẹn PDF
-                    </a>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    asChild
-                  >
-                    <a href={`/api/v1/admin/registrations/${selectedReg.id}/docx`} download>
-                      <FileText className="mr-1.5 h-4 w-4" />
-                      Giấy hẹn Word (.docx)
-                    </a>
-                  </Button>
+                <p className="text-caption-sm font-bold text-ink">Xuất biểu mẫu thăm gặp:</p>
+                <div className="flex flex-wrap gap-3">
+                  {(Object.keys(VISIT_FORM_TYPES) as VisitFormType[]).map((formType) => (
+                    <Button key={formType} variant="outline" size="sm" asChild>
+                      <a
+                        href={`/api/v1/admin/registrations/${selectedReg.id}/docx?type=${formType}`}
+                        download
+                      >
+                        <FileText className="mr-1.5 h-4 w-4" />
+                        {VISIT_FORM_TYPES[formType].label}
+                      </a>
+                    </Button>
+                  ))}
                 </div>
               </div>
             </div>

@@ -1,5 +1,7 @@
--- Migration 00001: Create prisons table
-create extension if not exists "pgcrypto";
+-- ============================================================================
+-- 01_prisons — Prisons (trại giam) master table
+-- ============================================================================
+-- Source (merged): 00001_create_prisons.sql
 
 CREATE TABLE IF NOT EXISTS prisons (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
