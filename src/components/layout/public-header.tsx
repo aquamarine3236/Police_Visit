@@ -12,11 +12,11 @@ export function PublicHeader() {
         <Link href="/" className="flex items-center gap-3 rounded-md focus-ring">
           <PoliceLogo size={44} priority />
           <div className="text-left">
-            <p className="text-caption-md font-bold uppercase leading-tight tracking-wide text-primary">
-              Trại tạm giam số 1
+            <p className="text-utility-xs font-normal leading-none text-mute">
+              CÔNG AN TỈNH QUẢNG TRỊ
             </p>
-            <p className="text-utility-xs font-medium leading-none text-mute">
-              Phân trại tạm giam Triệu Phong
+            <p className="text-body-md font-bold uppercase leading-tight tracking-wide text-primary">
+              TRẠI TẠM GIAM SỐ 1
             </p>
           </div>
         </Link>
