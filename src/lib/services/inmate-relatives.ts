@@ -295,8 +295,7 @@ export async function updateRelative(
       updated_by: admin.userId,
     })
     .eq('id', id)
-    .select()
-    .single();
+    .select();
 
   if (error) {
     if (error.code === '23505') {
@@ -309,7 +308,17 @@ export async function updateRelative(
     return { success: false, message: error.message };
   }
 
-  return { success: true, data: data as InmateRelative };
+  // Nếu không có dòng nào được cập nhật thì RLS đã chặn (bản ghi không thuộc
+  // đơn vị của admin). Báo lỗi rõ ràng thay vì "thành công giả".
+  if (!data || data.length === 0) {
+    return {
+      success: false,
+      message:
+        'Không thể cập nhật thân thích. Có thể do thiếu quyền hoặc bản ghi không thuộc đơn vị của bạn.',
+    };
+  }
+
+  return { success: true, data: data[0] as InmateRelative };
 }
 
 // ─── deleteRelative ─────────────────────────────────────────────────────────

@@ -111,22 +111,19 @@ CREATE POLICY admin_audit_logs_prison ON audit_logs
 
 -- ─── inmate_relatives ────────────────────────────────────────────────────────
 -- Admin scoped through the parent inmate's prison.
+--
+-- Scoping is resolved via fn_inmate_prison_id (SECURITY DEFINER, 10_functions_util.sql)
+-- instead of an inline `EXISTS (SELECT … FROM inmates …)`. An inline subquery
+-- runs under the caller's RLS context (nested RLS), which for the `authenticated`
+-- role could return no rows and cause UPDATE/DELETE to silently affect zero rows
+-- with no error. The SECURITY DEFINER helper bypasses that nested RLS and returns
+-- the real prison_id, so USING/WITH CHECK evaluate reliably.
 DROP POLICY IF EXISTS admin_inmate_relatives_prison ON inmate_relatives;
 CREATE POLICY admin_inmate_relatives_prison ON inmate_relatives
   FOR ALL
   USING (
-    EXISTS (
-      SELECT 1
-      FROM inmates i
-      WHERE i.id = inmate_relatives.inmate_id
-        AND i.prison_id::text = auth.jwt() ->> 'prison_id'
-    )
+    fn_inmate_prison_id(inmate_relatives.inmate_id)::text = auth.jwt() ->> 'prison_id'
   )
   WITH CHECK (
-    EXISTS (
-      SELECT 1
-      FROM inmates i
-      WHERE i.id = inmate_relatives.inmate_id
-        AND i.prison_id::text = auth.jwt() ->> 'prison_id'
-    )
+    fn_inmate_prison_id(inmate_relatives.inmate_id)::text = auth.jwt() ->> 'prison_id'
   );

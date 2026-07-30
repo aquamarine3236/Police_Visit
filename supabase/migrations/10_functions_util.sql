@@ -155,3 +155,29 @@ EXCEPTION WHEN OTHERS THEN
   RETURN NEW;
 END;
 $$;
+
+-- ─── fn_inmate_prison_id ─────────────────────────────────────────────────────
+-- Returns the parent inmate's prison_id, bypassing RLS.
+--
+-- Used by the inmate_relatives RLS policy. inmate_relatives has NO prison_id
+-- column, so scoping must be derived from the parent `inmates` row. Doing that
+-- with an inline `EXISTS (SELECT … FROM inmates …)` inside the policy makes the
+-- subquery run under the caller's RLS context (nested RLS), which can silently
+-- return no rows for the `authenticated` role — causing UPDATE/DELETE to affect
+-- zero rows WITHOUT raising an error. Wrapping the lookup in a SECURITY DEFINER
+-- function bypasses that nested RLS and returns the real prison_id reliably.
+--
+-- It exposes ONLY the prison_id (no sensitive data) and is used purely for
+-- authorisation checks, so granting EXECUTE to `authenticated` is safe.
+CREATE OR REPLACE FUNCTION public.fn_inmate_prison_id(p_inmate_id UUID)
+RETURNS UUID
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT prison_id FROM inmates WHERE id = p_inmate_id;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.fn_inmate_prison_id(UUID) FROM anon, public;
+GRANT EXECUTE ON FUNCTION public.fn_inmate_prison_id(UUID) TO authenticated;
