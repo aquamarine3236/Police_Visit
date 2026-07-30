@@ -185,35 +185,67 @@ export default function RelativesPage() {
     }
   };
 
+  // Surfaces react-hook-form validation failures (otherwise handleSubmit
+  // swallows them silently → the Edit button appears to "do nothing").
+  const onEditInvalid = (formErrors: Record<string, { message?: string }>) => {
+    const first = Object.values(formErrors)[0];
+    toast({
+      title: 'Dữ liệu không hợp lệ',
+      description: first?.message || 'Vui lòng kiểm tra lại các trường.',
+      variant: 'destructive',
+    });
+  };
+
   const onEditSubmit = async (data: RelativeFormData) => {
-    if (!selected || !inmate) return;
-    const res = await updateRelative(selected.id, data);
-    if (res.success) {
-      toast({ title: 'Thành công', description: 'Đã cập nhật thân thích.' });
-      setIsEditOpen(false);
-      await loadRelatives(inmate.id);
-    } else {
+    if (!selected || !inmate) {
       toast({
-        title: 'Thất bại',
-        description: res.message || 'Không thể cập nhật thân thích.',
+        title: 'Thiếu thông tin',
+        description: 'Chưa chọn thân thích hoặc người bị giam.',
         variant: 'destructive',
       });
+      return;
+    }
+    try {
+      const res = await updateRelative(selected.id, data);
+      if (res.success) {
+        toast({ title: 'Thành công', description: 'Đã cập nhật thân thích.' });
+        setIsEditOpen(false);
+        await loadRelatives(inmate.id);
+      } else {
+        toast({
+          title: 'Thất bại',
+          description: res.message || 'Không thể cập nhật thân thích.',
+          variant: 'destructive',
+        });
+      }
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Không thể cập nhật thân thích.';
+      console.error('[relatives] updateRelative failed:', err);
+      toast({ title: 'Lỗi', description: message, variant: 'destructive' });
     }
   };
 
   const handleDeleteConfirm = async () => {
     if (!selected || !inmate) return;
-    const res = await deleteRelative(selected.id);
-    if (res.success) {
-      toast({ title: 'Thành công', description: 'Đã xóa thân thích.' });
-      setIsDeleteOpen(false);
-      await loadRelatives(inmate.id);
-    } else {
-      toast({
-        title: 'Thất bại',
-        description: res.message || 'Không thể xóa thân thích.',
-        variant: 'destructive',
-      });
+    try {
+      const res = await deleteRelative(selected.id);
+      if (res.success) {
+        toast({ title: 'Thành công', description: 'Đã xóa thân thích.' });
+        setIsDeleteOpen(false);
+        await loadRelatives(inmate.id);
+      } else {
+        toast({
+          title: 'Thất bại',
+          description: res.message || 'Không thể xóa thân thích.',
+          variant: 'destructive',
+        });
+      }
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Không thể xóa thân thích.';
+      console.error('[relatives] deleteRelative failed:', err);
+      toast({ title: 'Lỗi', description: message, variant: 'destructive' });
     }
   };
 
@@ -500,7 +532,7 @@ export default function RelativesPage() {
       {/* ─── Edit Dialog ────────────────────────────────────────────────── */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent>
-          <form onSubmit={handleSubmitEdit(onEditSubmit)}>
+          <form onSubmit={handleSubmitEdit(onEditSubmit, onEditInvalid)}>
             <DialogHeader>
               <DialogTitle>Chỉnh sửa thân thích</DialogTitle>
               <DialogDescription>Cập nhật thông tin người thân thích.</DialogDescription>

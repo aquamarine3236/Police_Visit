@@ -20,6 +20,8 @@ numerically), and the numbering encodes dependency order:
 | `10_functions_util.sql` | `fn_update_timestamp`, `fn_audit_log`, `fn_audit_log_inmate_relatives` |
 | `11_functions_auth.sql` | `custom_access_token_hook` + grants + `auth_admin_read_admin_profiles` policy |
 | `12_functions_scheduling.sql` | `fn_check_monthly_visit_limit`, `fn_assign_time_slot`, `fn_lookup_inmate_for_registration`, `fn_submit_registration`, `fn_bulk_import_relatives` + grants |
+| `13_functions_admin_relatives.sql` | `fn_admin_update_relative`, `fn_admin_delete_relative` (SECURITY DEFINER admin write RPCs) + grants |
+| `14_functions_admin_inmates.sql` | `fn_admin_update_inmate`, `fn_admin_soft_delete_inmate` (SECURITY DEFINER admin write RPCs) + grants |
 | `20_triggers.sql` | `updated_at` + audit triggers for all tables |
 | `30_rls.sql` | `ENABLE ROW LEVEL SECURITY` + all final policies |
 | `40_timezone.sql` | Session/role timezone → `Asia/Ho_Chi_Minh` |

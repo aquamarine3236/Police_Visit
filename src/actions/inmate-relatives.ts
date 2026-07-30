@@ -63,19 +63,28 @@ export async function updateRelative(
   id: string,
   formData: RelativeFormData,
 ): Promise<ServiceResult<InmateRelative>> {
-  const supabase = await createServerClient();
-  if (!supabase) {
-    return { success: false, message: 'Supabase chưa được cấu hình.' };
+  try {
+    const supabase = await createServerClient();
+    if (!supabase) {
+      return { success: false, message: 'Supabase chưa được cấu hình.' };
+    }
+
+    const db = createServiceRoleClient() ?? supabase;
+    const result = await relativeService.updateRelative(supabase, id, formData, db);
+
+    if (result.success) {
+      revalidatePath('/admin/relatives');
+    }
+
+    return result;
+  } catch (err) {
+    console.error('[action] updateRelative failed:', err);
+    return {
+      success: false,
+      message:
+        err instanceof Error ? err.message : 'Không thể cập nhật thân thích.',
+    };
   }
-
-  const db = createServiceRoleClient() ?? supabase;
-  const result = await relativeService.updateRelative(supabase, id, formData, db);
-
-  if (result.success) {
-    revalidatePath('/admin/relatives');
-  }
-
-  return result;
 }
 
 // ─── deleteRelative ─────────────────────────────────────────────────────────
@@ -83,17 +92,26 @@ export async function updateRelative(
 export async function deleteRelative(
   id: string,
 ): Promise<ServiceResult<{ id: string }>> {
-  const supabase = await createServerClient();
-  if (!supabase) {
-    return { success: false, message: 'Supabase chưa được cấu hình.' };
+  try {
+    const supabase = await createServerClient();
+    if (!supabase) {
+      return { success: false, message: 'Supabase chưa được cấu hình.' };
+    }
+
+    const db = createServiceRoleClient() ?? supabase;
+    const result = await relativeService.deleteRelative(supabase, id, db);
+
+    if (result.success) {
+      revalidatePath('/admin/relatives');
+    }
+
+    return result;
+  } catch (err) {
+    console.error('[action] deleteRelative failed:', err);
+    return {
+      success: false,
+      message:
+        err instanceof Error ? err.message : 'Không thể xóa thân thích.',
+    };
   }
-
-  const db = createServiceRoleClient() ?? supabase;
-  const result = await relativeService.deleteRelative(supabase, id, db);
-
-  if (result.success) {
-    revalidatePath('/admin/relatives');
-  }
-
-  return result;
 }

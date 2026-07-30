@@ -50,3 +50,59 @@ export const SCHEDULING_SETTINGS_CACHE_TTL = 3600;
 // Public visitor registration submissions: max 10 requests per minute per IP.
 export const PUBLIC_REGISTRATION_RATE_LIMIT = 10;
 export const PUBLIC_REGISTRATION_RATE_WINDOW_MS = 60 * 1000;
+
+// ─── Visit registration DOCX form types ─────────────────────────────────────
+// Single source of truth for the biểu mẫu (form) each export button produces.
+// The DOCX API route (`/api/v1/admin/registrations/[id]/docx?type=...`) reads
+// `type` to pick a builder, and the admin UI reads `label` for the button and
+// `filenamePrefix` for the downloaded file. Adding a new form type only
+// requires a new entry here plus a matching builder in the DOCX route.
+
+export type VisitFormType = 'appointment' | 'gift' | 'report' | 'decision';
+
+export interface VisitFormTypeMeta {
+  /** Button label shown in the admin UI. */
+  label: string;
+  /** Document title rendered at the top of the DOCX. */
+  title: string;
+  /** Prefix for the downloaded filename: `${prefix}-${id}.docx`. */
+  filenamePrefix: string;
+  /**
+   * Name of the official Word template in `temp/` used to render this form via
+   * docxtemplater. `null` means the form is generated programmatically with the
+   * `docx` library instead of a template (currently only the appointment slip).
+   */
+  templateFile: string | null;
+}
+
+export const VISIT_FORM_TYPES: Record<VisitFormType, VisitFormTypeMeta> = {
+  appointment: {
+    label: 'Xuất phiếu thăm gặp',
+    title: 'PHIẾU ĐĂNG KÝ THĂM GẶP',
+    filenamePrefix: 'phieu-tham-gap',
+    templateFile: null,
+  },
+  gift: {
+    label: 'Xuất phiếu gửi quà',
+    title: 'PHIẾU GỬI QUÀ',
+    filenamePrefix: 'phieu-gui-qua',
+    templateFile: 'TG9- Phiếu gửi quà - BGT.docx',
+  },
+  report: {
+    label: 'Xuất Báo cáo',
+    title: 'BÁO CÁO ĐỀ XUẤT THĂM GẶP',
+    filenamePrefix: 'bao-cao-de-xuat',
+    templateFile: 'TG10- báo cáo đề xuất thăm gặp.docx',
+  },
+  decision: {
+    label: 'Xuất Quyết định',
+    title: 'QUYẾT ĐỊNH GIẢI QUYẾT CHO NGƯỜI BỊ TẠM GIAM, TẠM GIỮ GẶP, TIẾP XÚC',
+    filenamePrefix: 'quyet-dinh',
+    templateFile: 'TG12 - Quyết định giải quyết cho người bị TG,TG gặp, tiếp xúc.docx',
+  },
+};
+
+/** Runtime guard: narrow an arbitrary query string to a valid VisitFormType. */
+export function isVisitFormType(value: string): value is VisitFormType {
+  return value in VISIT_FORM_TYPES;
+}

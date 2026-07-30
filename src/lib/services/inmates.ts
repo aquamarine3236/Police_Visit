@@ -262,25 +262,43 @@ export async function updateInmate(
       : {}),
   };
 
-  const { data, error } = await db
-    .from('inmates')
-    .update(updatePayload)
-    .eq('id', id)
-    .select()
-    .single();
+  // Ghi qua RPC SECURITY DEFINER (fn_admin_update_inmate) thay vì UPDATE trực
+  // tiếp. Client dùng khóa SECRET (`sb_secret_…`) KHÔNG bỏ qua RLS như service
+  // role JWT cũ, nên UPDATE trực tiếp bị RLS chặn (0 dòng, không lỗi → "thành
+  // công giả"). Hàm RPC tự kiểm tra quyền theo prison_id rồi ghi với quyền definer.
+  const { data: rpcData, error } = await db.rpc('fn_admin_update_inmate', {
+    p_id: id,
+    p_prison_id: admin.prisonId,
+    p_payload: updatePayload,
+    p_user_id: admin.userId,
+  });
 
   if (error) {
-    if (error.code === '23505') {
+    return { success: false, message: error.message };
+  }
+
+  const result = rpcData as { error?: string } | Inmate | null;
+
+  if (result && 'error' in result && result.error) {
+    if (result.error === 'DUPLICATE_NUMBER') {
       return {
         success: false,
         message: 'Số giam phạm nhân đã tồn tại.',
         errors: { prison_number: ['Số giam phạm nhân đã tồn tại.'] },
       };
     }
-    return { success: false, message: error.message };
+    return { success: false, message: 'Không tìm thấy phạm nhân.' };
   }
 
-  return { success: true, data: data as Inmate };
+  if (!result) {
+    return {
+      success: false,
+      message:
+        'Không thể cập nhật phạm nhân. Có thể do thiếu quyền hoặc bản ghi không thuộc đơn vị của bạn.',
+    };
+  }
+
+  return { success: true, data: result as Inmate };
 }
 
 // ─── deleteInmate (soft-delete) ─────────────────────────────────────────────
@@ -330,17 +348,27 @@ export async function deleteInmate(
     };
   }
 
-  // Perform soft-delete
-  const { error } = await db
-    .from('inmates')
-    .update({
-      deleted_at: new Date().toISOString(),
-      updated_by: admin.userId,
-    })
-    .eq('id', id);
+  // Xóa mềm qua RPC SECURITY DEFINER (fn_admin_soft_delete_inmate). Client dùng
+  // khóa SECRET (`sb_secret_…`) không bỏ qua RLS nên UPDATE trực tiếp bị chặn
+  // (0 dòng, không lỗi → "thành công giả"). RPC tự kiểm tra quyền theo prison_id.
+  const { data: rpcData, error } = await db.rpc('fn_admin_soft_delete_inmate', {
+    p_id: id,
+    p_prison_id: admin.prisonId,
+    p_user_id: admin.userId,
+  });
 
   if (error) {
     return { success: false, message: error.message };
+  }
+
+  const result = rpcData as { deleted?: boolean; error?: string } | null;
+
+  if (!result || result.error || result.deleted !== true) {
+    return {
+      success: false,
+      message:
+        'Không thể xóa phạm nhân. Có thể do thiếu quyền hoặc bản ghi không thuộc đơn vị của bạn.',
+    };
   }
 
   return { success: true };

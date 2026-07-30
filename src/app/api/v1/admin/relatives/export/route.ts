@@ -20,7 +20,12 @@ export async function GET(request: NextRequest) {
   const auth = await requireAdminAuth();
   if ('error' in auth) return auth.error;
 
-  const { supabase, prisonId } = auth;
+  // Service-role client for the read (same as the registrations export route):
+  // the JOIN below runs with a privileged client so it does NOT depend on the
+  // JWT `prison_id` claim. The cookie-bound client is RLS-scoped through
+  // `fn_inmate_prison_id`, which returns ZERO rows for this role → an empty
+  // export file. Scoping is preserved manually via `.eq('inmate.prison_id', …)`.
+  const { db: supabase, prisonId } = auth;
 
   // Bộ lọc tùy chọn: chỉ xuất thân thích của MỘT người bị giam theo số giam.
   const prisonNumber = request.nextUrl.searchParams.get('prison_number')?.trim();
