@@ -63,6 +63,18 @@ export async function requireAdminAuth() {
     };
   }
 
+  // Super admins manage admins/prisons only — they carry no prison scope
+  // (prison_id IS NULL), so every prison-data API route is off-limits.
+  if (profile.role === 'super_admin' || !profile.prison_id) {
+    return {
+      error: errorResponse(
+        403,
+        'FORBIDDEN',
+        'Tài khoản quản trị cấp cao không truy cập dữ liệu trại giam.',
+      ),
+    };
+  }
+
   // Privileged client for trusted admin writes. It bypasses RLS, so it is only
   // returned AFTER the admin has been authorised above. Falls back to the
   // cookie-based client when the service role key is not configured.

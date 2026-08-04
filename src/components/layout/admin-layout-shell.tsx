@@ -17,6 +17,7 @@ interface AdminLayoutShellProps {
 
 export function AdminLayoutShell({ profile, email, children }: AdminLayoutShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const role = profile?.role === 'super_admin' ? 'super_admin' : 'admin';
 
   return (
     <div className="flex min-h-screen bg-soft-cloud font-sans text-ink">
@@ -48,13 +49,13 @@ export function AdminLayoutShell({ profile, email, children }: AdminLayoutShellP
           >
             <X className="h-5 w-5" />
           </button>
-          <AdminSidebar onNavigate={() => setSidebarOpen(false)} />
+          <AdminSidebar role={role} onNavigate={() => setSidebarOpen(false)} />
         </div>
       </div>
 
       {/* Desktop sidebar */}
       <div className="sticky top-0 hidden h-screen md:block">
-        <AdminSidebar />
+        <AdminSidebar role={role} />
       </div>
 
       {/* Main */}

@@ -54,5 +54,5 @@ export async function requireAdminSession(request: NextRequest) {
     return null;
   }
 
-  return response;
+  return { response, role: profile.role as 'admin' | 'super_admin' };
 }

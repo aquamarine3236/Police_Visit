@@ -63,13 +63,28 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    const response = await requireAdminSession(request);
+    const session = await requireAdminSession(request);
 
-    if (!response) {
+    if (!session) {
       return NextResponse.redirect(new URL('/admin/login', request.url));
     }
 
-    return response;
+    // ── Role-based route boundaries ──
+    // Super admin: management dashboard + own profile only — they hold no
+    // prison scope, so prison-data pages would just render empty states.
+    // Regular admin: everything EXCEPT the super-admin area.
+    const isSuperArea = pathname.startsWith('/admin/super');
+    const isProfile = pathname.startsWith('/admin/profile');
+
+    if (session.role === 'super_admin' && !isSuperArea && !isProfile) {
+      return NextResponse.redirect(new URL('/admin/super', request.url));
+    }
+
+    if (session.role === 'admin' && isSuperArea) {
+      return NextResponse.redirect(new URL('/admin', request.url));
+    }
+
+    return session.response;
   }
 
   // ─── Public registration submission rate limiting ─────────────────────────

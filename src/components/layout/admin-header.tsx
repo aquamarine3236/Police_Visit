@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LogOut, Menu, User } from 'lucide-react';
 import { logout } from '@/actions/auth';
@@ -19,6 +20,9 @@ const CRUMB_LABELS: Record<string, string> = {
   inmates: 'Quản lý người bị giam giữ',
   settings: 'Cấu hình lịch',
   login: 'Đăng nhập',
+  profile: 'Cài đặt tài khoản',
+  super: 'Quản lý quản trị viên',
+  prisons: 'Quản lý trại giam',
 };
 
 /**
@@ -65,18 +69,25 @@ export function AdminHeader({ profile, email, onMenuClick }: AdminHeaderProps) {
       <div className="flex items-center gap-2 sm:gap-3">
         <ThemeToggle />
 
-        <div className="flex items-center gap-3 border-l border-hairline pl-2 sm:pl-4">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-soft text-primary">
-            <User className="h-[18px] w-[18px]" />
-          </div>
-          <div className="hidden text-right md:block">
-            <p className="text-caption-md font-semibold leading-tight text-ink">
-              {displayName}
-            </p>
-            <p className="mt-0.5 text-utility-xs leading-none text-mute">
-              {displayRole}
-            </p>
-          </div>
+        <div className="flex items-center border-l border-hairline pl-2 sm:pl-4">
+          <Link
+            href="/admin/profile"
+            className="flex items-center gap-3 rounded-md px-2 py-1.5 transition-colors hover:bg-soft-cloud focus-ring"
+            title="Cài đặt tài khoản"
+            aria-label="Mở cài đặt tài khoản"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-soft text-primary">
+              <User className="h-[18px] w-[18px]" />
+            </div>
+            <div className="hidden text-right md:block">
+              <p className="text-caption-md font-semibold leading-tight text-ink">
+                {displayName}
+              </p>
+              <p className="mt-0.5 text-utility-xs leading-none text-mute">
+                {displayRole}
+              </p>
+            </div>
+          </Link>
         </div>
 
         <form action={logout}>

@@ -19,7 +19,10 @@ export async function login(formData: FormData) {
     return { success: false, message: 'Supabase chưa được cấu hình.' };
   }
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data: signInData, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
   if (error) {
     return {
@@ -28,8 +31,23 @@ export async function login(formData: FormData) {
     };
   }
 
+  // Role-based landing page: super admins manage admins/prisons and never see
+  // prison data, so they land on the management dashboard instead.
+  let destination = '/admin';
+  const userId = signInData.user?.id;
+  if (userId) {
+    const { data: profile } = await supabase
+      .from('admin_profiles')
+      .select('role')
+      .eq('id', userId)
+      .maybeSingle();
+    if (profile?.role === 'super_admin') {
+      destination = '/admin/super';
+    }
+  }
+
   revalidatePath('/admin');
-  redirect('/admin');
+  redirect(destination);
 }
 
 export async function logout() {

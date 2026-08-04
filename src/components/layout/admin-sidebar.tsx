@@ -3,11 +3,13 @@
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ClipboardList, Loader2, Settings, Users, Users2 } from 'lucide-react';
+import { Building2, ClipboardList, Loader2, Settings, ShieldCheck, Users, Users2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PoliceLogo } from '@/components/shared/police-logo';
 
 interface AdminSidebarProps {
+  /** Determines which navigation items are shown. */
+  role?: 'admin' | 'super_admin';
   /** Called when a nav link is clicked (used to close the mobile drawer). */
   onNavigate?: () => void;
 }
@@ -43,7 +45,23 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
+// Super admins manage admins and prisons only — prison-data pages are
+// blocked for them by the middleware, so their nav shows just these two.
+const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
+  {
+    label: 'Quản lý quản trị viên',
+    href: '/admin/super',
+    icon: ShieldCheck,
+    exact: true,
+  },
+  {
+    label: 'Quản lý trại giam',
+    href: '/admin/super/prisons',
+    icon: Building2,
+  },
+];
+
+export function AdminSidebar({ role = 'admin', onNavigate }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   // `useTransition` lets us give instant feedback the moment a nav item is
@@ -90,7 +108,7 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
         <p className="px-3 pb-2 text-utility-xs font-semibold uppercase tracking-wider text-sidebar-muted">
           Điều hướng
         </p>
-        {NAV_ITEMS.map((item) => {
+        {(role === 'super_admin' ? SUPER_ADMIN_NAV_ITEMS : NAV_ITEMS).map((item) => {
           const isActive = item.exact
             ? pathname === item.href
             : pathname.startsWith(item.href);

@@ -139,12 +139,47 @@ export type AdminRole = 'admin' | 'super_admin';
 
 export interface AdminProfile {
   id: string;
-  prison_id: string;
+  /** Active prison. NULL for super_admin (no prison scope). */
+  prison_id: string | null;
   full_name: string;
   role: AdminRole;
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+// ─── Admin ↔ Prison assignments (multi-prison model, migration 50) ──────────
+
+export interface AdminPrisonAssignment {
+  id: string;
+  admin_id: string;
+  prison_id: string;
+  created_at: string;
+  created_by: string | null;
+}
+
+/** Prison summary embedded in admin/profile RPC payloads. */
+export interface PrisonSummary {
+  id: string;
+  name: string;
+  code: string;
+}
+
+/** Row returned by fn_sa_list_admins(). */
+export interface AdminAccount {
+  id: string;
+  email: string | null;
+  full_name: string;
+  role: AdminRole;
+  is_active: boolean;
+  prison_id: string | null;
+  created_at: string;
+  assigned_prisons: PrisonSummary[];
+}
+
+/** Row returned by fn_sa_list_prisons(). */
+export interface PrisonWithAdminCount extends Prison {
+  admin_count: number;
 }
 
 // ─── Audit Logs ─────────────────────────────────────────────────────────────

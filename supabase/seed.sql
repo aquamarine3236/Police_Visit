@@ -9,6 +9,19 @@ VALUES (
 )
 ON CONFLICT (code) DO NOTHING;
 
+-- Trại giam thứ hai — dùng để kiểm thử tính cô lập dữ liệu giữa các trại và
+-- tính năng chuyển trại của admin (multi-prison assignments).
+INSERT INTO prisons (id, name, code, address, phone, is_active)
+VALUES (
+  '22222222-2222-2222-2222-222222222222',
+  'Trại giam TH',
+  'PRISON-002',
+  'Địa chỉ mẫu 2',
+  '0987654321',
+  true
+)
+ON CONFLICT (code) DO NOTHING;
+
 INSERT INTO scheduling_settings (
   prison_id,
   visit_time,

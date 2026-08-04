@@ -45,5 +45,34 @@ ON CONFLICT (id) DO UPDATE
       role      = EXCLUDED.role,
       is_active = EXCLUDED.is_active;
 
+-- STEP 3 — Record the prison assignment (multi-prison model, migration 50).
+--          Regular admins can only switch to prisons listed here. Skip this
+--          block for super_admin accounts (they hold no prison).
+INSERT INTO admin_prison_assignments (admin_id, prison_id)
+SELECT
+  '00000000-0000-0000-0000-000000000000'::uuid, -- STEP 1 auth user id
+  p.id
+FROM prisons p
+WHERE p.code = 'PRISON-001'
+ON CONFLICT (admin_id, prison_id) DO NOTHING;
+
+-- ── Super admin variant ─────────────────────────────────────────────────────
+-- For a super_admin, use this INSERT instead (no prison, no assignment):
+--
+--   INSERT INTO admin_profiles (id, prison_id, full_name, role, is_active)
+--   VALUES (
+--     '00000000-0000-0000-0000-000000000000'::uuid, -- STEP 1 auth user id
+--     NULL,
+--     'Quản trị viên cấp cao',
+--     'super_admin',
+--     true
+--   )
+--   ON CONFLICT (id) DO UPDATE
+--     SET prison_id = EXCLUDED.prison_id,
+--         full_name = EXCLUDED.full_name,
+--         role      = EXCLUDED.role,
+--         is_active = EXCLUDED.is_active;
+
 -- Verify the profile and that the JWT claim hook will resolve role/prison:
 --   SELECT id, prison_id, full_name, role, is_active FROM admin_profiles;
+--   SELECT admin_id, prison_id FROM admin_prison_assignments;
