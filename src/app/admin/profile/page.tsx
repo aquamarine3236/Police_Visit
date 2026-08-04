@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import {
   Select,
   SelectContent,
@@ -52,6 +53,15 @@ export default function ProfilePage() {
   const [savingPassword, setSavingPassword] = React.useState(false);
   const [switching, setSwitching] = React.useState(false);
   const [selectedPrisonId, setSelectedPrisonId] = React.useState<string>('');
+
+  // ── Pending confirmation (opens ConfirmDialog after form validation) ──────
+  const [pendingConfirm, setPendingConfirm] = React.useState<{
+    title: string;
+    description: string;
+    confirmLabel: string;
+    run: () => Promise<void>;
+  } | null>(null);
+  const confirmBusy = savingName || savingPassword || switching;
 
   // ── Display name form ──────────────────────────────────────────────────────
   const nameForm = useForm<DisplayNameFormData>({
@@ -91,6 +101,47 @@ export default function ProfilePage() {
   }, []);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
+
+  const requestSaveName = (data: DisplayNameFormData) => {
+    setPendingConfirm({
+      title: 'Xác nhận cập nhật tên hiển thị',
+      description: `Bạn có chắc chắn muốn đổi tên hiển thị thành "${data.full_name}" không?`,
+      confirmLabel: 'Cập nhật',
+      run: () => onSaveName(data),
+    });
+  };
+
+  const requestSavePassword = (data: ChangePasswordFormData) => {
+    setPendingConfirm({
+      title: 'Xác nhận đổi mật khẩu',
+      description:
+        'Bạn có chắc chắn muốn đổi mật khẩu không? Mật khẩu mới sẽ được áp dụng ngay sau khi xác nhận.',
+      confirmLabel: 'Đổi mật khẩu',
+      run: () => onSavePassword(data),
+    });
+  };
+
+  const requestSwitchPrison = () => {
+    if (!selectedPrisonId || selectedPrisonId === profile?.active_prison?.id) {
+      return;
+    }
+    const target = profile?.assigned_prisons.find((p) => p.id === selectedPrisonId);
+    setPendingConfirm({
+      title: 'Xác nhận chuyển trại giam',
+      description: `Bạn có chắc chắn muốn chuyển sang làm việc tại "${target?.name ?? 'trại giam đã chọn'}" không? Dữ liệu hiển thị sẽ chuyển sang trại giam mới.`,
+      confirmLabel: 'Chuyển trại giam',
+      run: onSwitchPrison,
+    });
+  };
+
+  const onConfirmPending = async () => {
+    if (!pendingConfirm) return;
+    try {
+      await pendingConfirm.run();
+    } finally {
+      setPendingConfirm(null);
+    }
+  };
 
   const onSaveName = async (data: DisplayNameFormData) => {
     setSavingName(true);
@@ -209,7 +260,7 @@ export default function ProfilePage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* ── Display name ── */}
         <form
-          onSubmit={nameForm.handleSubmit(onSaveName)}
+          onSubmit={nameForm.handleSubmit(requestSaveName)}
           className="space-y-4 rounded-lg border border-hairline bg-surface p-6 shadow-sm"
         >
           <h2 className="flex items-center gap-2 text-body-strong font-semibold text-ink">
@@ -278,7 +329,7 @@ export default function ProfilePage() {
             </div>
             <Button
               type="button"
-              onClick={onSwitchPrison}
+              onClick={requestSwitchPrison}
               disabled={
                 switching ||
                 !selectedPrisonId ||
@@ -297,7 +348,7 @@ export default function ProfilePage() {
 
         {/* ── Change password ── */}
         <form
-          onSubmit={passwordForm.handleSubmit(onSavePassword)}
+          onSubmit={passwordForm.handleSubmit(requestSavePassword)}
           className="space-y-4 rounded-lg border border-hairline bg-surface p-6 shadow-sm lg:col-span-1"
         >
           <h2 className="flex items-center gap-2 text-body-strong font-semibold text-ink">
@@ -373,6 +424,18 @@ export default function ProfilePage() {
           </Button>
         </form>
       </div>
+
+      <ConfirmDialog
+        open={Boolean(pendingConfirm)}
+        onOpenChange={(open) => {
+          if (!open && !confirmBusy) setPendingConfirm(null);
+        }}
+        title={pendingConfirm?.title ?? ''}
+        description={pendingConfirm?.description ?? ''}
+        confirmLabel={pendingConfirm?.confirmLabel}
+        loading={confirmBusy}
+        onConfirm={onConfirmPending}
+      />
     </div>
   );
 }

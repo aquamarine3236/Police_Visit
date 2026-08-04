@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Users2,
   Loader2,
+  X,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -143,6 +144,13 @@ export default function RelativesPage() {
     } finally {
       setLookupLoading(false);
     }
+  };
+
+  // Xóa tra cứu: bỏ bộ lọc hiện tại, quay về trạng thái ban đầu (xuất toàn bộ).
+  const handleClearLookup = () => {
+    setPrisonNumberInput('');
+    setInmate(null);
+    setRelatives([]);
   };
 
   // ─── Add form ─────────────────────────────────────────────────────────────
@@ -303,6 +311,46 @@ export default function RelativesPage() {
     }
   };
 
+  // ─── Export Excel ─────────────────────────────────────────────────────────
+  // Phạm vi xuất được xác định TƯỜNG MINH để tránh trạng thái "lệch pha" giữa
+  // ô nhập số giam và kết quả tra cứu (inmate):
+  //   1. Đã tra cứu & ô nhập trống hoặc khớp số giam  → xuất riêng người đó.
+  //   2. Ô nhập có chữ nhưng CHƯA tra cứu / không khớp → chặn, yêu cầu tra cứu
+  //      (không âm thầm xuất toàn bộ hoặc xuất theo bộ lọc cũ).
+  //   3. Ô nhập trống & chưa tra cứu                   → xuất toàn bộ (chủ đích).
+  const typedPrisonNumber = prisonNumberInput.trim();
+  const exportScope: 'inmate' | 'all' | 'blocked' =
+    inmate && (typedPrisonNumber === '' || typedPrisonNumber === inmate.prison_number)
+      ? 'inmate'
+      : typedPrisonNumber !== ''
+        ? 'blocked'
+        : 'all';
+
+  const handleExport = async () => {
+    if (exportScope === 'blocked') {
+      toast({
+        title: 'Chưa áp dụng bộ lọc',
+        description:
+          'Vui lòng bấm "Tra cứu" để áp dụng số giam trước khi xuất, hoặc xóa trống ô nhập để xuất toàn bộ.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const url =
+      exportScope === 'inmate' && inmate
+        ? `/api/v1/admin/relatives/export?prison_number=${encodeURIComponent(inmate.prison_number)}`
+        : '/api/v1/admin/relatives/export';
+    const ok = await downloadExport(url, 'danh-sach-than-thich.xlsx');
+    if (!ok) {
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể xuất danh sách. Vui lòng thử lại.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -324,27 +372,25 @@ export default function RelativesPage() {
           <Button
             variant="outline"
             disabled={exporting}
-            onClick={async () => {
-              // Nếu đang xem 1 người bị giam thì xuất riêng, ngược lại xuất toàn bộ.
-              const url = inmate
-                ? `/api/v1/admin/relatives/export?prison_number=${encodeURIComponent(inmate.prison_number)}`
-                : '/api/v1/admin/relatives/export';
-              const ok = await downloadExport(url, 'danh-sach-than-thich.xlsx');
-              if (!ok) {
-                toast({
-                  title: 'Lỗi',
-                  description: 'Không thể xuất danh sách. Vui lòng thử lại.',
-                  variant: 'destructive',
-                });
-              }
-            }}
+            onClick={handleExport}
+            title={
+              exportScope === 'inmate' && inmate
+                ? `Xuất thân thích của số giam ${inmate.prison_number}`
+                : exportScope === 'blocked'
+                  ? 'Bấm "Tra cứu" để áp dụng số giam trước khi xuất'
+                  : 'Xuất toàn bộ danh sách thân thích'
+            }
           >
             {exporting ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Download className="mr-2 h-4 w-4" />
             )}
-            {exporting ? 'Đang xuất...' : 'Xuất Excel'}
+            {exporting
+              ? 'Đang xuất...'
+              : exportScope === 'inmate' && inmate
+                ? `Xuất Excel (${inmate.prison_number})`
+                : 'Xuất Excel'}
           </Button>
         </div>
       </div>
@@ -370,10 +416,17 @@ export default function RelativesPage() {
             />
           </div>
         </div>
-        <Button className="h-11" onClick={handleLookup} disabled={lookupLoading}>
-          {lookupLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
-          Tra cứu
-        </Button>
+        {exportScope === 'inmate' && inmate ? (
+          <Button className="h-11" variant="outline" onClick={handleClearLookup}>
+            <X className="mr-2 h-4 w-4" />
+            Xóa tra cứu
+          </Button>
+        ) : (
+          <Button className="h-11" onClick={handleLookup} disabled={lookupLoading}>
+            {lookupLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
+            Tra cứu
+          </Button>
+        )}
       </div>
 
       {/* Thông tin người bị giam (chỉ đọc) */}

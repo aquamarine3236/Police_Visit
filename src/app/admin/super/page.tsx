@@ -24,6 +24,7 @@ import {
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import {
   Select,
   SelectContent,
@@ -60,9 +61,12 @@ export default function SuperAdminPage() {
   const [assignTarget, setAssignTarget] = React.useState<AdminAccount | null>(null);
   const [assignSelection, setAssignSelection] = React.useState<string[]>([]);
   const [assignSaving, setAssignSaving] = React.useState(false);
+  const [confirmAssignOpen, setConfirmAssignOpen] = React.useState(false);
 
   // ── Toggle-active state ──
   const [togglingId, setTogglingId] = React.useState<string | null>(null);
+  const [confirmToggleTarget, setConfirmToggleTarget] =
+    React.useState<AdminAccount | null>(null);
 
   // ── Create-admin dialog state ──
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -123,6 +127,7 @@ export default function SuperAdminPage() {
       const res = await setAdminPrisons(assignTarget.id, assignSelection);
       if (res.success) {
         toast({ title: 'Thành công', description: res.message });
+        setConfirmAssignOpen(false);
         setAssignTarget(null);
         await load();
       } else {
@@ -134,6 +139,7 @@ export default function SuperAdminPage() {
       }
     } finally {
       setAssignSaving(false);
+      setConfirmAssignOpen(false);
     }
   };
 
@@ -153,7 +159,13 @@ export default function SuperAdminPage() {
       }
     } finally {
       setTogglingId(null);
+      setConfirmToggleTarget(null);
     }
+  };
+
+  const onConfirmToggleActive = async () => {
+    if (!confirmToggleTarget) return;
+    await onToggleActive(confirmToggleTarget);
   };
 
   const toggleCreatePrison = (prisonId: string) => {
@@ -312,7 +324,7 @@ export default function SuperAdminPage() {
                           variant="outline"
                           size="sm"
                           disabled={togglingId === admin.id}
-                          onClick={() => onToggleActive(admin)}
+                          onClick={() => setConfirmToggleTarget(admin)}
                         >
                           {togglingId === admin.id ? (
                             <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
@@ -391,7 +403,7 @@ export default function SuperAdminPage() {
               Hủy
             </Button>
             <Button
-              onClick={onSaveAssignments}
+              onClick={() => setConfirmAssignOpen(true)}
               disabled={assignSaving || assignSelection.length === 0}
             >
               {assignSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -400,6 +412,43 @@ export default function SuperAdminPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── Confirm: save prison assignments ── */}
+      <ConfirmDialog
+        open={confirmAssignOpen}
+        onOpenChange={(open) => {
+          if (!assignSaving) setConfirmAssignOpen(open);
+        }}
+        title="Xác nhận phân công trại giam"
+        description={`Bạn có chắc chắn muốn cập nhật danh sách trại giam được phân công cho "${assignTarget?.full_name ?? ''}" không?`}
+        confirmLabel="Lưu phân công"
+        loading={assignSaving}
+        onConfirm={onSaveAssignments}
+      />
+
+      {/* ── Confirm: activate / deactivate admin ── */}
+      <ConfirmDialog
+        open={Boolean(confirmToggleTarget)}
+        onOpenChange={(open) => {
+          if (!open && !togglingId) setConfirmToggleTarget(null);
+        }}
+        title={
+          confirmToggleTarget?.is_active
+            ? 'Xác nhận vô hiệu hóa tài khoản'
+            : 'Xác nhận kích hoạt tài khoản'
+        }
+        description={
+          confirmToggleTarget?.is_active
+            ? `Bạn có chắc chắn muốn vô hiệu hóa tài khoản "${confirmToggleTarget?.full_name ?? ''}" không? Tài khoản này sẽ không thể đăng nhập cho đến khi được kích hoạt lại.`
+            : `Bạn có chắc chắn muốn kích hoạt lại tài khoản "${confirmToggleTarget?.full_name ?? ''}" không?`
+        }
+        confirmLabel={
+          confirmToggleTarget?.is_active ? 'Vô hiệu hóa' : 'Kích hoạt'
+        }
+        destructive={Boolean(confirmToggleTarget?.is_active)}
+        loading={Boolean(togglingId)}
+        onConfirm={onConfirmToggleActive}
+      />
 
       {/* ── Create admin dialog ── */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

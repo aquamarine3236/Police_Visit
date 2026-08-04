@@ -1,9 +1,11 @@
 'use client';
 
+import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LogOut, Menu, User } from 'lucide-react';
 import { logout } from '@/actions/auth';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { ThemeToggle } from '@/components/shared/theme-toggle';
 
 interface AdminHeaderProps {
@@ -42,6 +44,20 @@ function useCurrentTabLabel(pathname: string) {
 export function AdminHeader({ profile, email, onMenuClick }: AdminHeaderProps) {
   const pathname = usePathname();
   const currentTab = useCurrentTabLabel(pathname);
+
+  const [confirmLogoutOpen, setConfirmLogoutOpen] = React.useState(false);
+  const [loggingOut, setLoggingOut] = React.useState(false);
+
+  const onConfirmLogout = async () => {
+    setLoggingOut(true);
+    try {
+      // Server action signs out and redirects to /admin/login.
+      await logout();
+    } finally {
+      setLoggingOut(false);
+      setConfirmLogoutOpen(false);
+    }
+  };
 
   const displayName = profile?.full_name || email || 'Quản trị viên';
   const displayRole =
@@ -90,17 +106,29 @@ export function AdminHeader({ profile, email, onMenuClick }: AdminHeaderProps) {
           </Link>
         </div>
 
-        <form action={logout}>
-          <button
-            type="submit"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-mute transition-colors hover:bg-danger-soft hover:text-danger focus-ring"
-            title="Đăng xuất"
-            aria-label="Đăng xuất"
-          >
-            <LogOut className="h-[18px] w-[18px]" />
-          </button>
-        </form>
+        <button
+          type="button"
+          onClick={() => setConfirmLogoutOpen(true)}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-mute transition-colors hover:bg-danger-soft hover:text-danger focus-ring"
+          title="Đăng xuất"
+          aria-label="Đăng xuất"
+        >
+          <LogOut className="h-[18px] w-[18px]" />
+        </button>
       </div>
+
+      <ConfirmDialog
+        open={confirmLogoutOpen}
+        onOpenChange={(open) => {
+          if (!loggingOut) setConfirmLogoutOpen(open);
+        }}
+        title="Xác nhận đăng xuất"
+        description="Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?"
+        confirmLabel="Đăng xuất"
+        destructive
+        loading={loggingOut}
+        onConfirm={onConfirmLogout}
+      />
     </header>
   );
 }
