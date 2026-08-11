@@ -57,7 +57,7 @@ VALUES (
 
 function generateInmateSeed(): string {
   return `
--- Inmate type "Người bị tạm giữ" (allowed 2 visits/month)
+-- Inmate type "Người bị tạm giữ" (allowed 3 visits total)
 INSERT INTO inmates (id, prison_id, prison_number, full_name, date_of_birth, classification, visit_status)
 VALUES (
   '${TEST_INMATE_ID_TAM_GIU}',

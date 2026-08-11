@@ -17,7 +17,7 @@
 
 -- ─── fn_check_monthly_visit_limit ────────────────────────────────────────────
 -- Visit-limit rules:
---   * 'Người bị tạm giữ' → max 2 visits TOTAL since classification_changed_at.
+--   * 'Người bị tạm giữ' → max 3 visits TOTAL since classification_changed_at.
 --   * All other classifications → max 1 visit per calendar month.
 CREATE OR REPLACE FUNCTION fn_check_monthly_visit_limit(
   p_inmate_id UUID,
@@ -51,7 +51,7 @@ WITH inmate_data AS (
 SELECT
   CASE
     WHEN inmate_data.classification = 'Người bị tạm giữ'
-      THEN counted_total.visit_count < 2
+      THEN counted_total.visit_count < 3
     ELSE counted_monthly.visit_count < 1
   END
 FROM inmate_data, counted_total, counted_monthly;

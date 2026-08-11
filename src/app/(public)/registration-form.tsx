@@ -333,7 +333,7 @@ export default function RegistrationForm({ initialSettings }: RegistrationFormPr
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Người bị tạm giữ">Người bị tạm giữ (Tối đa 2 lần)</SelectItem>
+                              <SelectItem value="Người bị tạm giữ">Người bị tạm giữ (Tối đa 3 lần)</SelectItem>
                               <SelectItem value="Người bị tạm giam">Người bị tạm giam (1 lần/tháng)</SelectItem>
                               <SelectItem value="Người bị kết án tử hình">Người bị kết án tử hình (1 lần/tháng)</SelectItem>
                               <SelectItem value="Phạm nhân">Phạm nhân (1 lần/tháng)</SelectItem>

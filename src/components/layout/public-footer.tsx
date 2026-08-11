@@ -131,7 +131,7 @@ export function PublicFooter({
             <ul className="space-y-2.5 text-caption-md text-mute">
               <li className="flex items-center justify-between border-b border-hairline-soft pb-2">
                 <span>Người bị tạm giữ</span>
-                <span className="font-semibold text-ink">02 lần</span>
+                <span className="font-semibold text-ink">03 lần</span>
               </li>
               <li className="flex items-center justify-between border-b border-hairline-soft pb-2">
                 <span>Người bị tạm giam</span>
