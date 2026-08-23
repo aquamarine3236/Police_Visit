@@ -2,12 +2,12 @@
 
 import { createServerClient } from '@/lib/supabase/server';
 import * as schedulingService from '@/lib/services/scheduling';
-import type { RegistrationFormData } from '@/lib/validations/registration';
+import type { PublicRegistrationFormData } from '@/lib/validations/registration';
 import type { ServiceResult, VisitRegistration, RegistrationVisitor } from '@/types';
 
 export async function submitRegistration(
   prisonId: string,
-  formData: RegistrationFormData,
+  formData: PublicRegistrationFormData,
 ): Promise<ServiceResult<{ registration: VisitRegistration; visitors: RegistrationVisitor[] }>> {
   const supabase = await createServerClient();
   if (!supabase) {

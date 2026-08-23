@@ -28,8 +28,8 @@ import {
 } from '@/components/ui/dialog';
 
 import {
-  registrationFormSchema,
-  type RegistrationFormData,
+  publicRegistrationFormSchema,
+  type PublicRegistrationFormData,
 } from '@/lib/validations/registration';
 
 import { submitRegistration } from '@/actions/registration';
@@ -70,7 +70,7 @@ interface SuccessResult {
     relationship: string;
     display_order: number;
   }[];
-  inmate: RegistrationFormData['inmate'];
+  inmate: PublicRegistrationFormData['inmate'];
 }
 
 interface RegistrationFormProps {
@@ -101,8 +101,8 @@ export default function RegistrationForm({ initialSettings }: RegistrationFormPr
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isErrorOpen, setIsErrorOpen] = useState(false);
 
-  const form = useForm<RegistrationFormData>({
-    resolver: zodResolver(registrationFormSchema),
+  const form = useForm<PublicRegistrationFormData>({
+    resolver: zodResolver(publicRegistrationFormSchema),
     defaultValues: {
       inmate: {
         prison_number: '',
@@ -165,7 +165,7 @@ export default function RegistrationForm({ initialSettings }: RegistrationFormPr
   };
 
   // ─── Handle form submission (wired to Server Action) ─────────────────────
-  const onSubmit = async (data: RegistrationFormData) => {
+  const onSubmit = async (data: PublicRegistrationFormData) => {
     setIsSubmitting(true);
     setErrorMessage(null);
 
@@ -281,20 +281,6 @@ export default function RegistrationForm({ initialSettings }: RegistrationFormPr
                           <FormLabel className="text-body-strong">Số giam <span className="text-sale">*</span></FormLabel>
                           <FormControl>
                             <Input placeholder="Ví dụ: PMN12345" {...field} className="rounded-md" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={control}
-                      name="inmate.full_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-body-strong">Họ và tên<span className="text-sale">*</span></FormLabel>
-                          <FormControl>
-                            <Input placeholder="Nhập họ và tên" {...field} className="rounded-md" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -455,23 +441,6 @@ export default function RegistrationForm({ initialSettings }: RegistrationFormPr
                           </FormItem>
 
                           <FormItem>
-                            <FormLabel className="text-body-strong">Số định danh / CCCD <span className="text-sale">*</span></FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="Gồm 12 chữ số"
-                                maxLength={12}
-                                {...register(`visitors.${index}.citizen_id` as const)}
-                                className="rounded-md"
-                              />
-                            </FormControl>
-                            {errors.visitors?.[index]?.citizen_id && (
-                              <p className="text-caption-sm font-medium text-sale">
-                                {errors.visitors[index].citizen_id.message}
-                              </p>
-                            )}
-                          </FormItem>
-
-                          <FormItem>
                             <FormLabel className="text-body-strong">Quan hệ với người đang bị quản lý giam giữ <span className="text-sale">*</span></FormLabel>
                             <FormControl>
                               <Input
@@ -608,13 +577,12 @@ export default function RegistrationForm({ initialSettings }: RegistrationFormPr
 
               {/* Details grid */}
               <dl className="space-y-3 text-caption-md">
-                <div className="flex items-start gap-3">
+                   <div className="flex items-start gap-3">
                   <User className="mt-0.5 h-4 w-4 shrink-0 text-mute" />
                   <div className="flex-1">
                     <dt className="text-mute">Người đang bị quản lý giam giữ</dt>
                     <dd className="font-semibold text-ink">
-                      {toTitleCaseName(successData.inmate.full_name)}{' '}
-                      <span className="font-mono text-charcoal">({successData.inmate.prison_number})</span>
+                      <span className="font-mono">Số giam: {successData.inmate.prison_number}</span>
                     </dd>
                   </div>
                 </div>
@@ -649,7 +617,6 @@ export default function RegistrationForm({ initialSettings }: RegistrationFormPr
                             <li key={i} className="rounded-md bg-soft-cloud px-3 py-2 text-charcoal">
                               <span className="font-semibold text-ink">{toTitleCaseName(v.full_name)}</span>
                               <span className="text-mute"> · {v.relationship}</span>
-                              <span className="block font-mono text-caption-sm text-mute">CCCD: {v.citizen_id}</span>
                             </li>
                           ))}
                       </ul>

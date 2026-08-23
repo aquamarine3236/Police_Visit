@@ -2,8 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { ServiceResult, VisitRegistration, RegistrationVisitor } from '@/types';
 import {
-  registrationFormSchema,
-  type RegistrationFormData,
+  publicRegistrationFormSchema,
+  type PublicRegistrationFormData,
 } from '@/lib/validations/registration';
 import { formatSuitableDays } from '@/lib/constants';
 import { getISODayOfWeekVN, hasSlotEndedVN } from '@/lib/time';
@@ -23,10 +23,10 @@ interface InmateRecord {
 export async function submitRegistration(
   supabase: SupabaseClient,
   prisonId: string,
-  formData: RegistrationFormData,
+  formData: PublicRegistrationFormData,
 ): Promise<ServiceResult<{ registration: VisitRegistration; visitors: RegistrationVisitor[] }>> {
-  // Step 1: Validate form input
-  const parsed = registrationFormSchema.safeParse(formData);
+  // Step 1: Validate form input (public schema — no full_name / citizen_id required)
+  const parsed = publicRegistrationFormSchema.safeParse(formData);
   if (!parsed.success) {
     const fieldErrors: Record<string, string[]> = {};
     for (const issue of parsed.error.issues) {
@@ -64,13 +64,13 @@ export async function submitRegistration(
 
   const inmateRecord = inmate as InmateRecord;
 
-  // Step 2b: Cross-verify inmate data (exclude date_of_birth check)
-  const formName = inmateInput.full_name.trim().toLowerCase();
-  const dbName = inmateRecord.full_name.trim().toLowerCase();
-  if (formName !== dbName || inmateInput.classification !== inmateRecord.classification) {
+  // Step 2b: Cross-verify inmate data — only classification is checked.
+  // full_name is NOT collected from the public form (hidden for security);
+  // the inmate is already uniquely identified by prison_number.
+  if (inmateInput.classification !== inmateRecord.classification) {
     return {
       success: false,
-      message: 'Thông tin phạm nhân không khớp với hệ thống. Vui lòng kiểm tra lại họ tên và phân loại.',
+      message: 'Phân loại phạm nhân không khớp với hệ thống. Vui lòng kiểm tra lại.',
     };
   }
 
