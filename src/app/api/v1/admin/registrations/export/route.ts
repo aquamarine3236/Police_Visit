@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       .from('visit_registrations')
       .select('id, inmate:inmates!inner(id)')
       .eq('prison_id', prisonId)
-      .or(`full_name.ilike.${like},prison_number.ilike.${like}`, {
+      .or(`prison_number.ilike.${like}`, {
         referencedTable: 'inmates',
       });
     matchingRegIds = Array.from(
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       time_slot_end,
       status,
       created_at,
-      inmate:inmates!inner(prison_number, full_name),
+      inmate:inmates!inner(prison_number),
       visitors:registration_visitors(full_name, citizen_id, relationship)
       `,
     )

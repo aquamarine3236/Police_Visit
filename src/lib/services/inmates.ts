@@ -82,10 +82,10 @@ export async function listInmates(
     queryBuilder = queryBuilder.is('deleted_at', null);
   }
 
-  // Search by prison_number or full_name
+  // Search by prison_number
   if (search) {
     queryBuilder = queryBuilder.or(
-      `prison_number.ilike.%${search}%,full_name.ilike.%${search}%`,
+      `prison_number.ilike.%${search}%`,
     );
   }
 
@@ -161,7 +161,6 @@ export async function createInmate(
       ...parsed.data,
       prison_id: admin.prisonId,
       date_of_birth: parsed.data.date_of_birth || null,
-      citizen_id: parsed.data.citizen_id || null,
       permanent_address: parsed.data.permanent_address || null,
       criminal_offense: parsed.data.criminal_offense || null,
       arrest_date: parsed.data.arrest_date || null,
@@ -251,7 +250,6 @@ export async function updateInmate(
   const updatePayload: InmateUpdate & { classification_changed_at?: string } = {
     ...parsed.data,
     date_of_birth: parsed.data.date_of_birth || null,
-    citizen_id: parsed.data.citizen_id || null,
     permanent_address: parsed.data.permanent_address || null,
     criminal_offense: parsed.data.criminal_offense || null,
     arrest_date: parsed.data.arrest_date || null,

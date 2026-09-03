@@ -62,7 +62,6 @@ interface RegistrationWithRelations extends Omit<VisitRegistration, 'inmate_id'>
   inmate: {
     id: string;
     prison_number: string;
-    full_name: string;
   };
   visitors: VisitorDetail[];
 }
@@ -700,8 +699,7 @@ export default function AdminDashboardPage() {
                     </TableCell>
                     <TableCell className="font-semibold text-ink">{visitorLabel}</TableCell>
                     <TableCell>
-                      <p className="font-medium text-ink">{toTitleCaseName(reg.inmate?.full_name)}</p>
-                      <p className="text-caption-sm text-mute font-mono">{reg.inmate?.prison_number}</p>
+                      <p className="font-mono font-semibold text-ink">{reg.inmate?.prison_number}</p>
                     </TableCell>
                     <TableCell className="font-medium">{formatDateVN(reg.visit_date)}</TableCell>
                     <TableCell className="font-mono text-caption-md">
@@ -777,7 +775,6 @@ export default function AdminDashboardPage() {
                     Hồ sơ người bị giam giữ
                   </h3>
                   <div className="space-y-1 text-caption-md bg-soft-cloud/40 border border-hairline-soft p-3">
-                    <p>Họ tên: <strong className="text-ink">{toTitleCaseName(selectedReg.inmate?.full_name)}</strong></p>
                     <p>Số giam: <span className="font-mono text-ink font-semibold">{selectedReg.inmate?.prison_number}</span></p>
                   </div>
                 </div>
@@ -958,8 +955,7 @@ export default function AdminDashboardPage() {
               </p>
               <p>
                 Người bị giam giữ:{' '}
-                <strong className="text-ink">{toTitleCaseName(regToDelete.inmate?.full_name)}</strong>{' '}
-                <span className="font-mono text-mute">({regToDelete.inmate?.prison_number})</span>
+                <span className="font-mono font-semibold text-ink">{regToDelete.inmate?.prison_number}</span>
               </p>
               <p>
                 Ngày thăm: <strong className="text-ink">{formatDateVN(regToDelete.visit_date)}</strong> ·{' '}

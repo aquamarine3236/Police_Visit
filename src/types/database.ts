@@ -30,9 +30,7 @@ export interface Inmate {
   id: string;
   prison_id: string;
   prison_number: string;
-  full_name: string;
   date_of_birth: string | null;
-  citizen_id: string | null;
   permanent_address: string | null;
   criminal_offense: string | null;
   arrest_date: string | null;

@@ -106,7 +106,6 @@ export default function RegistrationForm({ initialSettings }: RegistrationFormPr
     defaultValues: {
       inmate: {
         prison_number: '',
-        full_name: '',
         date_of_birth: '',
         classification: 'Người bị tạm giữ',
       },

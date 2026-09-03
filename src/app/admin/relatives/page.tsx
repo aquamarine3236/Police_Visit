@@ -442,23 +442,15 @@ export default function RelativesPage() {
                 <dd className="text-body-md font-medium text-ink">{inmate.prison_number}</dd>
               </div>
               <div>
-                <dt className="text-caption-sm text-mute">Họ và tên</dt>
-                <dd className="text-body-md font-medium text-ink">{toTitleCaseName(inmate.full_name)}</dd>
-              </div>
-              <div>
                 <dt className="text-caption-sm text-mute">Ngày sinh</dt>
                 <dd className="text-body-md text-ink">{formatDateVN(inmate.date_of_birth) || '—'}</dd>
-              </div>
-              <div>
-                <dt className="text-caption-sm text-mute">CCCD</dt>
-                <dd className="text-body-md text-ink">{inmate.citizen_id || '—'}</dd>
               </div>
               <div>
                 <dt className="text-caption-sm text-mute">Địa chỉ thường trú</dt>
                 <dd className="text-body-md text-ink">{inmate.permanent_address || '—'}</dd>
               </div>
               <div>
-                <dt className="text-caption-sm text-mute">Tội giam</dt>
+                <dt className="text-caption-sm text-mute">Tội danh</dt>
                 <dd className="text-body-md text-ink">{inmate.criminal_offense || '—'}</dd>
               </div>
             </dl>
@@ -563,7 +555,7 @@ export default function RelativesPage() {
               <DialogTitle>Thêm thân thích</DialogTitle>
               <DialogDescription>
                 Thêm một người thân thích được phép đăng ký thăm gặp cho{' '}
-                {inmate ? toTitleCaseName(inmate.full_name) : 'người bị giam'}.
+                {inmate ? `số giam ${inmate.prison_number}` : 'người bị giam'}.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">

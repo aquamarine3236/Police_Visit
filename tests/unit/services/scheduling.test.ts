@@ -119,7 +119,6 @@ function futureSuitableDate(): string {
 const VALID_INMATE_DB = {
   id: 'inmate-1',
   prison_id: 'prison-1',
-  full_name: 'Nguyễn Văn An',
   date_of_birth: '1990-05-15',
   classification: 'Phạm nhân',
   visit_status: 'Được thăm gặp',
@@ -136,7 +135,6 @@ function validFormData() {
     }],
     inmate: {
       prison_number: 'PN-001',
-      full_name: 'Nguyễn Văn An',
       date_of_birth: '1990-05-15',
       classification: 'Phạm nhân' as const,
     },
@@ -153,7 +151,7 @@ describe('submitRegistration', () => {
     const supabase = mockSupabase();
     const result = await submitRegistration(supabase, 'prison-1', {
       visitors: [],
-      inmate: { prison_number: '', full_name: '', date_of_birth: '', classification: 'Phạm nhân' as const },
+      inmate: { prison_number: '', date_of_birth: '', classification: 'Phạm nhân' as const },
       visit_date: '',
     });
     expect(result.success).toBe(false);
@@ -168,15 +166,6 @@ describe('submitRegistration', () => {
     const result = await submitRegistration(supabase, 'prison-1', validFormData());
     expect(result.success).toBe(false);
     expect(result.message).toContain('Không tìm thấy phạm nhân');
-  });
-
-  it('returns error when inmate data does not match (name mismatch)', async () => {
-    const supabase = mockSupabase({
-      inmateResult: { data: [{ ...VALID_INMATE_DB, full_name: 'Khác Tên' }], error: null },
-    });
-    const result = await submitRegistration(supabase, 'prison-1', validFormData());
-    expect(result.success).toBe(false);
-    expect(result.message).toContain('không khớp');
   });
 
   it('succeeds even when inmate DOB does not match', async () => {

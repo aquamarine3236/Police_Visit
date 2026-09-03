@@ -12,7 +12,6 @@ import { getISODayOfWeekVN, hasSlotEndedVN } from '@/lib/time';
 
 interface InmateRecord {
   id: string;
-  full_name: string;
   date_of_birth: string | null;
   classification: string;
   visit_status: string;

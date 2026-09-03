@@ -12,7 +12,6 @@ import {
 function validInmateForm() {
   return {
     prison_number: 'PN-001',
-    full_name: 'Nguyễn Văn An',
     date_of_birth: '1990-05-15',
     classification: 'Phạm nhân' as const,
     visit_status: 'Được thăm gặp' as const,
@@ -34,7 +33,6 @@ describe('inmateFormSchema', () => {
   it('accepts a full payload with all optional fields', () => {
     const result = inmateFormSchema.safeParse({
       ...validInmateForm(),
-      citizen_id: '012345678901',
       permanent_address: '123 Đường Lê Lợi, Quận 1, TP.HCM',
       criminal_offense: 'Trộm cắp tài sản',
       arrest_date: '2022-01-10',
@@ -82,42 +80,6 @@ describe('inmateFormSchema', () => {
     });
   });
 
-  // ── full_name ─────────────────────────────────────────────────────────────
-
-  describe('full_name', () => {
-    it('rejects names shorter than 2 characters', () => {
-      const result = inmateFormSchema.safeParse({
-        ...validInmateForm(),
-        full_name: 'A',
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it('rejects names over 100 characters', () => {
-      const result = inmateFormSchema.safeParse({
-        ...validInmateForm(),
-        full_name: 'Nguyễn '.repeat(20),
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it('rejects names with numbers or special characters', () => {
-      const result = inmateFormSchema.safeParse({
-        ...validInmateForm(),
-        full_name: 'Nguyễn Văn 123',
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it('accepts Vietnamese diacritic names', () => {
-      const result = inmateFormSchema.safeParse({
-        ...validInmateForm(),
-        full_name: 'Trần Thị Bích Ngọc',
-      });
-      expect(result.success).toBe(true);
-    });
-  });
-
   // ── date_of_birth ─────────────────────────────────────────────────────────
 
   describe('date_of_birth', () => {
@@ -144,40 +106,6 @@ describe('inmateFormSchema', () => {
         ...validInmateForm(),
         date_of_birth: '',
       });
-      expect(result.success).toBe(true);
-    });
-  });
-
-  // ── citizen_id ────────────────────────────────────────────────────────────
-
-  describe('citizen_id', () => {
-    it('accepts exactly 12 digits', () => {
-      const result = inmateFormSchema.safeParse({
-        ...validInmateForm(),
-        citizen_id: '012345678901',
-      });
-      expect(result.success).toBe(true);
-    });
-
-    it('rejects non-12-digit strings', () => {
-      const result = inmateFormSchema.safeParse({
-        ...validInmateForm(),
-        citizen_id: '123456',
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it('rejects strings with letters', () => {
-      const result = inmateFormSchema.safeParse({
-        ...validInmateForm(),
-        citizen_id: '01234567890A',
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it('allows undefined (optional)', () => {
-      const data = validInmateForm();
-      const result = inmateFormSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
   });

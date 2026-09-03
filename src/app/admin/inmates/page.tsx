@@ -60,7 +60,7 @@ import {
   INMATE_VISIT_STATUSES 
 } from '@/lib/validations/inmate';
 import { createInmate, updateInmate, deleteInmate } from '@/actions/inmates';
-import { formatDateVN, toTitleCaseName } from '@/lib/format';
+import { formatDateVN } from '@/lib/format';
 import type { Inmate } from '@/types';
 
 export default function InmatesPage() {
@@ -153,9 +153,7 @@ export default function InmatesPage() {
     resolver: zodResolver(inmateFormSchema),
     defaultValues: {
       prison_number: '',
-      full_name: '',
       date_of_birth: '',
-      citizen_id: '',
       permanent_address: '',
       criminal_offense: '',
       arrest_date: '',
@@ -248,9 +246,7 @@ export default function InmatesPage() {
     setSelectedInmate(inmate);
     resetEdit({
       prison_number: inmate.prison_number,
-      full_name: inmate.full_name,
       date_of_birth: inmate.date_of_birth || '',
-      citizen_id: inmate.citizen_id || '',
       permanent_address: inmate.permanent_address || '',
       criminal_offense: inmate.criminal_offense || '',
       arrest_date: inmate.arrest_date || '',
@@ -439,7 +435,6 @@ export default function InmatesPage() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[120px] font-semibold">Số giam</TableHead>
-              <TableHead className="font-semibold">Họ và tên</TableHead>
               <TableHead className="font-semibold">Ngày sinh</TableHead>
               <TableHead className="font-semibold">Phân loại</TableHead>
               <TableHead className="font-semibold">Trạng thái thăm gặp</TableHead>
@@ -451,7 +446,6 @@ export default function InmatesPage() {
               rows={limit}
               columns={[
                 { width: 'w-20' },
-                { width: 'w-40' },
                 { width: 'w-24' },
                 { width: 'w-28' },
                 { width: 'w-32' },
@@ -462,7 +456,7 @@ export default function InmatesPage() {
           <TableBody>
             {inmates.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="p-0">
+                <TableCell colSpan={5} className="p-0">
                   <EmptyState
                     icon={Users}
                     title="Chưa có hồ sơ"
@@ -474,7 +468,6 @@ export default function InmatesPage() {
               inmates.map((inmate) => (
                 <TableRow key={inmate.id} className="hover:bg-soft-cloud/60">
                   <TableCell className="font-mono text-body-strong">{inmate.prison_number}</TableCell>
-                  <TableCell className="font-medium text-ink">{toTitleCaseName(inmate.full_name)}</TableCell>
                   <TableCell>{formatDateVN(inmate.date_of_birth) || '—'}</TableCell>
                   <TableCell>{inmate.classification}</TableCell>
                   <TableCell>
@@ -492,7 +485,7 @@ export default function InmatesPage() {
                         size="icon"
                         onClick={() => openEditModal(inmate)}
                         title="Sửa thông tin"
-                        aria-label={`Sửa thông tin người bị giam giữ ${inmate.full_name}`}
+                        aria-label={`Sửa thông tin người bị giam giữ ${inmate.prison_number}`}
                         className="h-8 w-8"
                       >
                         <Edit className="h-4 w-4" aria-hidden="true" />
@@ -502,7 +495,7 @@ export default function InmatesPage() {
                         size="icon"
                         onClick={() => openDeleteModal(inmate)}
                         title="Xóa"
-                        aria-label={`Xóa hồ sơ người bị giam giữ ${inmate.full_name}`}
+                        aria-label={`Xóa hồ sơ người bị giam giữ ${inmate.prison_number}`}
                         className="h-8 w-8 text-danger hover:bg-danger-soft hover:text-danger"
                       >
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -553,19 +546,6 @@ export default function InmatesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="add-full-name">Họ và tên *</Label>
-                <Input
-                  id="add-full-name"
-                  placeholder="Nhập họ và tên có dấu"
-                  {...registerAdd('full_name')}
-                  className={errorsAdd.full_name ? 'border-sale' : ''}
-                />
-                {errorsAdd.full_name && (
-                  <p className="text-caption-sm text-sale">{errorsAdd.full_name.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
                 <Label htmlFor="add-dob">Ngày sinh</Label>
                 <Controller
                   name="date_of_birth"
@@ -582,20 +562,6 @@ export default function InmatesPage() {
                 />
                 {errorsAdd.date_of_birth && (
                   <p className="text-caption-sm text-sale">{errorsAdd.date_of_birth.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="add-citizen-id">Số CCCD (12 chữ số)</Label>
-                <Input
-                  id="add-citizen-id"
-                  placeholder="Nhập số căn cước"
-                  maxLength={12}
-                  {...registerAdd('citizen_id')}
-                  className={errorsAdd.citizen_id ? 'border-sale' : ''}
-                />
-                {errorsAdd.citizen_id && (
-                  <p className="text-caption-sm text-sale">{errorsAdd.citizen_id.message}</p>
                 )}
               </div>
 
@@ -751,19 +717,6 @@ export default function InmatesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="edit-full-name">Họ và tên *</Label>
-                <Input
-                  id="edit-full-name"
-                  placeholder="Nhập họ và tên"
-                  {...registerEdit('full_name')}
-                  className={errorsEdit.full_name ? 'border-sale' : ''}
-                />
-                {errorsEdit.full_name && (
-                  <p className="text-caption-sm text-sale">{errorsEdit.full_name.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
                 <Label htmlFor="edit-dob">Ngày sinh</Label>
                 <Controller
                   name="date_of_birth"
@@ -780,20 +733,6 @@ export default function InmatesPage() {
                 />
                 {errorsEdit.date_of_birth && (
                   <p className="text-caption-sm text-sale">{errorsEdit.date_of_birth.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="edit-citizen-id">Số CCCD (12 chữ số)</Label>
-                <Input
-                  id="edit-citizen-id"
-                  placeholder="Nhập số căn cước"
-                  maxLength={12}
-                  {...registerEdit('citizen_id')}
-                  className={errorsEdit.citizen_id ? 'border-sale' : ''}
-                />
-                {errorsEdit.citizen_id && (
-                  <p className="text-caption-sm text-sale">{errorsEdit.citizen_id.message}</p>
                 )}
               </div>
 
@@ -928,7 +867,7 @@ export default function InmatesPage() {
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Xác nhận xóa hồ sơ"
-        description={`Bạn có chắc chắn muốn xóa hồ sơ "${selectedInmate?.full_name}" (Số giam: ${selectedInmate?.prison_number}) ra khỏi hệ thống? Hành động này sẽ chuyển trạng thái của hồ sơ này sang Đã xóa và ẩn đi.`}
+        description={`Bạn có chắc chắn muốn xóa hồ sơ số giam "${selectedInmate?.prison_number}" ra khỏi hệ thống? Hành động này sẽ chuyển trạng thái của hồ sơ này sang Đã xóa và ẩn đi.`}
         confirmLabel="Xóa hồ sơ"
         cancelLabel="Bỏ qua"
         destructive

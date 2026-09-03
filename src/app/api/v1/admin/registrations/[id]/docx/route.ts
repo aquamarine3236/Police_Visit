@@ -51,7 +51,6 @@ interface RegistrationData {
   created_at: string;
   inmate: {
     prison_number: string;
-    full_name: string;
     date_of_birth: string | null;
     classification: string;
   };
@@ -225,9 +224,7 @@ function buildInmateSection(inmate: RegistrationData['inmate']): Paragraph[] {
     }),
     new Paragraph({
       children: [
-        new TextRun({ text: 'Họ và tên: ', bold: true, size: 22 }),
-        new TextRun({ text: toTitleCaseName(inmate.full_name), size: 22 }),
-        new TextRun({ text: '    Ngày sinh: ', bold: true, size: 22 }),
+        new TextRun({ text: 'Ngày sinh: ', bold: true, size: 22 }),
         new TextRun({ text: formatDateVN(inmate.date_of_birth), size: 22 }),
       ],
       spacing: { after: 200 },
@@ -374,7 +371,7 @@ export async function GET(
       status,
       notes,
       created_at,
-      inmate:inmates!inner(prison_number, full_name, date_of_birth, classification),
+      inmate:inmates!inner(prison_number, date_of_birth, classification),
       visitors:registration_visitors(full_name, date_of_birth, citizen_id, relationship, display_order)
       `,
     )

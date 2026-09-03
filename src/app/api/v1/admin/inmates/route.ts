@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   const to = from + limit - 1;
 
   // Allowed sort columns
-  const allowedSortColumns = ['created_at', 'full_name', 'prison_number', 'date_of_birth', 'classification', 'visit_status'];
+  const allowedSortColumns = ['created_at', 'prison_number', 'date_of_birth', 'classification', 'visit_status'];
   const safeSortBy = allowedSortColumns.includes(sortBy) ? sortBy : 'created_at';
   const ascending = sortDir === 'asc';
 
@@ -38,10 +38,10 @@ export async function GET(request: NextRequest) {
     query = query.is('deleted_at', null);
   }
 
-  // Search by prison_number or full_name
+  // Search by prison_number
   if (search) {
     query = query.or(
-      `prison_number.ilike.%${search}%,full_name.ilike.%${search}%`,
+      `prison_number.ilike.%${search}%`,
     );
   }
 

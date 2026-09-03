@@ -39,12 +39,12 @@ export async function GET(request: NextRequest) {
       .select('registration_id')
       .or(`full_name.ilike.${like},citizen_id.ilike.${like}`);
 
-    // Registrations whose inmate name / prison number matches the term.
+    // Registrations whose inmate prison number matches the term.
     const { data: inmateMatches } = await supabase
       .from('visit_registrations')
       .select('id, inmate:inmates!inner(id)')
       .eq('prison_id', prisonId)
-      .or(`full_name.ilike.${like},prison_number.ilike.${like}`, {
+      .or(`prison_number.ilike.${like}`, {
         referencedTable: 'inmates',
       });
 
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
       notes,
       created_at,
       updated_at,
-      inmate:inmates!inner(id, prison_number, full_name),
+      inmate:inmates!inner(id, prison_number),
       visitors:registration_visitors(id, full_name, date_of_birth, citizen_id, relationship, display_order)
       `,
       { count: 'exact' },

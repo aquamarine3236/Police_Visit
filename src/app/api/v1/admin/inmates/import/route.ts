@@ -8,9 +8,7 @@ import { inmateFormSchema } from '@/lib/validations/inmate';
 
 const COLUMN_MAP: Record<string, string> = {
   'Số giam': 'prison_number',
-  'Họ và tên': 'full_name',
   'Ngày sinh': 'date_of_birth',
-  'Số CCCD': 'citizen_id',
   'Địa chỉ thường trú': 'permanent_address',
   'Tội danh': 'criminal_offense',
   'Ngày bắt': 'arrest_date',
@@ -19,7 +17,7 @@ const COLUMN_MAP: Record<string, string> = {
   'Trạng thái thăm gặp': 'visit_status',
 };
 
-const REQUIRED_COLUMNS = ['Số giam', 'Họ và tên', 'Phân loại', 'Trạng thái thăm gặp'];
+const REQUIRED_COLUMNS = ['Số giam', 'Phân loại', 'Trạng thái thăm gặp'];
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_ROWS = 5000;
@@ -217,7 +215,6 @@ export async function POST(request: NextRequest) {
       ...parsed.data,
       prison_id: prisonId,
       date_of_birth: parsed.data.date_of_birth || null,
-      citizen_id: parsed.data.citizen_id || null,
       permanent_address: parsed.data.permanent_address || null,
       criminal_offense: parsed.data.criminal_offense || null,
       arrest_date: parsed.data.arrest_date || null,

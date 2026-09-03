@@ -64,9 +64,7 @@ async function getInmateForAdmin(
 export interface InmateLookupResult {
   id: string;
   prison_number: string;
-  full_name: string;
   date_of_birth: string | null;
-  citizen_id: string | null;
   permanent_address: string | null;
   criminal_offense: string | null;
 }
@@ -90,7 +88,7 @@ export async function lookupInmateByPrisonNumber(
   const { data, error } = await db
     .from('inmates')
     .select(
-      'id, prison_number, full_name, date_of_birth, citizen_id, permanent_address, criminal_offense',
+      'id, prison_number, date_of_birth, permanent_address, criminal_offense',
     )
     .eq('prison_id', admin.prisonId)
     .eq('prison_number', trimmed)

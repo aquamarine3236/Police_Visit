@@ -24,7 +24,6 @@ export interface VisitFormData {
   time_slot_end: string;
   inmate: {
     prison_number: string;
-    full_name: string;
     date_of_birth: string | null;
     classification: string;
   };
@@ -51,7 +50,9 @@ function buildPlaceholderData(reg: VisitFormData): Record<string, string> {
 
   return {
     // Inmate (subject person on every form).
-    ho_ten: toTitleCaseName(reg.inmate.full_name),
+    // ho_ten is intentionally left blank — full_name has been removed from the
+    // inmates table for privacy compliance. The nullGetter above will fill the
+    // placeholder with '' so the dotted fill-in line in the template survives.
     so_giam: reg.inmate.prison_number,
     // Primary visitor (sender on the gift slip).
     nguoi_gui: primaryVisitor ? toTitleCaseName(primaryVisitor.full_name) : '',

@@ -35,9 +35,7 @@ export async function exportInmatesToExcel(
   worksheet.columns = [
     { header: 'STT', key: 'stt', width: 8 },
     { header: 'Số giam', key: 'prison_number', width: 15 },
-    { header: 'Họ và tên', key: 'full_name', width: 25 },
     { header: 'Ngày sinh', key: 'date_of_birth', width: 15 },
-    { header: 'Số CCCD', key: 'citizen_id', width: 18 },
     { header: 'Địa chỉ thường trú', key: 'permanent_address', width: 35 },
     { header: 'Tội danh', key: 'criminal_offense', width: 30 },
     { header: 'Ngày bắt', key: 'arrest_date', width: 15 },
@@ -52,9 +50,7 @@ export async function exportInmatesToExcel(
     worksheet.addRow({
       stt: idx + 1,
       prison_number: inmate.prison_number,
-      full_name: toTitleCaseName(inmate.full_name),
       date_of_birth: formatDateVN(inmate.date_of_birth),
-      citizen_id: inmate.citizen_id || '',
       permanent_address: inmate.permanent_address || '',
       criminal_offense: inmate.criminal_offense || '',
       arrest_date: formatDateVN(inmate.arrest_date),
@@ -79,7 +75,6 @@ interface RegistrationExportRow {
   created_at: string;
   inmate?: {
     prison_number: string;
-    full_name: string;
   };
   visitors?: {
     full_name: string;
@@ -112,7 +107,6 @@ export async function exportRegistrationsToExcel(
     { header: 'Ngày thăm', key: 'visit_date', width: 15 },
     { header: 'Thời gian', key: 'time_slot', width: 18 },
     { header: 'Số giam phạm nhân', key: 'prison_number', width: 20 },
-    { header: 'Tên phạm nhân', key: 'inmate_name', width: 25 },
     { header: 'Người thăm', key: 'visitor_names', width: 35 },
     { header: 'CCCD người thăm', key: 'visitor_cccd', width: 25 },
     { header: 'Quan hệ', key: 'relationship', width: 20 },
@@ -129,7 +123,6 @@ export async function exportRegistrationsToExcel(
       visit_date: formatDateVN(reg.visit_date),
       time_slot: `${reg.time_slot_start} - ${reg.time_slot_end}`,
       prison_number: reg.inmate?.prison_number || '',
-      inmate_name: toTitleCaseName(reg.inmate?.full_name),
       visitor_names: visitors.map((v) => toTitleCaseName(v.full_name)).join(', '),
       visitor_cccd: visitors.map((v) => v.citizen_id).join(', '),
       relationship: visitors.map((v) => v.relationship).join(', '),

@@ -82,11 +82,6 @@ export const inmateIdentificationSchema = z.object({
     .min(1, 'Vui lòng nhập số giam phạm nhân.')
     .max(50, 'Số giam phạm nhân tối đa 50 ký tự.'),
 
-  full_name: z
-    .string({ required_error: 'Vui lòng nhập họ và tên phạm nhân.' })
-    .min(2, 'Họ và tên phải từ 2 đến 100 ký tự.')
-    .max(100, 'Họ và tên phải từ 2 đến 100 ký tự.'),
-
   date_of_birth: z
     .string()
     .optional()
@@ -104,17 +99,14 @@ export const inmateIdentificationSchema = z.object({
   }),
 });
 
-// ─── Public inmate sub-schema (full_name hidden for security) ───────────────
+// ─── Public inmate sub-schema ───────────────────────────────────────────────
+// full_name has been fully removed from the inmates table (privacy compliance).
 
 export const publicInmateIdentificationSchema = z.object({
   prison_number: z
     .string({ required_error: 'Vui lòng nhập số giam phạm nhân.' })
     .min(1, 'Vui lòng nhập số giam phạm nhân.')
     .max(50, 'Số giam phạm nhân tối đa 50 ký tự.'),
-
-  // full_name is intentionally omitted from the public form for security.
-  // The server resolves it from the inmates table by prison_number lookup.
-  full_name: z.string(),
 
   date_of_birth: z
     .string()
