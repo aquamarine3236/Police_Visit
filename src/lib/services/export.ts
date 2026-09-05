@@ -78,7 +78,6 @@ interface RegistrationExportRow {
   };
   visitors?: {
     full_name: string;
-    citizen_id: string;
     relationship: string;
   }[];
 }
@@ -108,7 +107,6 @@ export async function exportRegistrationsToExcel(
     { header: 'Thời gian', key: 'time_slot', width: 18 },
     { header: 'Số giam phạm nhân', key: 'prison_number', width: 20 },
     { header: 'Người thăm', key: 'visitor_names', width: 35 },
-    { header: 'CCCD người thăm', key: 'visitor_cccd', width: 25 },
     { header: 'Quan hệ', key: 'relationship', width: 20 },
     { header: 'Trạng thái', key: 'status', width: 18 },
     { header: 'Ngày tạo', key: 'created_at', width: 20 },
@@ -124,7 +122,6 @@ export async function exportRegistrationsToExcel(
       time_slot: `${reg.time_slot_start} - ${reg.time_slot_end}`,
       prison_number: reg.inmate?.prison_number || '',
       visitor_names: visitors.map((v) => toTitleCaseName(v.full_name)).join(', '),
-      visitor_cccd: visitors.map((v) => v.citizen_id).join(', '),
       relationship: visitors.map((v) => v.relationship).join(', '),
       status: STATUS_LABELS[reg.status] || reg.status,
       created_at: reg.created_at ? formatDateTimeVN(reg.created_at) : '',
@@ -141,13 +138,11 @@ interface RelativeExportRow {
   prison_number: string;
   full_name: string;
   date_of_birth: string | null;
-  citizen_id: string;
   relationship: string;
 }
 
 // ─── Export Relatives to Excel ──────────────────────────────────────────────
-// Cột XUẤT phải KHỚP với cột NHẬP (Số giam, Họ và tên, Ngày sinh, CCCD, Mối
-// quan hệ) để file xuất ra có thể được import lại ngay lập tức.
+// Cột XUẤT phải KHỚP với cột NHẬP để file xuất ra có thể được import lại ngay lập tức.
 
 export async function exportRelativesToExcel(
   rows: RelativeExportRow[],
@@ -162,7 +157,6 @@ export async function exportRelativesToExcel(
     { header: 'Số giam', key: 'prison_number', width: 15 },
     { header: 'Họ và tên', key: 'full_name', width: 25 },
     { header: 'Ngày sinh', key: 'date_of_birth', width: 15 },
-    { header: 'CCCD', key: 'citizen_id', width: 18 },
     { header: 'Mối quan hệ', key: 'relationship', width: 20 },
   ];
 
@@ -173,7 +167,6 @@ export async function exportRelativesToExcel(
       prison_number: row.prison_number,
       full_name: toTitleCaseName(row.full_name),
       date_of_birth: formatDateVN(row.date_of_birth),
-      citizen_id: row.citizen_id,
       relationship: row.relationship,
     });
   });

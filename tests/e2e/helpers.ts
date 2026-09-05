@@ -248,7 +248,6 @@ export interface MockRegistration {
   visitors: Array<{
     id: string;
     full_name: string;
-    citizen_id: string;
     relationship: string;
     display_order: number;
   }>;
@@ -270,7 +269,6 @@ export function buildRegistrations(): MockRegistration[] {
         {
           id: 'v-1',
           full_name: 'Trần Thị Mai',
-          citizen_id: '012345678901',
           relationship: 'Mẹ',
           display_order: 1,
         },
@@ -290,7 +288,6 @@ export function buildRegistrations(): MockRegistration[] {
         {
           id: 'v-2',
           full_name: 'Phạm Thị Cúc',
-          citizen_id: '098765432109',
           relationship: 'Vợ',
           display_order: 1,
         },

@@ -66,7 +66,6 @@ interface SuccessResult {
   };
   visitors: {
     full_name: string;
-    citizen_id: string;
     relationship: string;
     display_order: number;
   }[];
@@ -113,7 +112,6 @@ export default function RegistrationForm({ initialSettings }: RegistrationFormPr
         {
           full_name: '',
           date_of_birth: '',
-          citizen_id: '',
           relationship: '',
         },
       ],
@@ -211,7 +209,6 @@ export default function RegistrationForm({ initialSettings }: RegistrationFormPr
     append({
       full_name: '',
       date_of_birth: '',
-      citizen_id: '',
       relationship: '',
     });
   };
@@ -365,7 +362,7 @@ export default function RegistrationForm({ initialSettings }: RegistrationFormPr
                     </div>
                   )}
 
-                  {/* Show array-level message from server (e.g., duplicate CCCD) */}
+                  {/* Show array-level messages returned by the registration service. */}
                   {errors.visitors?.message && (
                     <div className="p-4 bg-sale-deep/5 border border-sale text-sale text-caption-md flex items-center gap-3">
                       <ShieldAlert className="h-5 w-5 shrink-0" />

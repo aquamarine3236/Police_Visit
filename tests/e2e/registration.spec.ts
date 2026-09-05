@@ -69,22 +69,6 @@ test.describe('Public registration flow', () => {
     await expect(page.getByText('Vui lòng chọn ngày thăm gặp.')).toBeVisible();
   });
 
-  test('validates the visitor citizen id length', async ({ page }) => {
-    await page.goto('/');
-    await expect(
-      page.getByRole('heading', { name: 'Thông tin người đang bị quản lý giam giữ' }),
-    ).toBeVisible();
-
-    // Fill an invalid (too short) CCCD and trigger validation.
-    // (section heading omitted; placeholder presence proves the form rendered)
-    await page.getByPlaceholder('Gồm 12 chữ số').fill('12345');
-    await clickButtonByText(page, 'Đăng ký lịch hẹn');
-
-    await expect(
-      page.getByText('Số CCCD phải gồm đúng 12 chữ số.'),
-    ).toBeVisible();
-  });
-
   test('submits valid data and shows the assigned time slot on success', async ({
     page,
   }) => {
@@ -104,7 +88,6 @@ test.describe('Public registration flow', () => {
         visitors: [
           {
             full_name: 'Trần Thị Mai',
-            citizen_id: '012345678901',
             relationship: 'Mẹ',
             display_order: 1,
           },

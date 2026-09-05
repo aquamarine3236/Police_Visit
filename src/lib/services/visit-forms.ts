@@ -13,7 +13,6 @@ import { formatDateVN, toTitleCaseName } from '@/lib/format';
 export interface VisitFormVisitor {
   full_name: string;
   date_of_birth: string | null;
-  citizen_id: string;
   relationship: string;
   display_order: number;
 }

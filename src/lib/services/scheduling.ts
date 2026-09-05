@@ -24,7 +24,7 @@ export async function submitRegistration(
   prisonId: string,
   formData: PublicRegistrationFormData,
 ): Promise<ServiceResult<{ registration: VisitRegistration; visitors: RegistrationVisitor[] }>> {
-  // Step 1: Validate form input (public schema — no full_name / citizen_id required)
+  // Step 1: Validate form input (public schema — no inmate full_name required)
   const parsed = publicRegistrationFormSchema.safeParse(formData);
   if (!parsed.success) {
     const fieldErrors: Record<string, string[]> = {};
@@ -112,7 +112,6 @@ export async function submitRegistration(
     // Ngày sinh không bắt buộc: gửi null (thay vì chuỗi rỗng) để RPC ép kiểu
     // sang DATE mà không lỗi.
     date_of_birth: v.date_of_birth ? v.date_of_birth : null,
-    citizen_id: v.citizen_id,
     relationship: v.relationship.trim(),
   }));
 
@@ -131,6 +130,7 @@ export async function submitRegistration(
   const result = rpcResult as
     | { error: 'DUPLICATE' | 'MONTHLY_LIMIT' | 'NO_SLOT' }
     | { error: 'NOT_RELATIVE'; positions: number[] }
+    | { error: 'AMBIGUOUS_RELATIVE'; positions: number[] }
     | { registration: VisitRegistration; visitors: RegistrationVisitor[] };
 
   if ('error' in result) {
@@ -156,6 +156,13 @@ export async function submitRegistration(
         return {
           success: false,
           message: `Người thứ ${positions.join(', ')} không nằm trong danh sách thân thích của người này.`,
+        };
+      }
+      case 'AMBIGUOUS_RELATIVE': {
+        const positions = result.positions ?? [];
+        return {
+          success: false,
+          message: 'Thông tin người đi thăm trùng với nhiều thân thích. Vui lòng liên hệ đơn vị quản lý để cập nhật danh sách.',
         };
       }
       case 'NO_SLOT':

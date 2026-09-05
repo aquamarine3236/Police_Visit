@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   const safeSortBy = allowedSortColumns.includes(sortBy) ? sortBy : 'created_at';
   const ascending = sortDir === 'asc';
 
-  // When searching, also match against visitor name / CCCD. PostgREST cannot OR
+  // When searching, also match against visitor name. PostgREST cannot OR
   // across two different embedded tables in one filter, so we pre-resolve the
   // registration IDs whose visitors match the term and fold them into the main
   // query as an additional OR branch.
@@ -33,11 +33,11 @@ export async function GET(request: NextRequest) {
   if (search) {
     const like = `%${search}%`;
 
-    // Registrations whose visitor name / CCCD matches the term.
+    // Registrations whose visitor name matches the term.
     const { data: visitorMatches } = await supabase
       .from('registration_visitors')
       .select('registration_id')
-      .or(`full_name.ilike.${like},citizen_id.ilike.${like}`);
+      .ilike('full_name', like);
 
     // Registrations whose inmate prison number matches the term.
     const { data: inmateMatches } = await supabase
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
       created_at,
       updated_at,
       inmate:inmates!inner(id, prison_number),
-      visitors:registration_visitors(id, full_name, date_of_birth, citizen_id, relationship, display_order)
+      visitors:registration_visitors(id, full_name, date_of_birth, relationship, display_order)
       `,
       { count: 'exact' },
     )

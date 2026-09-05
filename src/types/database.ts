@@ -84,7 +84,6 @@ export interface RegistrationVisitor {
   registration_id: string;
   full_name: string;
   date_of_birth: string | null;
-  citizen_id: string;
   relationship: string;
   display_order: number;
   created_at: string;
@@ -97,7 +96,6 @@ export interface InmateRelative {
   inmate_id: string;
   full_name: string;
   date_of_birth: string | null;
-  citizen_id: string;
   relationship: string;
   created_at: string;
   updated_at: string;

@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const { data: visitorMatches } = await supabase
       .from('registration_visitors')
       .select('registration_id')
-      .or(`full_name.ilike.${like},citizen_id.ilike.${like}`);
+      .ilike('full_name', like);
     const { data: inmateMatches } = await supabase
       .from('visit_registrations')
       .select('id, inmate:inmates!inner(id)')
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       status,
       created_at,
       inmate:inmates!inner(prison_number),
-      visitors:registration_visitors(full_name, citizen_id, relationship)
+      visitors:registration_visitors(full_name, relationship)
       `,
     )
     .eq('prison_id', prisonId)

@@ -38,8 +38,10 @@ AS $$
 $$;
 
 -- ─── Updated fn_submit_registration ─────────────────────────────────────────
--- Same logic as before, but name comparisons now use fn_normalize_vietnamese_name
--- instead of lower(btrim(...)).
+-- Match visitors against inmate's approved relatives using:
+--   * normalized full_name (Vietnamese diacritic-tolerant)
+--   * date_of_birth (optional, NULL-safe)
+--   * relationship (case-insensitive)
 CREATE OR REPLACE FUNCTION fn_submit_registration(
   p_prison_id UUID,
   p_inmate_id UUID,
@@ -61,39 +63,38 @@ DECLARE
   v_inserted registration_visitors%ROWTYPE;
   v_match_count INTEGER;
   v_invalid_positions INTEGER[] := ARRAY[]::INTEGER[];
-  v_resolved_citizen_id TEXT;
-  v_visitor_citizen_id TEXT;
+  v_ambiguous_positions INTEGER[] := ARRAY[]::INTEGER[];
+  v_visitor_date_of_birth DATE;
 BEGIN
   -- ─── Relative check ───────────────────────────────────────────────────────
-  -- Every visitor must be in the inmate's approved-relatives list.
-  -- When citizen_id is provided: match on citizen_id + normalized full_name.
-  -- When citizen_id is empty/null (public form): match on normalized full_name
-  -- only and resolve citizen_id from the matched relative record.
+  -- Every visitor must match an entry in the inmate's approved-relatives list.
+  -- Match on: normalized full_name + date_of_birth + relationship
   v_order := 0;
   FOR v_visitor IN SELECT * FROM jsonb_array_elements(p_visitors)
   LOOP
     v_order := v_order + 1;
-    v_visitor_citizen_id := NULLIF(btrim(v_visitor->>'citizen_id'), '');
+    v_visitor_date_of_birth := NULLIF(v_visitor->>'date_of_birth', '')::date;
 
-    IF v_visitor_citizen_id IS NOT NULL THEN
-      -- Original behaviour: match on citizen_id + normalized full_name.
-      SELECT COUNT(*) INTO v_match_count
-      FROM inmate_relatives r
-      WHERE r.inmate_id = p_inmate_id
-        AND r.citizen_id = v_visitor_citizen_id
-        AND fn_normalize_vietnamese_name(r.full_name) = fn_normalize_vietnamese_name(v_visitor->>'full_name');
-    ELSE
-      -- Public form: citizen_id not provided. Match by normalized full_name only.
-      SELECT COUNT(*) INTO v_match_count
-      FROM inmate_relatives r
-      WHERE r.inmate_id = p_inmate_id
-        AND fn_normalize_vietnamese_name(r.full_name) = fn_normalize_vietnamese_name(v_visitor->>'full_name');
-    END IF;
+    SELECT COUNT(*) INTO v_match_count
+    FROM inmate_relatives r
+    WHERE r.inmate_id = p_inmate_id
+      AND fn_normalize_vietnamese_name(r.full_name) = fn_normalize_vietnamese_name(v_visitor->>'full_name')
+      AND r.date_of_birth IS NOT DISTINCT FROM v_visitor_date_of_birth
+      AND lower(btrim(r.relationship)) = lower(btrim(v_visitor->>'relationship'));
 
     IF v_match_count = 0 THEN
       v_invalid_positions := array_append(v_invalid_positions, v_order);
+    ELSIF v_match_count > 1 THEN
+      v_ambiguous_positions := array_append(v_ambiguous_positions, v_order);
     END IF;
   END LOOP;
+
+  IF array_length(v_ambiguous_positions, 1) > 0 THEN
+    RETURN jsonb_build_object(
+      'error', 'AMBIGUOUS_RELATIVE',
+      'positions', to_jsonb(v_ambiguous_positions)
+    );
+  END IF;
 
   IF array_length(v_invalid_positions, 1) > 0 THEN
     RETURN jsonb_build_object(
@@ -135,33 +136,19 @@ BEGIN
   RETURNING * INTO v_registration;
 
   -- Insert visitors (1..3), preserving order.
-  -- When citizen_id is not provided, resolve it from the inmate_relatives table
-  -- to satisfy the NOT NULL constraint on registration_visitors.citizen_id.
   v_order := 0;
   FOR v_visitor IN SELECT * FROM jsonb_array_elements(p_visitors)
   LOOP
     v_order := v_order + 1;
-    v_visitor_citizen_id := NULLIF(btrim(v_visitor->>'citizen_id'), '');
-
-    IF v_visitor_citizen_id IS NULL THEN
-      -- Resolve citizen_id from the matched relative record (using normalized name).
-      SELECT r.citizen_id INTO v_resolved_citizen_id
-      FROM inmate_relatives r
-      WHERE r.inmate_id = p_inmate_id
-        AND fn_normalize_vietnamese_name(r.full_name) = fn_normalize_vietnamese_name(v_visitor->>'full_name')
-      LIMIT 1;
-      v_visitor_citizen_id := COALESCE(v_resolved_citizen_id, '');
-    END IF;
 
     INSERT INTO registration_visitors (
-      registration_id, full_name, date_of_birth, citizen_id, relationship, display_order
+      registration_id, full_name, date_of_birth, relationship, display_order
     )
     VALUES (
       v_registration.id,
-      v_visitor->>'full_name',
-      (v_visitor->>'date_of_birth')::date,
-      v_visitor_citizen_id,
-      v_visitor->>'relationship',
+      btrim(v_visitor->>'full_name'),
+      NULLIF(v_visitor->>'date_of_birth', '')::date,
+      btrim(v_visitor->>'relationship'),
       v_order
     )
     RETURNING * INTO v_inserted;

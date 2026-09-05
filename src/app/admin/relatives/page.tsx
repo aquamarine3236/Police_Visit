@@ -62,7 +62,6 @@ import type { InmateRelative } from '@/types';
 const EMPTY_RELATIVE: RelativeFormData = {
   full_name: '',
   date_of_birth: '',
-  citizen_id: '',
   relationship: '',
 };
 
@@ -262,7 +261,6 @@ export default function RelativesPage() {
     resetEdit({
       full_name: relative.full_name,
       date_of_birth: relative.date_of_birth || '',
-      citizen_id: relative.citizen_id,
       relationship: relative.relationship,
     });
     setIsEditOpen(true);
@@ -491,7 +489,6 @@ export default function RelativesPage() {
                 <TableRow>
                   <TableHead>Họ và tên</TableHead>
                   <TableHead>Ngày sinh</TableHead>
-                  <TableHead>CCCD</TableHead>
                   <TableHead>Mối quan hệ</TableHead>
                   <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
@@ -499,13 +496,13 @@ export default function RelativesPage() {
               <TableBody>
                 {listLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="py-10 text-center text-mute">
+                    <TableCell colSpan={4} className="py-10 text-center text-mute">
                       <Loader2 className="mx-auto h-5 w-5 animate-spin" />
                     </TableCell>
                   </TableRow>
                 ) : relatives.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="py-0">
+                    <TableCell colSpan={4} className="py-0">
                       <EmptyState
                         icon={Users2}
                         title="Chưa có thân thích"
@@ -518,7 +515,6 @@ export default function RelativesPage() {
                     <TableRow key={r.id}>
                       <TableCell className="font-medium text-ink">{toTitleCaseName(r.full_name)}</TableCell>
                       <TableCell>{formatDateVN(r.date_of_birth) || '—'}</TableCell>
-                      <TableCell>{r.citizen_id}</TableCell>
                       <TableCell>{r.relationship}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
@@ -615,7 +611,7 @@ export default function RelativesPage() {
           <DialogHeader>
             <DialogTitle>Nhập thân thích từ Excel</DialogTitle>
             <DialogDescription>
-              Tệp cần các cột: Số giam, Họ và tên, Ngày sinh (không bắt buộc), CCCD, Mối quan hệ.
+              Tệp cần các cột: Số giam, Họ và tên, Ngày sinh (không bắt buộc), Mối quan hệ.
               Dữ liệu được gom theo số giam. Không nhập trùng và không vượt quá {MAX_RELATIVES_PER_INMATE} người.
             </DialogDescription>
           </DialogHeader>
@@ -697,17 +693,6 @@ function RelativeFormFields({ register, errors, control, prefix }: RelativeFormF
             )}
           />
           {errors.date_of_birth && <p className="mt-1 text-caption-sm text-danger">{errors.date_of_birth.message}</p>}
-        </div>
-        <div>
-          <Label htmlFor={`${prefix}_citizen_id`}>CCCD *</Label>
-          <Input
-            id={`${prefix}_citizen_id`}
-            className="mt-1.5"
-            inputMode="numeric"
-            maxLength={12}
-            {...register('citizen_id')}
-          />
-          {errors.citizen_id && <p className="mt-1 text-caption-sm text-danger">{errors.citizen_id.message}</p>}
         </div>
       </div>
 

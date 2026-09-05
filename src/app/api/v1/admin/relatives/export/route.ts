@@ -7,7 +7,6 @@ import { exportRelativesToExcel } from '@/lib/services/export';
 interface RelativeWithInmate {
   full_name: string;
   date_of_birth: string | null;
-  citizen_id: string;
   relationship: string;
   inmate: {
     prison_number: string;
@@ -36,7 +35,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from('inmate_relatives')
     .select(
-      'full_name, date_of_birth, citizen_id, relationship, inmate:inmates!inner(prison_number, prison_id, deleted_at)',
+      'full_name, date_of_birth, relationship, inmate:inmates!inner(prison_number, prison_id, deleted_at)',
     )
     .eq('inmate.prison_id', prisonId)
     .is('inmate.deleted_at', null)
@@ -56,7 +55,6 @@ export async function GET(request: NextRequest) {
     prison_number: r.inmate?.prison_number ?? '',
     full_name: r.full_name,
     date_of_birth: r.date_of_birth,
-    citizen_id: r.citizen_id,
     relationship: r.relationship,
   }));
 

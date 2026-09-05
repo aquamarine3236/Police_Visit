@@ -9,7 +9,6 @@ function validVisitor(overrides = {}) {
   return {
     full_name: 'Trần Thị Mai',
     date_of_birth: '1985-03-20',
-    citizen_id: '012345678901',
     relationship: 'Mẹ',
     ...overrides,
   };
@@ -61,17 +60,6 @@ describe('visitorSchema', () => {
     const f = new Date(); f.setFullYear(f.getFullYear() + 1);
     expect(visitorSchema.safeParse(validVisitor({ date_of_birth: f.toISOString().split('T')[0] })).success).toBe(false);
   });
-  it('requires exactly 12 digit citizen_id', () => {
-    expect(visitorSchema.safeParse(validVisitor({ citizen_id: '012345678901' })).success).toBe(true);
-    expect(visitorSchema.safeParse(validVisitor({ citizen_id: '1234567890' })).success).toBe(false);
-    expect(visitorSchema.safeParse(validVisitor({ citizen_id: '0123456789012' })).success).toBe(false);
-  });
-  it('rejects non-numeric citizen_id', () => {
-    expect(visitorSchema.safeParse(validVisitor({ citizen_id: '01234567890a' })).success).toBe(false);
-  });
-  it('rejects empty citizen_id', () => {
-    expect(visitorSchema.safeParse(validVisitor({ citizen_id: '' })).success).toBe(false);
-  });
   it('rejects short relationship', () => {
     expect(visitorSchema.safeParse(validVisitor({ relationship: 'A' })).success).toBe(false);
   });
@@ -106,12 +94,12 @@ describe('registrationFormSchema', () => {
   it('accepts valid form with 1 visitor', () => {
     expect(registrationFormSchema.safeParse(validForm()).success).toBe(true);
   });
-  it('accepts 3 visitors with unique CCCDs', () => {
+  it('accepts 3 visitors', () => {
     const r = registrationFormSchema.safeParse(validForm({
       visitors: [
-        validVisitor({ citizen_id: '111111111111' }),
-        validVisitor({ citizen_id: '222222222222', full_name: 'Lê Văn Bé' }),
-        validVisitor({ citizen_id: '333333333333', full_name: 'Phạm Thị Cúc' }),
+        validVisitor(),
+        validVisitor({ full_name: 'Lê Văn Bé' }),
+        validVisitor({ full_name: 'Phạm Thị Cúc' }),
       ],
     }));
     expect(r.success).toBe(true);
@@ -123,25 +111,13 @@ describe('registrationFormSchema', () => {
   it('rejects more than 3 visitors', () => {
     const r = registrationFormSchema.safeParse(validForm({
       visitors: [
-        validVisitor({ citizen_id: '111111111111' }),
-        validVisitor({ citizen_id: '222222222222' }),
-        validVisitor({ citizen_id: '333333333333' }),
-        validVisitor({ citizen_id: '444444444444' }),
+        validVisitor(),
+        validVisitor({ full_name: 'Lê Văn Bé' }),
+        validVisitor({ full_name: 'Phạm Thị Cúc' }),
+        validVisitor({ full_name: 'Đỗ Văn Dũng' }),
       ],
     }));
     expect(r.success).toBe(false);
-  });
-  it('rejects duplicate CCCDs', () => {
-    const r = registrationFormSchema.safeParse(validForm({
-      visitors: [
-        validVisitor({ citizen_id: '111111111111' }),
-        validVisitor({ citizen_id: '111111111111', full_name: 'Lê Văn Bé' }),
-      ],
-    }));
-    expect(r.success).toBe(false);
-    if (!r.success) {
-      expect(r.error.issues.map(i => i.message)).toContain('Số CCCD không được trùng nhau trong cùng một đăng ký.');
-    }
   });
   it('rejects empty visit_date', () => {
     expect(registrationFormSchema.safeParse(validForm({ visit_date: '' })).success).toBe(false);

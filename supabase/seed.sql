@@ -14,7 +14,7 @@ ON CONFLICT (code) DO NOTHING;
 INSERT INTO prisons (id, name, code, address, phone, is_active)
 VALUES (
   '22222222-2222-2222-2222-222222222222',
-  'Trại giam TH',
+  'Trại giam Thanh Hóa',
   'PRISON-002',
   'Địa chỉ mẫu 2',
   '0987654321',

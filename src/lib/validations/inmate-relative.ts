@@ -29,12 +29,6 @@ export const relativeFormSchema = z.object({
       { message: 'Ngày sinh phải là ngày trong quá khứ.' },
     ),
 
-  citizen_id: z
-    .string({ required_error: 'Vui lòng nhập số CCCD.' })
-    .min(1, 'Vui lòng nhập số CCCD.')
-    .regex(/^\d+$/, 'Số CCCD chỉ được chứa chữ số.')
-    .length(12, 'Số CCCD phải gồm đúng 12 chữ số.'),
-
   relationship: z
     .string({ required_error: 'Vui lòng nhập mối quan hệ.' })
     .min(2, 'Mối quan hệ phải từ 2 đến 50 ký tự.')

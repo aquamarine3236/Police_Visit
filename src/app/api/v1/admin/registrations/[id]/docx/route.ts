@@ -36,7 +36,6 @@ const STATUS_LABELS: Record<string, string> = {
 interface RegistrationVisitor {
   full_name: string;
   date_of_birth: string | null;
-  citizen_id: string;
   relationship: string;
   display_order: number;
 }
@@ -276,7 +275,6 @@ function buildVisitorsSection(
         createCell('STT', true),
         createCell('Họ và tên', true),
         createCell('Ngày sinh', true),
-        createCell('Số CCCD', true),
         createCell('Quan hệ', true),
       ],
       tableHeader: true,
@@ -288,7 +286,6 @@ function buildVisitorsSection(
             createCell((idx + 1).toString()),
             createCell(toTitleCaseName(v.full_name)),
             createCell(formatDateVN(v.date_of_birth)),
-            createCell(v.citizen_id),
             createCell(v.relationship),
           ],
         }),
@@ -372,7 +369,7 @@ export async function GET(
       notes,
       created_at,
       inmate:inmates!inner(prison_number, date_of_birth, classification),
-      visitors:registration_visitors(full_name, date_of_birth, citizen_id, relationship, display_order)
+      visitors:registration_visitors(full_name, date_of_birth, relationship, display_order)
       `,
     )
     .eq('id', id)

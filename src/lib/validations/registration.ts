@@ -34,19 +34,13 @@ export const visitorSchema = z.object({
       { message: 'Ngày sinh phải là ngày trong quá khứ.' },
     ),
 
-  citizen_id: z
-    .string({ required_error: 'Vui lòng nhập số CCCD.' })
-    .min(1, 'Vui lòng nhập số CCCD.')
-    .regex(/^\d+$/, 'Số CCCD chỉ được chứa chữ số.')
-    .length(12, 'Số CCCD phải gồm đúng 12 chữ số.'),
-
   relationship: z
     .string({ required_error: 'Vui lòng nhập mối quan hệ.' })
     .min(2, 'Mối quan hệ phải từ 2 đến 50 ký tự.')
     .max(50, 'Mối quan hệ phải từ 2 đến 50 ký tự.'),
 });
 
-// ─── Public visitor sub-schema (citizen_id hidden for security) ─────────────
+// ─── Public visitor sub-schema ──────────────────────────────────────────────
 
 export const publicVisitorSchema = z.object({
   full_name: z
@@ -63,10 +57,6 @@ export const publicVisitorSchema = z.object({
       (val) => !val || isPastDateVN(val),
       { message: 'Ngày sinh phải là ngày trong quá khứ.' },
     ),
-
-  // citizen_id is intentionally omitted from the public form for security.
-  // The server resolves it from the inmate_relatives table by full_name match.
-  citizen_id: z.string(),
 
   relationship: z
     .string({ required_error: 'Vui lòng nhập mối quan hệ.' })
@@ -149,22 +139,10 @@ export const registrationFormSchema = z
             'Ngày thăm gặp phải là ngày trong tương lai (không bao gồm hôm nay).',
         },
       ),
-  })
-  .refine(
-    (data) => {
-      // Ensure no duplicate citizen_id within the same registration
-      const citizenIds = data.visitors.map((v) => v.citizen_id);
-      return new Set(citizenIds).size === citizenIds.length;
-    },
-    {
-      message: 'Số CCCD không được trùng nhau trong cùng một đăng ký.',
-      path: ['visitors'],
-    },
-  );
+  });
 
 // ─── Public Registration Form schema ────────────────────────────────────────
-// Used by the public-facing registration form. Omits inmate.full_name and
-// visitor.citizen_id (resolved server-side from the DB for security).
+// Used by the public-facing registration form. Omits inmate.full_name.
 
 const visitDateSchema = z
   .string({ required_error: 'Vui lòng chọn ngày thăm gặp.' })

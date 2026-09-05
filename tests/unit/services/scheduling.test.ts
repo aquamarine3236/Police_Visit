@@ -130,7 +130,6 @@ function validFormData() {
     visitors: [{
       full_name: 'Trần Thị Mai',
       date_of_birth: '1985-03-20',
-      citizen_id: '012345678901',
       relationship: 'Mẹ',
     }],
     inmate: {

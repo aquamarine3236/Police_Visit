@@ -53,7 +53,6 @@ interface VisitorDetail {
   id: string;
   full_name: string;
   date_of_birth: string | null;
-  citizen_id: string;
   relationship: string;
   display_order: number;
 }
@@ -807,7 +806,6 @@ export default function AdminDashboardPage() {
                         <TableHead className="h-9 py-1 font-semibold">STT</TableHead>
                         <TableHead className="h-9 py-1 font-semibold">Họ và tên</TableHead>
                         <TableHead className="h-9 py-1 font-semibold">Ngày sinh</TableHead>
-                        <TableHead className="h-9 py-1 font-semibold">Số CCCD</TableHead>
                         <TableHead className="h-9 py-1 font-semibold">Quan hệ với người bị giam giữ</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -817,7 +815,6 @@ export default function AdminDashboardPage() {
                           <TableCell className="py-2 text-caption-md font-mono">{i + 1}</TableCell>
                           <TableCell className="py-2 text-caption-md font-semibold text-ink">{toTitleCaseName(vis.full_name)}</TableCell>
                           <TableCell className="py-2 text-caption-md">{formatDateVN(vis.date_of_birth) || '—'}</TableCell>
-                          <TableCell className="py-2 text-caption-md font-mono">{vis.citizen_id}</TableCell>
                           <TableCell className="py-2 text-caption-md">{vis.relationship}</TableCell>
                         </TableRow>
                       ))}

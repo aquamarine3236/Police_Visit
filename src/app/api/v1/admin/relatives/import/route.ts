@@ -14,11 +14,10 @@ const COLUMN_MAP: Record<string, string> = {
   'Số giam': 'prison_number',
   'Họ và tên': 'full_name',
   'Ngày sinh': 'date_of_birth',
-  CCCD: 'citizen_id',
   'Mối quan hệ': 'relationship',
 };
 
-const REQUIRED_COLUMNS = ['Số giam', 'Họ và tên', 'CCCD', 'Mối quan hệ'];
+const REQUIRED_COLUMNS = ['Số giam', 'Họ và tên', 'Mối quan hệ'];
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_ROWS = 5000;
@@ -49,7 +48,6 @@ interface RowError {
 interface RelativePayload {
   full_name: string;
   date_of_birth: string | null;
-  citizen_id: string;
   relationship: string;
 }
 
@@ -148,8 +146,8 @@ export async function POST(request: NextRequest) {
   const errors: RowError[] = [];
   // Gom theo Số giam: prison_number → danh sách thân thích hợp lệ.
   const groups = new Map<string, RelativePayload[]>();
-  // Chống trùng CCCD ngay trong file (theo từng prison_number).
-  const seenCitizenIds = new Map<string, Set<string>>();
+  // Chống trùng thân thích ngay trong file (theo từng prison_number).
+  const seenRelatives = new Map<string, Set<string>>();
 
   // ─── Parse & validate từng dòng dữ liệu ─────────────────────────────────
   for (let rowIdx = 2; rowIdx <= worksheet.rowCount; rowIdx++) {
@@ -168,7 +166,6 @@ export async function POST(request: NextRequest) {
       prison_number: rowData.prison_number,
       full_name: rowData.full_name,
       date_of_birth: rowData.date_of_birth || undefined,
-      citizen_id: rowData.citizen_id,
       relationship: rowData.relationship,
     });
 
@@ -180,20 +177,22 @@ export async function POST(request: NextRequest) {
 
     const pn = parsed.data.prison_number.trim();
 
-    // Dedup CCCD trong cùng file cho cùng người bị giam.
-    if (!seenCitizenIds.has(pn)) seenCitizenIds.set(pn, new Set());
-    const seen = seenCitizenIds.get(pn)!;
-    if (seen.has(parsed.data.citizen_id)) {
-      // Trùng trong file → bỏ qua âm thầm (không tính là lỗi cứng).
+    const relativeKey = [
+      parsed.data.full_name.trim().toLocaleLowerCase(),
+      parsed.data.date_of_birth || '',
+      parsed.data.relationship.trim().toLocaleLowerCase(),
+    ].join('|');
+    if (!seenRelatives.has(pn)) seenRelatives.set(pn, new Set());
+    const seen = seenRelatives.get(pn)!;
+    if (seen.has(relativeKey)) {
       continue;
     }
-    seen.add(parsed.data.citizen_id);
+    seen.add(relativeKey);
 
     if (!groups.has(pn)) groups.set(pn, []);
     groups.get(pn)!.push({
       full_name: parsed.data.full_name.trim(),
       date_of_birth: parsed.data.date_of_birth || null,
-      citizen_id: parsed.data.citizen_id,
       relationship: parsed.data.relationship.trim(),
     });
   }

@@ -9,6 +9,7 @@ import {
   type RelativeFormData,
   MAX_RELATIVES_PER_INMATE,
 } from '@/lib/validations/inmate-relative';
+import { normalizeVietnameseName } from '@/lib/vietnamese-name';
 
 // ─── Helper: get admin's prison_id from session ─────────────────────────────
 // (Giống pattern trong services/inmates.ts — không tách ra file chung để tránh
@@ -187,29 +188,12 @@ export async function createRelative(
     };
   }
 
-  // Chống trùng CCCD trong cùng người bị giam.
-  const { data: duplicate } = await db
-    .from('inmate_relatives')
-    .select('id')
-    .eq('inmate_id', inmateId)
-    .eq('citizen_id', parsed.data.citizen_id)
-    .maybeSingle();
-
-  if (duplicate) {
-    return {
-      success: false,
-      message: 'Số CCCD này đã tồn tại trong danh sách thân thích.',
-      errors: { citizen_id: ['Số CCCD này đã tồn tại trong danh sách thân thích.'] },
-    };
-  }
-
   const { data, error } = await db
     .from('inmate_relatives')
     .insert({
       inmate_id: inmateId,
       full_name: parsed.data.full_name.trim(),
       date_of_birth: parsed.data.date_of_birth || null,
-      citizen_id: parsed.data.citizen_id,
       relationship: parsed.data.relationship.trim(),
       created_by: admin.userId,
       updated_by: admin.userId,
@@ -218,13 +202,6 @@ export async function createRelative(
     .single();
 
   if (error) {
-    if (error.code === '23505') {
-      return {
-        success: false,
-        message: 'Số CCCD này đã tồn tại trong danh sách thân thích.',
-        errors: { citizen_id: ['Số CCCD này đã tồn tại trong danh sách thân thích.'] },
-      };
-    }
     return { success: false, message: error.message };
   }
 
@@ -272,21 +249,23 @@ export async function updateRelative(
     return { success: false, message: 'Không tìm thấy thân thích.' };
   }
 
-  // Chống trùng CCCD (trừ chính bản ghi này) trong cùng người bị giam.
-  const { data: duplicate } = await db
+  const { data: existingRelatives } = await db
     .from('inmate_relatives')
-    .select('id')
+    .select('id, full_name, date_of_birth, relationship')
     .eq('inmate_id', existing.inmate_id)
-    .eq('citizen_id', parsed.data.citizen_id)
-    .neq('id', id)
-    .maybeSingle();
+    .neq('id', id);
+
+  const duplicate = (existingRelatives ?? []).some(
+    (relative) =>
+      normalizeVietnameseName(relative.full_name) ===
+        normalizeVietnameseName(parsed.data.full_name) &&
+      relative.date_of_birth === (parsed.data.date_of_birth || null) &&
+      relative.relationship.trim().toLocaleLowerCase() ===
+        parsed.data.relationship.trim().toLocaleLowerCase(),
+  );
 
   if (duplicate) {
-    return {
-      success: false,
-      message: 'Số CCCD này đã tồn tại trong danh sách thân thích.',
-      errors: { citizen_id: ['Số CCCD này đã tồn tại trong danh sách thân thích.'] },
-    };
+    return { success: false, message: 'Thân thích này đã tồn tại trong danh sách.' };
   }
 
   // Ghi qua RPC SECURITY DEFINER (fn_admin_update_relative) thay vì UPDATE trực
@@ -298,7 +277,6 @@ export async function updateRelative(
     p_prison_id: admin.prisonId,
     p_full_name: parsed.data.full_name.trim(),
     p_date_of_birth: parsed.data.date_of_birth || null,
-    p_citizen_id: parsed.data.citizen_id,
     p_relationship: parsed.data.relationship.trim(),
     p_user_id: admin.userId,
   });
@@ -311,12 +289,6 @@ export async function updateRelative(
 
   if (result && 'error' in result && result.error) {
     switch (result.error) {
-      case 'DUPLICATE_CCCD':
-        return {
-          success: false,
-          message: 'Số CCCD này đã tồn tại trong danh sách thân thích.',
-          errors: { citizen_id: ['Số CCCD này đã tồn tại trong danh sách thân thích.'] },
-        };
       case 'FORBIDDEN':
       case 'NOT_FOUND':
       default:
